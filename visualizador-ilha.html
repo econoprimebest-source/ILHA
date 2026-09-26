@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ilha — Observatório</title>
+<style>
+:root{--bg:#0b1220;--panel:#111b2e;--line:#263651;--text:#e8eef8;--muted:#9eacc2;--water:#4aa3df;--land:#b7a06a;--tree:#4f9a61;--human:#e9d27b;--animal:#c58b65}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1200px;margin:auto;padding:16px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.title{font-size:22px;font-weight:700}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:14px;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
+svg{display:block;width:100%;height:auto;background:#172235;border-radius:10px}
+.maplabel{font-size:12px;fill:#dfe7f4}.small{font-size:11px;fill:#aebbd0}
+.entity{cursor:pointer}.entity text{font-size:12px;fill:#fff;font-weight:650;text-anchor:middle}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{border:1px solid var(--line);border-radius:10px;padding:9px}.stat b{display:block;font-size:18px;margin-top:2px}
+.events{max-height:430px;overflow:auto}.event{padding:8px 0;border-bottom:1px solid var(--line)}.event:last-child{border:0}
+.bar{height:7px;background:#263651;border-radius:9px;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:var(--water)}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="top">
+    <div><div class="title">🏝️ Ilha — Observatório</div><div id="sub" class="muted">Carregando estado real…</div></div>
+    <div id="status" class="muted">● conectando</div>
+  </div>
+  <div class="grid">
+    <section class="card">
+      <svg id="map" viewBox="0 0 900 560" role="img" aria-label="Mapa esquemático da Ilha"></svg>
+    </section>
+    <aside class="card">
+      <div class="stats" id="stats"></div>
+      <div style="margin-top:14px"><b>Seres</b><div id="beings"></div></div>
+      <div style="margin-top:14px"><b>Acontecimentos recentes</b><div id="events" class="events"></div></div>
+    </aside>
+  </div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function num(v,d=0){return Number.isFinite(Number(v))?Number(v):d}
+function firstStatePath(o){return o?.estado||o}
+function localPos(local,i){
+  const p={acampamento:[245,320],rio:[450,360],bosque:[245,175],floresta:[675,175],lago:[465,235],nascente:[610,330],poco:[770,350]};
+  return p[local]||[[330,300],[570,320],[400,150],[600,150]][i%4];
+}
+function findEntities(e){
+  const seres=e?.seres||{};
+  return Object.values(seres).map((s,i)=>({id:s.id||s.nome||('ser'+i),nome:s.nome||s.id||('Ser '+i),local:s.local||'acampamento',status:s.status||'vivo',s})); 
+}
+function ecology(e){
+  const x=e?.mundo?.ecossistema||{};
+  const agua=x.agua||{}; const peixes=x.peixes?.rio||{};
+  const arvores=x.arvores||{}; const animais=x.animais||{};
+  const frutos=Object.values(arvores).reduce((a,v)=>a+num(v.frutos),0);
+  const fauna=Object.values(animais).reduce((a,v)=>a+num(v.populacao),0);
+  return {agua,peixes,arvores,animais,frutos,fauna};
+}
+function render(e,logs){
+  const t=e?.mundo?.tempo||{}; const x=ecology(e); const ents=findEntities(e);
+  $('sub').textContent=`Ciclo ${num(t.ciclo)} · Dia ${num(t.dia)} · ${t.periodo||'—'} · ${t.estacao||'—'} · Clima: ${e?.mundo?.clima||'—'}`;
+  $('status').textContent='● atualizado agora';
+  const water=num(x.agua.nascente); const wcap=Math.max(1,num(x.agua.limite,60));
+  $('stats').innerHTML=[
+    ['Água',water.toFixed(1)+' / '+wcap],
+    ['Peixes',Math.round(num(x.peixes.populacao))],
+    ['Frutos',x.frutos.toFixed(1)],
+    ['Fauna',Math.round(x.fauna)]
+  ].map(([a,b],i)=>`<div class="stat"><span class="muted">${esc(a)}</span><b>${esc(b)}</b>${i===0?'<div class="bar"><i style="width:'+Math.min(100,water/wcap*100)+'%"></i></div>':''}</div>`).join('');
+  $('beings').innerHTML=ents.length?ents.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${esc(x.nome)}</b> <span class="muted">· ${esc(x.local)} · ${esc(x.status)}</span></div>`).join(''):'<div class="muted" style="padding-top:8px">Nenhum ser no estado.</div>';
+  $('events').innerHTML=logs.length?logs.slice(-18).reverse().map(r=>`<div class="event"><b>Ciclo ${esc(r.ciclo??'?')}</b> <span class="muted">${esc(r.acao||r.acaoId||'')}</span><br><span class="muted">${esc(r.consequencia?.descricao||r.motivo||r.mensagem||'Evento registrado')}</span></div>`).join(''):'<div class="muted" style="padding-top:8px">Sem eventos legíveis.</div>';
+  const svg=$('map'); svg.innerHTML='';
+  const NS='http://www.w3.org/2000/svg'; const el=(tag,a={})=>{const n=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,v));return n};
+  svg.append(el('rect',{x:0,y:0,width:900,height:560,rx:10,fill:'#a99661'}));
+  svg.append(el('path',{d:'M330 55 C390 20 500 35 560 95 C600 130 650 145 675 220 C700 300 630 390 540 435 C450 480 320 465 255 410 C190 355 190 255 230 180 C255 130 285 90 330 55Z',fill:'#c7b47a',stroke:'#e4d59c','stroke-width':3}));
+  svg.append(el('ellipse',{cx:465,cy:255,rx:125,ry:75,fill:'#4aa3df',opacity:.9}));
+  svg.append(el('path',{d:'M455 320 C445 365 410 420 360 470',fill:'none',stroke:'#4aa3df','stroke-width':12,'stroke-linecap':'round'}));
+  [['Bosque',245,125],['Floresta',675,125],['Acampamento',245,375],['Rio',450,390],['Lago',465,255]].forEach(([n,x,y])=>{const t=el('text',{x,y,class:'maplabel'});t.textContent=n;svg.append(t)});
+  Object.values(x.arvores).forEach((a,i)=>{const [px,py]=localPos(a.local,i);const g=el('g');g.append(el('circle',{cx:px,cy:py,r:15,fill:'#4f9a61',stroke:'#173b24','stroke-width':2}));const t=el('text',{x:px,y:py+4,class:'maplabel','text-anchor':'middle'});t.textContent='🌳';g.append(t);svg.append(g)});
+  ents.forEach((p,i)=>{const [px,py]=localPos(p.local,i+2);const g=el('g',{class:'entity'});g.append(el('circle',{cx:px,cy:py,r:19,fill:'#e9d27b',stroke:'#5d4c1b','stroke-width':3}));const t=el('text',{x:px,y:py+4});t.textContent=(p.nome||'?')[0].toUpperCase();g.append(t);const l=el('text',{x:px,y:py+34,class:'small'});l.textContent=p.nome;g.append(l);svg.append(g)});
+  const animalTotal=Math.round(x.fauna); const at=el('text',{x:760,y:430,class:'maplabel'});at.textContent='🐾 fauna: '+animalTotal;svg.append(at);
+}
+async function load(){
+  try{const r=await fetch('/api/snapshot?ts='+Date.now()); if(!r.ok)throw Error('HTTP '+r.status); const d=await r.json(); render(firstStatePath(d),d.eventos||[]);}
+  catch(err){$('status').textContent='● erro: '+err.message}
+}
+load();setInterval(load,2000);
+</script>
+</body>
+</html>
