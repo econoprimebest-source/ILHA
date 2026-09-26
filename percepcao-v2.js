@@ -1,0 +1,3 @@
+'use strict';
+function perceber(e,s){const x=e.mundo.ecossistema,p=[];if(s.local==='acampamento'&&x.agua.nascente>0)p.push('Água corrente audível junto ao rio.');if(s.local==='rio'){p.push('O rio está visível.');if(x.peixes.rio.populacao>0)p.push(x.peixes.rio.populacao<5?'Poucos peixes visíveis.':'Peixes visíveis na superfície.')}if(s.local==='bosque'&&Object.values(x.arvores).some(a=>a.local==='bosque'&&a.frutos>=.5))p.push('Árvores frutíferas com frutos visíveis.');if(s.local==='floresta'&&x.madeira.floresta>0)p.push('Madeira caída visível.');if(e.mundo.clima.includes('chuva'))p.push('Chuva visível e audível.');return p}
+module.exports={perceber};

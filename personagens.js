@@ -1,0 +1,1 @@
+const personagens={icaro:{nome:'Icaro',estado:'ativo',experiencias:[]},maria:{nome:'Maria',estado:'ativo',experiencias:[]},joao:{nome:'Joao',estado:'ativo',experiencias:[]}};module.exports=personagens;

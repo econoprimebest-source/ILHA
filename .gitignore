@@ -1,0 +1,7 @@
+﻿logs/
+estado-ilha.json
+backups/**/estado-ilha.json
+*.tmp
+node_modules/
+.env
+*.env
