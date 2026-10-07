@@ -1,7 +1,32 @@
-﻿logs/
+﻿# --- dados runtime (nunca versionar) ---
 estado-ilha.json
-backups/**/estado-ilha.json
+estado-ilha.json.*
+memorias/*/chat.jsonl
+memorias/*/chat-arquivado.jsonl
+memorias/*/diario.jsonl
+memorias/*/self-model.json
+reinicio.pendente
+episodios/
+experimento/
+
+# --- logs ---
+logs/
+*.log
+*.err
+
+# --- backups / temporarios ---
+backups/
+*.bak
+*.bak-*
+*.bak-sync-*/
+*.backup-*
+*.old-episodio-*
+*.pre-v5.bak
 *.tmp
+codex-input.txt
+
+# --- ambiente ---
 node_modules/
 .env
 *.env
+.aider*
