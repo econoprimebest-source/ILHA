@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ilha — Observatório</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#07111f;color:#e8eef8;font-family:Arial,sans-serif}
+.wrap{max-width:1100px;margin:auto;padding:18px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+h1{margin:0;font-size:28px} .sub{color:#aebbd0;margin-top:6px}
+.live{color:#9ee6bd;white-space:nowrap}
+.panel{background:#0d192b;border:1px solid #263956;border-radius:18px;padding:14px;margin-top:16px}
+#map{width:100%;height:520px;border-radius:14px;overflow:hidden;background:#429bd0}
+svg{width:100%;height:100%;display:block}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card{background:#101d31;border:1px solid #293d5c;border-radius:14px;padding:14px}
+.label{color:#9fb0c8}.value{font-size:22px;font-weight:700;margin-top:5px}
+.people{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.person{background:#101d31;border:1px solid #293d5c;border-radius:14px;padding:12px}
+.person b{font-size:18px}.small{color:#aebbd0;margin-top:5px}
+.event{padding:11px 0;border-bottom:1px solid #293956}.event:last-child{border:0}
+.event b{color:#fff}.event .reason{color:#aec0d9;margin-top:4px}
+@media(max-width:750px){.cards{grid-template-columns:repeat(2,1fr)}.people{grid-template-columns:1fr}.wrap{padding:10px}#map{height:430px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div>
+<h1>🏝️ Ilha — Observatório</h1>
+<div id="tempo" class="sub">Carregando…</div>
+</div>
+<div class="live">● atualizado agora</div>
+</header>
+
+<section class="panel"><div id="map"></div></section>
+
+<section class="panel">
+<div class="cards">
+<div class="card"><div class="label">Água</div><div id="agua" class="value">—</div></div>
+<div class="card"><div class="label">Peixes</div><div id="peixes" class="value">—</div></div>
+<div class="card"><div class="label">Frutos</div><div id="frutos" class="value">—</div></div>
+<div class="card"><div class="label">Fauna</div><div id="fauna" class="value">—</div></div>
+</div>
+</section>
+
+<section class="panel">
+<h2>Seres</h2><div id="people" class="people"></div>
+</section>
+
+<section class="panel">
+<h2>Acontecimentos recentes</h2><div id="events"></div>
+</section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function num(x){return typeof x==='number'?x:0}
+function localXY(local){
+  local=String(local||'').toLowerCase();
+  if(local.includes('rio'))return [455,375];
+  if(local.includes('lago'))return [470,265];
+  if(local.includes('bosque'))return [205,190];
+  if(local.includes('floresta'))return [685,205];
+  if(local.includes('acamp'))return [395,335];
+  if(local.includes('mar'))return [450,75];
+  return [395,335];
+}
+function icon(nome){
+  nome=String(nome||'').toLowerCase();
+  if(nome.includes('maria'))return '👩';
+  if(nome.includes('joão')||nome.includes('joao'))return '👨';
+  return '🧑';
+}
+function makeMap(estado){
+ const seres=Object.values(estado.seres||{});
+ const clima=estado.mundo?.clima||'';
+ let people=seres.map(s=>{
+   const [x,y]=localXY(s.local);
+   return `<g transform="translate(${x},${y})">
+     <circle r="28" fill="#fff" opacity=".9"/>
+     <text text-anchor="middle" y="10" font-size="32">${icon(s.nome)}</text>
+     <text text-anchor="middle" y="48" font-size="14" font-weight="700" fill="#172033">${esc(s.nome)}</text>
+   </g>`;
+ }).join('');
+ return `<svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+ <rect width="900" height="520" fill="#3f99cc"/>
+ <path d="M90 90 Q170 35 270 65 Q365 25 470 70 Q590 35 690 100 Q805 120 825 220 Q870 320 780 410 Q690 490 560 455 Q450 500 335 460 Q220 495 125 420 Q45 345 75 250 Q35 160 90 90Z" fill="#e9d19a" stroke="#f5e2b5" stroke-width="12"/>
+ <path d="M105 105 Q175 55 275 82 Q370 48 465 86 Q580 55 675 112 Q780 135 805 225 Q835 315 755 395 Q670 460 555 435 Q450 475 345 440 Q230 470 145 405 Q70 335 98 250 Q65 170 105 105Z" fill="#b4a06a"/>
+ <path d="M110 365 Q150 330 145 280" fill="none" stroke="#efd9a5" stroke-width="18"/>
+ <ellipse cx="470" cy="265" rx="125" ry="72" fill="#4aa8dc"/>
+ <path d="M470 335 C465 370 430 405 395 445" fill="none" stroke="#4aa8dc" stroke-width="14" stroke-linecap="round"/>
+ <g font-family="Arial,sans-serif" text-anchor="middle">
+   <text x="450" y="45" font-size="22" font-weight="700" fill="#fff">🌊 MAR</text>
+   <text x="470" y="265" font-size="18" fill="#fff">💧 Lago</text>
+   <text x="190" y="135" font-size="17" fill="#172033">🌳 Bosque</text>
+   <text x="690" y="135" font-size="17" fill="#172033">🌲 Floresta</text>
+   <text x="225" y="405" font-size="17" fill="#172033">🏕️ Acampamento</text>
+   <text x="400" y="470" font-size="17" fill="#172033">💧 Rio</text>
+ </g>
+ <g font-size="42">
+   <text x="135" y="205">🌳</text><text x="185" y="235">🌳</text><text x="225" y="185">🌳</text>
+   <text x="655" y="205">🌲</text><text x="710" y="240">🌲</text><text x="680" y="275">🌲</text>
+ </g>
+ ${people}
+ <g font-family="Arial,sans-serif">
+   <rect x="535" y="335" width="300" height="105" rx="15" fill="#fff" opacity=".92"/>
+   <text x="555" y="360" font-size="15" font-weight="700" fill="#172033">👀 OBSERVATÓRIO</text>
+   <text x="555" y="384" font-size="14" fill="#172033">Clima: ${esc(clima)}</text>
+   <text x="555" y="406" font-size="14" fill="#172033">O mundo calcula as consequências.</text>
+   <text x="555" y="428" font-size="14" fill="#172033">Os habitantes escolhem as ações.</text>
+ </g>
+ </svg>`;
+}
+function actionOf(e){
+ let a=e?.acao;
+ if(a && typeof a==='object')a=a.id||a.acao||a.nome;
+ return a||e?.acaoId||'Evento';
+}
+function reasonOf(e){
+ return (typeof e?.motivo==='string'&&e.motivo) || e?.consequencia?.descricao || e?.mensagem || 'Evento registrado';
+}
+function render(d){
+ const e=d.estado||{}, t=e.mundo?.tempo||{}, eco=e.mundo?.ecossistema||{};
+ $('tempo').textContent=`Ciclo ${t.ciclo??'—'} · Dia ${t.dia??'—'} · ${t.periodo||'—'} · ${t.estacao||''} · Clima: ${e.mundo?.clima||'—'}`;
+ $('map').innerHTML=makeMap(e);
+ const agua=eco.agua?.fontes?.nascente ?? eco.agua?.nascente ?? eco.agua?.total ?? 0;
+ const peixes=eco.fauna?.peixes?.populacao ?? eco.peixes?.rio?.populacao ?? eco.peixes?.rio ?? 0;
+ let frutos=0; for(const v of Object.values(eco.arvores||{})) frutos+=num(v.frutos);
+ const fauna=(eco.fauna?.aves?.populacao||0)+(eco.fauna?.mamiferos?.populacao||0)+(eco.fauna?.peixes?.populacao||0);
+ $('agua').textContent=typeof agua==='number'?agua.toFixed(1):agua;
+ $('peixes').textContent=peixes;
+ $('frutos').textContent=frutos.toFixed(1);
+ $('fauna').textContent=fauna||'—';
+ $('people').innerHTML=Object.values(e.seres||{}).map(s=>`<div class="person"><b>${icon(s.nome)} ${esc(s.nome)}</b><div class="small">📍 ${esc(s.local||'—')} · ${esc(s.status||'—')}</div><div class="small">💭 última ação: ${esc(s.cortex?.trajetoria?.at(-1)?.acao||'—')}</div></div>`).join('');
+ const ev=(d.eventos||[]).slice(-12).reverse();
+ $('events').innerHTML=ev.length?ev.map(r=>`<div class="event"><b>Ciclo ${esc(r.ciclo)} · ${esc(actionOf(r))}</b><div class="reason">${esc(reasonOf(r))}</div></div>`).join(''):'Nenhum acontecimento registrado.';
+}
+async function update(){
+ try{
+  const r=await fetch('/api/snapshot?ts='+Date.now(),{cache:'no-store'});
+  render(await r.json());
+ }catch(err){$('tempo').textContent='Observatório aguardando o servidor…';}
+}
+update();setInterval(update,2000);
+</script>
+</body>
+</html>

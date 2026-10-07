@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ilha — Observatório</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071426;color:#eef5ff;font-family:Arial,sans-serif}
+.wrap{max-width:1120px;margin:auto;padding:14px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+h1{margin:0;font-size:28px}.sub{margin-top:5px;color:#aebed4}.live{color:#8fe2ae}
+.panel{background:#0c1a2d;border:1px solid #29405f;border-radius:18px;padding:12px;margin-top:14px}
+#map{width:100%;height:560px;border-radius:14px;overflow:hidden;background:#197fc0}
+svg{display:block;width:100%;height:100%}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card,.person{background:#101f34;border:1px solid #29405f;border-radius:14px;padding:13px}
+.label,.small{color:#a9bad1}.value{font-size:23px;font-weight:700;margin-top:4px}
+.people{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.event{padding:11px 0;border-bottom:1px solid #293b55}.event:last-child{border:0}
+.reason{color:#adc0d8;margin-top:4px}
+@media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr)}.people{grid-template-columns:1fr}#map{height:460px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div><h1>🏝️ Ilha — Observatório</h1><div id="tempo" class="sub">Carregando…</div></div>
+<div class="live">● ao vivo</div>
+</header>
+
+<section class="panel"><div id="map"></div></section>
+
+<section class="panel">
+<div class="cards">
+<div class="card"><div class="label">💧 Água</div><div id="agua" class="value">—</div></div>
+<div class="card"><div class="label">🐟 Peixes</div><div id="peixes" class="value">—</div></div>
+<div class="card"><div class="label">🍎 Frutos</div><div id="frutos" class="value">—</div></div>
+<div class="card"><div class="label">🐾 Fauna</div><div id="fauna" class="value">—</div></div>
+</div>
+</section>
+
+<section class="panel"><h2>Habitantes</h2><div id="people" class="people"></div></section>
+<section class="panel"><h2>Acontecimentos recentes</h2><div id="events"></div></section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function num(x){return typeof x==='number'?x:0}
+function icon(nome){let n=String(nome||'').toLowerCase();return n.includes('maria')?'👩':(n.includes('joão')||n.includes('joao'))?'👨':'🧑'}
+const animState={};
+function positionFor(ser,indexByLocal){
+ let [x,y]=pos(ser.local);
+ const key=String(ser.local||'acampamento').toLowerCase();
+ const i=indexByLocal[key]||0; indexByLocal[key]=i+1;
+ const offsets=[[0,0],[-48,8],[48,8],[-24,-38],[24,-38]];
+ const off=offsets[i]||[i*18,0];
+ return [x+off[0],y+off[1]];
+}
+function animatePerson(id,toX,toY){
+ const el=document.getElementById('person-'+id);
+ if(!el)return;
+ const key=String(id);
+ const old=animState[key];
+ const from=old||[toX,toY];
+ animState[key]=[toX,toY];
+ const start=performance.now(), duration=1700;
+ function frame(now){
+   const p=Math.min(1,(now-start)/duration);
+   const ease=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+   const x=from[0]+(toX-from[0])*ease;
+   const y=from[1]+(toY-from[1])*ease;
+   el.setAttribute('transform',`translate(${x},${y})`);
+   if(p<1)requestAnimationFrame(frame);
+ }
+ requestAnimationFrame(frame);
+}
+
+function pos(local){
+ let l=String(local||'').toLowerCase();
+ if(l.includes('rio'))return [465,455];
+ if(l.includes('lago'))return [470,285];
+ if(l.includes('bosque'))return [275,235];
+ if(l.includes('floresta'))return [665,230];
+ if(l.includes('acamp'))return [355,390];
+ return [355,390];
+}
+function makeMap(estado){
+ const seres=Object.values(estado.seres||{});
+ const clima=estado.mundo?.clima||'';
+ const same={};
+ const people=seres.map(s=>{
+   const [x,y]=positionFor(s,same);
+   animState[String(s.id||s.nome)] = [x,y];
+   return `<g id="person-${esc(s.id||s.nome)}" transform="translate(${x},${y})">
+     <circle r="27" fill="#fff" stroke="#172033" stroke-width="3"/>
+     <text text-anchor="middle" y="10" font-size="30">${icon(s.nome)}</text>
+     <text text-anchor="middle" y="47" font-size="15" font-weight="700" fill="#172033">${esc(s.nome)}</text>
+   </g>`;
+ }).join('');
+
+ return `<svg viewBox="0 0 900 590" xmlns="http://www.w3.org/2000/svg">
+ <!-- oceano -->
+ <rect width="900" height="590" fill="#2689c7"/>
+ <g opacity=".22" fill="none" stroke="#b8e5fa" stroke-width="3">
+  <path d="M15 70q55-25 110 0t110 0t110 0t110 0t110 0t110 0t110 0"/>
+  <path d="M-10 530q55-25 110 0t110 0t110 0t110 0t110 0t110 0t110 0"/>
+  <path d="M720 120q45-20 90 0"/><path d="M25 420q45-20 90 0"/>
+ </g>
+ <!-- praia -->
+ <ellipse cx="450" cy="300" rx="350" ry="250" fill="#f3d99b" stroke="#fff1c5" stroke-width="10"/>
+ <!-- ilha -->
+ <ellipse cx="450" cy="300" rx="322" ry="222" fill="#6e9b4d"/>
+ <!-- regiões -->
+ <path d="M135 255q55-115 170-135q75 30 100 115q-95 45-180 95q-55-15-90-75z" fill="#4f8d43"/>
+ <path d="M540 120q145 5 220 120q-25 100-110 135q-80-65-150-130q20-65 40-125z" fill="#39783d"/>
+ <!-- clareira -->
+ <ellipse cx="410" cy="390" rx="115" ry="72" fill="#91b75b"/>
+ <!-- lagoa -->
+ <ellipse cx="465" cy="285" rx="125" ry="78" fill="#55b2df" stroke="#2d83b0" stroke-width="5"/>
+ <text x="465" y="291" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">LAGOA</text>
+ <!-- rio/riacho -->
+ <path d="M465 350 C465 380 480 405 462 430 C445 455 430 475 415 520"
+       fill="none" stroke="#2d82b4" stroke-width="22" stroke-linecap="round"/>
+ <path d="M465 350 C465 380 480 405 462 430 C445 455 430 475 415 520"
+       fill="none" stroke="#9bdcf2" stroke-width="7" stroke-linecap="round"/>
+ <!-- montanha -->
+ <path d="M425 155l42-82 50 82z" fill="#705535" stroke="#4d3b27" stroke-width="5"/>
+ <path d="M452 107l15-34 17 34z" fill="#e4e0cf"/>
+ <!-- árvores -->
+ <g font-size="43">
+  <text x="130" y="210">🌴</text><text x="175" y="170">🌳</text><text x="225" y="215">🌴</text>
+  <text x="275" y="160">🌳</text><text x="315" y="220">🌴</text>
+  <text x="600" y="175">🌴</text><text x="650" y="140">🌳</text><text x="700" y="190">🌴</text>
+  <text x="735" y="235">🌳</text><text x="585" y="225">🌴</text>
+ </g>
+ <!-- frutas -->
+ <g font-size="18"><text x="190" y="245">🍎</text><text x="250" y="190">🍊</text><text x="685" y="230">🍌</text></g>
+ <!-- acampamento -->
+ <text x="350" y="405" font-size="48" text-anchor="middle">🏕️</text>
+ <text x="350" y="435" text-anchor="middle" font-size="16" font-weight="700" fill="#172033">ACAMPAMENTO</text>
+ <!-- cais/barco -->
+ <path d="M385 515h70" stroke="#6d482b" stroke-width="12"/>
+ <text x="475" y="530" font-size="30">🛶</text>
+ <!-- praias e mar -->
+ <text x="450" y="35" text-anchor="middle" font-size="23" font-weight="700" fill="#fff">🌊 MAR</text>
+ <text x="450" y="75" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">🏖️ PRAIA</text>
+ <!-- rótulos -->
+ <g font-family="Arial,sans-serif">
+  <rect x="130" y="105" width="160" height="34" rx="17" fill="#fff" opacity=".92"/>
+  <text x="210" y="128" text-anchor="middle" font-size="16" font-weight="700" fill="#172033">🌳 BOSQUE</text>
+  <rect x="610" y="105" width="170" height="34" rx="17" fill="#fff" opacity=".92"/>
+  <text x="695" y="128" text-anchor="middle" font-size="16" font-weight="700" fill="#172033">🌲 FLORESTA</text>
+  <rect x="360" y="535" width="110" height="32" rx="16" fill="#fff" opacity=".92"/>
+  <text x="415" y="557" text-anchor="middle" font-size="15" font-weight="700" fill="#172033">💧 RIO</text>
+ </g>
+ ${people}
+ <!-- clima -->
+ <g transform="translate(24,25)">
+  <rect width="175" height="42" rx="21" fill="#071426" opacity=".85"/>
+  <text x="87" y="27" text-anchor="middle" font-size="14" fill="#fff">☁️ ${esc(clima)}</text>
+ </g>
+ </svg>`;
+}
+function actionOf(e){let a=e?.acao;if(a&&typeof a==='object')a=a.id||a.acao||a.nome;return a||e?.acaoId||'Evento'}
+function reasonOf(e){return typeof e?.motivo==='string'&&e.motivo?e.motivo:e?.consequencia?.descricao||e?.mensagem||'Evento registrado'}
+function render(d){
+ const e=d.estado||{},t=e.mundo?.tempo||{},eco=e.mundo?.ecossistema||{};
+ $('tempo').textContent=`Ciclo ${t.ciclo??'—'} · Dia ${t.dia??'—'} · ${t.periodo||'—'} · ${t.estacao||''} · Clima: ${e.mundo?.clima||'—'}`;
+ if(!$('map').querySelector('svg')) $('map').innerHTML=makeMap(e);
+ const sameNow={};
+ const ids=new Set(Object.values(e.seres||{}).map(s=>String(s.id||s.nome)));
+ $('map').querySelectorAll('[id^="person-"]').forEach(el=>{if(!ids.has(el.id.slice(7)))el.remove();});
+ Object.values(e.seres||{}).forEach(s=>{
+   const [tx,ty]=positionFor(s,sameNow);
+   animatePerson(s.id||s.nome,tx,ty);
+ });
+ const agua=eco.agua?.fontes?.nascente??eco.agua?.nascente??eco.agua?.total??0;
+ const peixes=eco.fauna?.peixes?.populacao??eco.peixes?.rio?.populacao??eco.peixes?.rio??0;
+ let frutos=0;for(const v of Object.values(eco.arvores||{}))frutos+=num(v.frutos);
+ const fauna=(eco.fauna?.aves?.populacao||0)+(eco.fauna?.mamiferos?.populacao||0)+(eco.fauna?.peixes?.populacao||0);
+ $('agua').textContent=typeof agua==='number'?agua.toFixed(1):(agua&&typeof agua==='object'?(agua.nivel??agua.volume??agua.quantidade??'—'):'—');
+ $('peixes').textContent=peixes;$('frutos').textContent=frutos.toFixed(1);$('fauna').textContent=fauna||'—';
+ $('people').innerHTML=Object.values(e.seres||{}).map(s=>`<div class="person"><b>${icon(s.nome)} ${esc(s.nome)}</b><div class="small">📍 ${esc(s.local||'—')} · ${esc(s.status||'—')}</div><div class="small">💭 última ação: ${esc(s.cortex?.trajetoria?.at(-1)?.acao||'—')}</div></div>`).join('');
+ const ev=(d.eventos||[]).slice(-12).reverse();
+ $('events').innerHTML=ev.length?ev.map(r=>`<div class="event"><b>Ciclo ${esc(r.ciclo)} · ${esc(actionOf(r))}</b><div class="reason">${esc(reasonOf(r))}</div></div>`).join(''):'Nenhum acontecimento registrado.';
+}
+async function update(){try{const r=await fetch('/api/snapshot?ts='+Date.now(),{cache:'no-store'});render(await r.json())}catch(e){$('tempo').textContent='Observatório aguardando o servidor…'}}
+update();setInterval(update,2000);
+</script>
+</body>
+</html>

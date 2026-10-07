@@ -1,6 +1,8 @@
-const MODELO=process.env.ILHA_MODELO||'qwen3:8b';
-function identidade(ser){if(!ser)return{nome:'Ícaro',papel:'habitante da ilha'};return{nome:ser.nome||ser.id||'Habitante',papel:ser.especie==='humano'?'habitante humano da ilha':'habitante da ilha'}}
-function prompt(c,a,ser){const id=identidade(ser);const system=`Você é ${id.nome}, ${id.papel} em uma simulação. Escolha uma ação possível para ${id.nome}. Não preveja resultados. Declare um motivo curto, em uma frase, na voz de ${id.nome}.`;return[{role:'system',content:system},{role:'user',content:JSON.stringify({...c,acoesPossiveis:a})}]}
-function interpretar(txt,a){const o=JSON.parse(txt.trim());if(!a.some(x=>x.id===o.acao)||typeof o.motivo!=='string'||!o.motivo.trim())throw Error('Decisão inválida ou sem motivo');return{acao:o.acao,motivo:o.motivo.trim()}}
-async function decidir(c,a,ser){const formato={type:'object',properties:{acao:{type:'string',enum:a.map(x=>x.id)},motivo:{type:'string'}},required:['acao','motivo'],additionalProperties:false};const r=await fetch(process.env.OLLAMA_URL||'http://127.0.0.1:11434/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({model:MODELO,stream:false,think:false,format:formato,options:{temperature:.3,num_predict:256},messages:prompt(c,a,ser)})});if(!r.ok)throw Error('Ollama HTTP '+r.status);const d=await r.json(),txt=d.message&&d.message.content;if(!txt)throw Error('Resposta vazia do modelo');let dec;try{dec=interpretar(txt,a)}catch(e){throw Error('JSON inválido do modelo: '+txt.slice(0,400)+' ('+e.message+')')}return{...dec,origem:'modelo',modelo:MODELO,respostaBruta:txt}}
-module.exports={decidir,interpretar,prompt,identidade,MODELO};
+'use strict';
+// Compatibilidade: mantém o contrato antigo (prompt/interpretar para os testes
+// de mecânica), mas o CAMINHO de decisão é o cerebro.js — sem overrides
+// "corpo"/"social": necessidade nenhuma vira ação automaticamente.
+const orig=require('./decisor-original');
+const cerebro=require('./cerebro');
+async function decidir(c,a,ser){return cerebro.decidir(c,a,ser)}
+module.exports=Object.assign({},orig,{decidir});

@@ -1,91 +1,1621 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ilha — Observatório</title>
+<meta charset="UTF-8">
+<title>Ilha Aurora — Observatório V9</title>
 <style>
-:root{--bg:#0b1220;--panel:#111b2e;--line:#263651;--text:#e8eef8;--muted:#9eacc2;--water:#4aa3df;--land:#b7a06a;--tree:#4f9a61;--human:#e9d27b;--animal:#c58b65}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,Segoe UI,sans-serif}
-main{max-width:1200px;margin:auto;padding:16px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.title{font-size:22px;font-weight:700}.muted{color:var(--muted)}
-.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:14px;margin-top:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
-svg{display:block;width:100%;height:auto;background:#172235;border-radius:10px}
-.maplabel{font-size:12px;fill:#dfe7f4}.small{font-size:11px;fill:#aebbd0}
-.entity{cursor:pointer}.entity text{font-size:12px;fill:#fff;font-weight:650;text-anchor:middle}
-.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{border:1px solid var(--line);border-radius:10px;padding:9px}.stat b{display:block;font-size:18px;margin-top:2px}
-.events{max-height:430px;overflow:auto}.event{padding:8px 0;border-bottom:1px solid var(--line)}.event:last-child{border:0}
-.bar{height:7px;background:#263651;border-radius:9px;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:var(--water)}
-@media(max-width:800px){.grid{grid-template-columns:1fr}}
+  body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #071827; color: #fff; }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  :root { color-scheme: dark; }
+  #layout { display:grid; grid-template-columns:minmax(0,1fr) 350px; gap:14px; height:100dvh; padding:14px; box-sizing:border-box; }
+  #map-stage { position:relative; min-width:0; min-height:0; overflow:hidden; border:1px solid #38536a; border-radius:18px; background:#082b45; box-shadow:0 12px 32px #0005; }
+  canvas { width:100%; height:100%; border-radius:18px; }
+  #header { position:absolute; left:16px; top:16px; z-index:10; padding:13px 16px; border-radius:14px; background:rgba(8,24,39,.86); border:1px solid #334155; font-size:14px; pointer-events:none; backdrop-filter:blur(12px); box-shadow:0 10px 28px #02061780; }
+  #cycle-info { display:inline-block; color:#dbeafe; font-weight:600; letter-spacing:.02em; }
+  #btn-reiniciar { position:absolute; right:16px; top:16px; z-index:11; padding:10px 16px; border-radius:12px; border:1px solid #7f1d1d; background:rgba(127,29,29,.88); color:#fecaca; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
+  #btn-reiniciar:hover { background:rgba(153,27,27,.95); transform:translateY(-1px); }
+  #time-display { font-size:18px; font-weight:bold; color:#fbbf24; margin-top:5px; display:block; letter-spacing:.08em; text-shadow:0 0 18px #fbbf2460; }
+  #tooltip { position:absolute; display:none; background:rgba(15,23,42,.95); color:#fff; padding:11px 13px; border-radius:8px; font-size:15px; line-height:1.5; pointer-events:none; border:1px solid #38bdf8; z-index:20; max-width:320px; white-space:pre-wrap; box-shadow:0 10px 15px -3px rgba(0,0,0,.5); }
+  #side-column { min-height:0; display:grid; grid-template-rows:minmax(0,1.15fr) minmax(190px,.85fr); gap:14px; }
+  .panel-section { min-height:0; overflow:auto; padding:16px; border:1px solid #2b4358; border-radius:16px; background:linear-gradient(155deg,rgba(20,38,57,.98),rgba(10,23,38,.98)); box-shadow:0 12px 32px #0004; scrollbar-color:#47647b #0b1928; scrollbar-width:thin; }
+  h2 { position:sticky; top:-16px; z-index:2; margin:0 -2px 12px; padding:4px 2px 11px; background:#142639; color:#7dd3fc; font-size:15px; letter-spacing:1.4px; text-transform:uppercase; border-bottom:1px solid #334155; }
+  .ser-card { margin-bottom:10px; padding:12px; border:1px solid #ffffff12; border-left:4px solid #64748b; border-radius:12px; background:#ffffff08; transition:background .2s ease,border-color .2s ease,transform .2s ease; }
+  .ser-card:hover { transform:translateY(-1px); background:#ffffff0d; }
+  .ser-card.is-home { border-left-color:#34d399; background:linear-gradient(110deg,#064e3b66,#ffffff08 75%); }
+  .ser-card.is-exposed { border-left-color:#fb7185; background:linear-gradient(110deg,#88133777,#ffffff08 75%); box-shadow:inset 0 0 0 1px #fb718544,0 6px 18px #4c051955; }
+  .ser-name { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:7px; font-size:15px; font-weight:bold; }
+  .ser-location { color:#cbd5e1; font-size:14px; }
+  .agent-reason { margin:0 0 8px; color:#a9bacb; font-size:13px; line-height:1.5; font-style:italic; }
+  .ser-status { display:inline-flex; align-items:center; gap:6px; color:#b9cad9; font-size:13px; }
+  .status-badge { padding:3px 8px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:.07em; white-space:nowrap; }
+  .status-badge.home { color:#a7f3d0; background:#064e3b; }
+  .status-badge.exposed { color:#ffe4e6; background:#9f1239; }
+  .label-bar { width:56px; font-size:10px; color:#b5c4d3; }
+  .bar-container { height:8px; background:#23364a; border-radius:4px; overflow:hidden; box-shadow:inset 0 1px 2px #0008; }
+  .bar-fill { height:100%; border-radius:inherit; box-shadow:0 0 8px currentColor; transition:width .5s ease-out; }
+  #list-eventos { font-size:14px; line-height:1.55; color:#d3deea; }
+  .event-item { padding:9px 0; border-bottom:1px solid #ffffff12; }
+  .event-item:last-child { border-bottom:0; }
+  .event-meta { color:#9fb2c5; font-size:12px; }
+  .empty-state { color:#91a4b7; font-size:14px; }
+  #map-hint { position:absolute; right:16px; bottom:16px; z-index:9; max-width:300px; background:#081827e0; border:1px solid #2b4358; border-radius:12px; padding:9px 13px; font-size:13px; color:#9fb2c5; text-align:right; line-height:1.55; }
+  #house-panel { position:absolute; left:16px; bottom:16px; z-index:12; width:min(450px,calc(100% - 32px)); max-height:calc(100% - 110px); overflow:auto; background:rgba(8,24,39,.95); backdrop-filter:blur(10px); border:1px solid #38536a; border-radius:16px; padding:14px 16px; box-shadow:0 18px 44px #0009; scrollbar-color:#47647b #0b1928; scrollbar-width:thin; }
+  #house-panel[hidden] { display:none; }
+  .hp-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .hp-title { font-size:14px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#7dd3fc; }
+  .hp-sub { font-size:13px; color:#9fb2c5; margin-top:3px; }
+  #hp-close { flex:none; width:27px; height:27px; border-radius:9px; border:1px solid #38536a; background:#ffffff10; color:#cbd5e1; font-size:15px; line-height:1; cursor:pointer; }
+  #hp-close:hover { background:#ffffff22; }
+  .hp-block { margin-top:12px; }
+  .hp-block h3 { margin:0 0 6px; font-size:12px; letter-spacing:.14em; color:#7c93ab; text-transform:uppercase; }
+  .occ { border:1px solid #ffffff14; border-left:4px solid #64748b; border-radius:12px; background:#ffffff08; padding:10px 12px; margin-top:8px; }
+  .occ-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .occ-name { font-weight:700; font-size:14px; }
+  .occ-act { flex:none; font-size:13px; padding:3px 10px; border-radius:99px; color:#a7f3d0; background:#064e3b; white-space:nowrap; }
+  .occ-act.ultima { color:#bae6fd; background:#164e63; }
+  .occ-act.sem { color:#94a3b8; background:#1e293b; }
+  .occ-motivo { font-size:13px; color:#93a8bd; font-style:italic; margin-top:5px; line-height:1.5; }
+  .occ-bars { margin-top:7px; }
+  .diary { margin-top:9px; border-top:1px dashed #ffffff1a; padding-top:7px; }
+  .diary h4 { margin:0 0 4px; font-size:11px; letter-spacing:.14em; color:#7c93ab; text-transform:uppercase; }
+  .diary div { font-size:13px; color:#c9d7e5; padding:2px 0; line-height:1.5; }
+  .diary .dc { color:#7dd3fc; font-weight:700; }
+  .pill-list span { display:inline-block; margin:3px 5px 0 0; padding:3px 10px; border-radius:99px; background:#ffffff12; font-size:13px; border-left:3px solid #64748b; }
+  @media (max-width:850px) {
+    body { overflow:auto; }
+    #layout { height:auto; min-height:100dvh; grid-template-columns:1fr; grid-template-rows:minmax(55vh,65dvh) auto; }
+    #side-column { grid-template-columns:1fr 1fr; grid-template-rows:minmax(300px,auto); }
+  }
+  @media (max-width:560px) {
+    #layout { gap:10px; padding:10px; grid-template-rows:minmax(48vh,55dvh) auto; }
+    #side-column { grid-template-columns:1fr; grid-template-rows:auto minmax(220px,auto); }
+    #header { left:10px; top:10px; padding:10px 12px; }
+    #cycle-info { font-size:11px; }
+    #time-display { font-size:15px; }
+    .panel-section { padding:14px; }
+    #map-hint { display:none; }
+  }
 </style>
 </head>
 <body>
-<main id="app">
-  <div class="top">
-    <div><div class="title">🏝️ Ilha — Observatório</div><div id="sub" class="muted">Carregando estado real…</div></div>
-    <div id="status" class="muted">● conectando</div>
-  </div>
-  <div class="grid">
-    <section class="card">
-      <svg id="map" viewBox="0 0 900 560" role="img" aria-label="Mapa esquemático da Ilha"></svg>
+
+<main id="layout">
+  <section id="map-stage" aria-label="Mapa da ilha">
+    <div id="header">
+      <span id="cycle-info">Carregando estado...</span><br>
+      <span id="time-display">--:--</span>
+    </div>
+    <button id="btn-reiniciar" title="Salvar o estado atual em backups/ e iniciar um novo mundo">&#10227; Reiniciar mundo</button>
+    <canvas id="game"></canvas>
+    <div id="map-hint">Clique numa casa ou lugar da ilha para ver quem está lá, o que cada um está fazendo e o diário de bordo.</div>
+    <div id="house-panel" hidden>
+      <div class="hp-head">
+        <div>
+          <div class="hp-title" id="hp-title"></div>
+          <div class="hp-sub" id="hp-sub"></div>
+        </div>
+        <button id="hp-close" aria-label="Fechar painel">&times;</button>
+      </div>
+      <div id="hp-body"></div>
+    </div>
+  </section>
+  <aside id="side-column">
+    <section class="panel-section" aria-labelledby="agents-title">
+      <h2 id="agents-title">Habitantes</h2>
+      <div id="list-seres"><div class="empty-state">Aguardando estado dos habitantes…</div></div>
     </section>
-    <aside class="card">
-      <div class="stats" id="stats"></div>
-      <div style="margin-top:14px"><b>Seres</b><div id="beings"></div></div>
-      <div style="margin-top:14px"><b>Acontecimentos recentes</b><div id="events" class="events"></div></div>
-    </aside>
-  </div>
+    <section class="panel-section" aria-labelledby="events-title">
+      <h2 id="events-title">Eventos recentes</h2>
+      <div id="list-eventos"><div class="empty-state">Aguardando eventos…</div></div>
+    </section>
+  </aside>
 </main>
+<div id="tooltip"></div>
+
 <script>
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function num(v,d=0){return Number.isFinite(Number(v))?Number(v):d}
-function firstStatePath(o){return o?.estado||o}
-function localPos(local,i){
-  const p={acampamento:[245,320],rio:[450,360],bosque:[245,175],floresta:[675,175],lago:[465,235],nascente:[610,330],poco:[770,350]};
-  return p[local]||[[330,300],[570,320],[400,150],[600,150]][i%4];
+'use strict';
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+let stateData = null;
+let eventsData = [];
+let mapa = null;                 /* {nos, arestas} servidos por /api/mapa (fonte unica: espaco.js) */
+let selectedLocal = null;
+let hoveredLocal = null;
+let hoveredSerId = null;
+let mouseX = 0, mouseY = 0;
+let hotspots = [];
+let decor = null;
+let currentBox = { x:0, y:0, w:1, h:1, scale:1 };
+const animatedActors = Object.create(null);
+let lastFrameAt = 0;
+
+const PALETTE = {
+  icaro:'#fbbf24', maria:'#f472b6', joao:'#2dd4bf', lara:'#a78bfa'
+};
+/* Camisa e cabelo de cada personagem (sprite maior, reconhecivel). */
+const CAMISA = { joao:'#3585d0', maria:'#d95757', icaro:'#3fae6a', lara:'#9061e6' };
+const CABELO = {
+  joao:{cor:'#6a4023', longo:false}, maria:{cor:'#7a4a2a', longo:true},
+  icaro:{cor:'#33302c', longo:false}, lara:{cor:'#e08a3c', longo:true}
+};
+/* Fundo pintado: a ilha vira o mapa novo (mapa-ilha-nova.png).
+   A arte nova vem limpa (sem personagens pintados) — nenhuma mascara. */
+const imgFundo = new Image();
+let fundoPronto = null;
+function arbusto(g, cx, cy, rx, ry, semente){
+  const r = mulberry32(semente);
+  g.save();
+  g.fillStyle = 'rgba(18,58,24,.35)';
+  g.beginPath(); g.ellipse(cx, cy + ry*.6, rx*.95, ry*.26, 0, 0, Math.PI*2); g.fill();
+  /* base solida: garante cobertura total da regiao mascarada */
+  g.fillStyle = '#2f7a34';
+  g.beginPath(); g.ellipse(cx, cy, rx*.96, ry*.94, 0, 0, Math.PI*2); g.fill();
+  /* lobulos com contorno escuro, estilo da arte pintada */
+  const lobos = [{ x:cx, y:cy, r:.66 }];
+  for(let i=0;i<7;i++){
+    const ang = (i/7)*Math.PI*2 + r()*.7;
+    const d = .38 + r()*.26;
+    lobos.push({ x: cx + Math.cos(ang)*rx*d, y: cy + Math.sin(ang)*ry*d, r: .34 + r()*.16 });
+  }
+  g.fillStyle = '#1d5423';
+  for(const l of lobos){
+    g.beginPath(); g.ellipse(l.x, l.y, rx*l.r*1.14, ry*l.r*1.14, 0, 0, Math.PI*2); g.fill();
+  }
+  const cores = ['#2f7a34','#3c8f3b','#47a044','#35863a'];
+  lobos.forEach((l,i)=>{
+    g.fillStyle = cores[(i+1)%cores.length];
+    g.beginPath(); g.ellipse(l.x, l.y, rx*l.r, ry*l.r, 0, 0, Math.PI*2); g.fill();
+  });
+  g.fillStyle = 'rgba(158,236,124,.55)';
+  for(let i=0;i<9;i++){
+    const ang = r()*Math.PI*2, d = .18 + r()*.55;
+    g.beginPath();
+    g.ellipse(cx + Math.cos(ang)*rx*d*.8, cy + Math.sin(ang)*ry*d*.75, rx*.09, ry*.06, 0, 0, Math.PI*2);
+    g.fill();
+  }
+  g.restore();
 }
-function findEntities(e){
-  const seres=e?.seres||{};
-  return Object.values(seres).map((s,i)=>({id:s.id||s.nome||('ser'+i),nome:s.nome||s.id||('Ser '+i),local:s.local||'acampamento',status:s.status||'vivo',s})); 
+function mascararPintados(g, W, H){
+  const k = W/1536;
+  arbusto(g, 375*k, 368*k, 56*k, 72*k, 7);   /* onde estao o Joao pintado + rotulo */
+  arbusto(g, 1105*k, 514*k, 56*k, 70*k, 13); /* onde estao a Maria pintada + rotulo */
 }
-function ecology(e){
-  const x=e?.mundo?.ecossistema||{};
-  const agua=x.agua||{}; const peixes=x.peixes?.rio||{};
-  const arvores=x.arvores||{}; const animais=x.animais||{};
-  const frutos=Object.values(arvores).reduce((a,v)=>a+num(v.frutos),0);
-  const fauna=Object.values(animais).reduce((a,v)=>a+num(v.populacao),0);
-  return {agua,peixes,arvores,animais,frutos,fauna};
+imgFundo.onload = () => {
+  try{
+    const c = document.createElement('canvas');
+    c.width = imgFundo.naturalWidth || 882;
+    c.height = imgFundo.naturalHeight || 588;
+    const g = c.getContext('2d');
+    g.drawImage(imgFundo, 0, 0, c.width, c.height);
+    fundoPronto = c;
+  }catch(e){ fundoPronto = null; }
+};
+imgFundo.onerror = () => { fundoPronto = null; };
+imgFundo.src = '/mapa-ilha-nova.png';
+
+/* Grafo espacial da ilha - copia de seguranca caso /api/mapa falhe. */
+const NOS_FALLBACK = {
+  casa_icaro:{x:.213,y:.493,nome:'Casa do Ícaro'},
+  casa_joao:{x:.477,y:.197,nome:'Casa do João'},
+  casa_maria:{x:.855,y:.568,nome:'Casa da Maria'},
+  acampamento:{x:.450,y:.505,nome:'Acampamento'},
+  fogueira:{x:.492,y:.476,nome:'Fogueira'},
+  bosque:{x:.310,y:.310,nome:'Bosque'},
+  floresta:{x:.800,y:.290,nome:'Floresta'},
+  rio:{x:.695,y:.580,nome:'Rio'},
+  cachoeira:{x:.655,y:.090,nome:'Cachoeira'},
+  fazenda:{x:.948,y:.561,nome:'Fazenda'},
+  mar:{x:.360,y:.910,nome:'Mar'},
+  barco:{x:.487,y:.860,nome:'Cais do barco'}
+};
+const ARESTAS_FALLBACK = [
+  {a:'fogueira',b:'casa_icaro',wp:[[.42,.49],[.34,.55],[.27,.56]]},
+  {a:'fogueira',b:'acampamento',wp:[]},
+  {a:'fogueira',b:'casa_joao',wp:[[.46,.42],[.45,.33],[.47,.27]]},
+  {a:'casa_joao',b:'bosque',wp:[[.40,.27],[.35,.29]]},
+  {a:'bosque',b:'floresta',wp:[[.42,.33],[.52,.34],[.62,.33],[.72,.31]]},
+  {a:'floresta',b:'cachoeira',wp:[[.73,.20],[.69,.13]]},
+  {a:'floresta',b:'fazenda',wp:[[.86,.38],[.90,.47],[.935,.53]]},
+  {a:'fazenda',b:'casa_maria',wp:[[.92,.55]]},
+  {a:'fazenda',b:'rio',wp:[[.90,.66],[.80,.70],[.73,.66],[.70,.62]]},
+  {a:'fazenda',b:'fogueira',wp:[[.56,.47],[.63,.51],[.665,.548],[.76,.62],[.86,.66],[.93,.61]]},
+  {a:'fogueira',b:'bosque',wp:[[.44,.43],[.37,.37]]},
+  {a:'fogueira',b:'mar',wp:[[.455,.55],[.43,.65],[.40,.76],[.38,.86]]},
+  {a:'fogueira',b:'barco',wp:[[.49,.56],[.487,.66],[.487,.77]]},
+  {a:'mar',b:'barco',wp:[[.42,.91],[.455,.89]]},
+  {a:'casa_icaro',b:'mar',wp:[[.24,.58],[.28,.70],[.32,.82]]},
+  {a:'barco',b:'rio',wp:[[.53,.79],[.59,.71],[.645,.64]]},
+  {a:'casa_maria',b:'rio',wp:[[.82,.66],[.76,.64],[.72,.61]]},
+  {a:'rio',b:'cachoeira',wp:[[.71,.48],[.69,.38],[.675,.27],[.66,.17]]}
+];
+
+/* Acoes do motor traduzidas para leitura humana. */
+const ACOES = {
+  comer:'comendo', beber:'bebendo água', banho:'tomando banho', arrumar_casa:'arrumando a casa',
+  descansar:'descansando', esperar:'aguardando', observar:'observando', conviver:'conversando',
+  falar:'falando', pescar:'pescando', colher_frutas:'colhendo frutos', coletar_agua:'coletando água',
+  coletar_madeira:'coletando madeira', cacar:'caçando', melhorar_abrigo:'melhorando o abrigo',
+  continuar:'caminhando', moradia:'em casa', dormir:'dormindo', inspecionar:'inspecionando',
+  explorar:'explorando'
+};
+const CURTAS = {
+  comer:'comer', beber:'beber', banho:'banho', arrumar_casa:'arrumar casa', descansar:'descansar',
+  dormir:'dormir', esperar:'esperar', observar:'observar', conviver:'conversar', falar:'conversar',
+  pescar:'pescar', colher_frutas:'colher', coletar_agua:'água', coletar_madeira:'madeira',
+  cacar:'caçar', melhorar_abrigo:'construir', continuar:'caminho', moradia:'em casa'
+};
+
+/* Contorno da ilha: curvas bezier em coordenadas 0..1 do retangulo do mundo. */
+const ISAREIA = [
+  ['M',.075,.455],
+  ['C',.055,.30,.115,.20,.21,.165],
+  ['C',.30,.115,.42,.10,.505,.135],
+  ['C',.60,.085,.75,.095,.815,.175],
+  ['C',.885,.245,.90,.375,.865,.485],
+  ['C',.885,.585,.845,.69,.755,.755],
+  ['C',.665,.82,.56,.865,.46,.855],
+  ['C',.36,.87,.265,.815,.19,.735],
+  ['C',.115,.66,.055,.56,.075,.455]
+];
+const ISVERDE = [
+  ['M',.115,.455],
+  ['C',.09,.33,.15,.245,.235,.21],
+  ['C',.31,.17,.42,.155,.50,.19],
+  ['C',.59,.145,.72,.15,.78,.22],
+  ['C',.845,.285,.86,.385,.835,.48],
+  ['C',.855,.57,.815,.66,.735,.715],
+  ['C',.655,.775,.555,.815,.47,.805],
+  ['C',.38,.82,.30,.775,.235,.70],
+  ['C',.165,.635,.10,.55,.115,.455]
+];
+const FLORESTA = [
+  ['M',.585,.20],
+  ['C',.64,.13,.78,.13,.815,.22],
+  ['C',.85,.31,.83,.42,.775,.44],
+  ['C',.70,.46,.62,.38,.585,.31],
+  ['C',.57,.27,.57,.23,.585,.20]
+];
+const BOSQUE = [
+  ['M',.27,.245],
+  ['C',.33,.20,.44,.21,.47,.27],
+  ['C',.50,.33,.46,.40,.39,.41],
+  ['C',.31,.42,.26,.36,.26,.31],
+  ['C',.255,.28,.255,.255,.27,.245]
+];
+const MATA = [
+  ['M',.53,.60],
+  ['C',.57,.55,.66,.56,.685,.62],
+  ['C',.70,.68,.66,.73,.60,.73],
+  ['C',.545,.73,.515,.66,.53,.60]
+];
+/* Rio: da cachoeira ate a foz no sul da ilha. */
+const RIO = [[.72,.17],[.705,.24],[.695,.32],[.71,.41],[.695,.49],[.67,.57],[.645,.64],[.62,.72],[.595,.80],[.585,.848]];
+
+/* Regioes de vegetacao (elipses dentro da grama) para semear arvores. */
+const REGIOES = [
+  { cx:.705, cy:.265, rx:.115, ry:.085, n:56, tipo:'floresta' },
+  { cx:.365, cy:.30,  rx:.095, ry:.06,  n:34, tipo:'bosque' },
+  { cx:.60,  cy:.645, rx:.085, ry:.045, n:14, tipo:'mata' },
+  { cx:.245, cy:.585, rx:.075, ry:.07,  n:12, tipo:'orla' },
+  { cx:.50,  cy:.70,  rx:.10,  ry:.05,  n:12, tipo:'orla' }
+];
+
+/* Ancoras visuais dos locais com estrutura (deslocamento em relacao ao no). */
+const ANC = {
+  acampamento:{ dx:.016, dy:-.014, r:.030 },
+  fogueira:{ dx:-.005, dy:.014, r:.026 },
+  barco:{ dx:0, dy:-.012, r:.030 },
+  cachoeira:{ dx:0, dy:0, r:.026 },
+  fazenda:{ dx:0, dy:0, r:.030 },
+  bosque:{ dx:0, dy:0, r:.030 },
+  floresta:{ dx:0, dy:0, r:.030 }
+};
+/* Deslocamento vertical dos rotulos de texto (unidades do mundo).
+   Positivos precisam ficar >= 46 para nao colidir com o nome dos personagens
+   (nome fica ~26u abaixo dos pes). */
+const ROT_DY = {
+  casa_icaro:46, casa_joao:46, casa_maria:46, acampamento:-40, cachoeira:-30,
+  fazenda:-46, mar:46, barco:56, rio:48, bosque:48, floresta:48, fogueira:68
+};
+/* Deslocamento horizontal: evita rotulos sobrepostos em nos vizinhos. */
+const ROT_DX = {
+  fazenda:-30
+};
+function nos(){ return (mapa && mapa.nos) || NOS_FALLBACK; }
+function arestas(){ return (mapa && mapa.arestas) || ARESTAS_FALLBACK; }
+function nomeLocal(id){
+  if(!id) return '';
+  const n = nos()[id];
+  if(n) return n.nome;
+  const alias = { pesca_mar:'Mar', mar_pesca:'Mar', praia:'Mar', casa:'Casa' };
+  return alias[id] || id;
 }
-function render(e,logs){
-  const t=e?.mundo?.tempo||{}; const x=ecology(e); const ents=findEntities(e);
-  $('sub').textContent=`Ciclo ${num(t.ciclo)} · Dia ${num(t.dia)} · ${t.periodo||'—'} · ${t.estacao||'—'} · Clima: ${e?.mundo?.clima||'—'}`;
-  $('status').textContent='● atualizado agora';
-  const water=num(x.agua.nascente); const wcap=Math.max(1,num(x.agua.limite,60));
-  $('stats').innerHTML=[
-    ['Água',water.toFixed(1)+' / '+wcap],
-    ['Peixes',Math.round(num(x.peixes.populacao))],
-    ['Frutos',x.frutos.toFixed(1)],
-    ['Fauna',Math.round(x.fauna)]
-  ].map(([a,b],i)=>`<div class="stat"><span class="muted">${esc(a)}</span><b>${esc(b)}</b>${i===0?'<div class="bar"><i style="width:'+Math.min(100,water/wcap*100)+'%"></i></div>':''}</div>`).join('');
-  $('beings').innerHTML=ents.length?ents.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${esc(x.nome)}</b> <span class="muted">· ${esc(x.local)} · ${esc(x.status)}</span></div>`).join(''):'<div class="muted" style="padding-top:8px">Nenhum ser no estado.</div>';
-  $('events').innerHTML=logs.length?logs.slice(-18).reverse().map(r=>`<div class="event"><b>Ciclo ${esc(r.ciclo??'?')}</b> <span class="muted">${esc(r.acao||r.acaoId||'')}</span><br><span class="muted">${esc(r.consequencia?.descricao||r.motivo||r.mensagem||'Evento registrado')}</span></div>`).join(''):'<div class="muted" style="padding-top:8px">Sem eventos legíveis.</div>';
-  const svg=$('map'); svg.innerHTML='';
-  const NS='http://www.w3.org/2000/svg'; const el=(tag,a={})=>{const n=document.createElementNS(NS,tag);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,v));return n};
-  svg.append(el('rect',{x:0,y:0,width:900,height:560,rx:10,fill:'#a99661'}));
-  svg.append(el('path',{d:'M330 55 C390 20 500 35 560 95 C600 130 650 145 675 220 C700 300 630 390 540 435 C450 480 320 465 255 410 C190 355 190 255 230 180 C255 130 285 90 330 55Z',fill:'#c7b47a',stroke:'#e4d59c','stroke-width':3}));
-  svg.append(el('ellipse',{cx:465,cy:255,rx:125,ry:75,fill:'#4aa3df',opacity:.9}));
-  svg.append(el('path',{d:'M455 320 C445 365 410 420 360 470',fill:'none',stroke:'#4aa3df','stroke-width':12,'stroke-linecap':'round'}));
-  [['Bosque',245,125],['Floresta',675,125],['Acampamento',245,375],['Rio',450,390],['Lago',465,255]].forEach(([n,x,y])=>{const t=el('text',{x,y,class:'maplabel'});t.textContent=n;svg.append(t)});
-  Object.values(x.arvores).forEach((a,i)=>{const [px,py]=localPos(a.local,i);const g=el('g');g.append(el('circle',{cx:px,cy:py,r:15,fill:'#4f9a61',stroke:'#173b24','stroke-width':2}));const t=el('text',{x:px,y:py+4,class:'maplabel','text-anchor':'middle'});t.textContent='🌳';g.append(t);svg.append(g)});
-  ents.forEach((p,i)=>{const [px,py]=localPos(p.local,i+2);const g=el('g',{class:'entity'});g.append(el('circle',{cx:px,cy:py,r:19,fill:'#e9d27b',stroke:'#5d4c1b','stroke-width':3}));const t=el('text',{x:px,y:py+4});t.textContent=(p.nome||'?')[0].toUpperCase();g.append(t);const l=el('text',{x:px,y:py+34,class:'small'});l.textContent=p.nome;g.append(l);svg.append(g)});
-  const animalTotal=Math.round(x.fauna); const at=el('text',{x:760,y:430,class:'maplabel'});at.textContent='🐾 fauna: '+animalTotal;svg.append(at);
+function ehNoite(){ return !!(stateData && ['noite','madrugada'].includes(stateData.mundo.tempo.periodo)); }
+
+/* ---------- texto das acoes ---------- */
+function fraseAcao(a, ser){
+  if(!a) return 'sem atividade registrada';
+  if(ACOES[a]) return ACOES[a];
+  if(a.startsWith('ir_')){
+    const dest = a.slice(3);
+    const alvo = dest === 'casa' ? (ser && ser.casa ? nomeLocal(ser.casa) : 'casa') : nomeLocal(dest);
+    return 'indo para ' + (alvo || dest);
+  }
+  if(ehNoite() && (a === 'descansar' || a === 'esperar')) return 'dormindo';
+  return a.replace(/_/g, ' ');
 }
-async function load(){
-  try{const r=await fetch('/api/snapshot?ts='+Date.now()); if(!r.ok)throw Error('HTTP '+r.status); const d=await r.json(); render(firstStatePath(d),d.eventos||[]);}
-  catch(err){$('status').textContent='● erro: '+err.message}
+function curtaAcao(a){
+  if(!a) return '';
+  if(CURTAS[a]) return CURTAS[a];
+  if(a.startsWith('ir_')) return 'a caminho';
+  if(ehNoite() && (a === 'descansar' || a === 'esperar')) return 'dormindo';
+  return a.replace(/_/g, ' ');
 }
-load();setInterval(load,2000);
+function ultimoEvento(id){
+  if(!eventsData) return null;
+  return eventsData.find(ev => ev.serId === id) || null;
+}
+/* Atividade: acao atual do estado; se ausente, a ultima registrada no log. */
+function atividade(s){
+  if(s.acao) return { texto: fraseAcao(s.acao, s), curta: curtaAcao(s.acao), atual: true };
+  const ev = ultimoEvento(s.id);
+  if(ev && ev.acao) return { texto: fraseAcao(ev.acao, s), curta: '', atual: false, ciclo: ev.ciclo };
+  if(s.status === 'morto') return { texto: 'falecido', curta: '', atual: false, sem: true };
+  return { texto: '—', curta: '', atual: false, sem: true };
+}
+
+/* ---------- geometria ---------- */
+function resize(){
+  const area = document.getElementById('map-stage');
+  canvas.width = Math.max(1, Math.floor(area.clientWidth));
+  canvas.height = Math.max(1, Math.floor(area.clientHeight));
+  ctx.setTransform(1,0,0,1,0,0);
+}
+window.addEventListener('resize', resize);
+function computeBox(w, h){
+  if(fundoPronto){
+    const AR = (imgFundo.naturalWidth || 1536) / (imgFundo.naturalHeight || 1024);
+    let bh = h, bw = bh * AR;
+    if(bw < w){ bw = w; bh = bw / AR; }
+    return { x:(w-bw)/2, y:(h-bh)/2, w:bw, h:bh, scale:bw/1000 };
+  }
+  const AR = 1.55, m = 8;
+  let bw = w - 2*m, bh = bw / AR;
+  if(bh > h - 2*m){ bh = h - 2*m; bw = bh * AR; }
+  return { x:(w-bw)/2, y:(h-bh)/2, w:bw, h:bh, scale:bw/1000 };
+}
+function P(u, v){ return { x: currentBox.x + currentBox.w*u, y: currentBox.y + currentBox.h*v }; }
+function ancoraDe(id){
+  const n = nos()[id] || { x:.5, y:.5 };
+  const a = ANC[id] || {};
+  return { x:n.x + (a.dx || 0), y:n.y + (a.dy || 0), r:a.r || .024 };
+}
+function ancoraScreen(id, box){
+  const a = ancoraDe(id);
+  return { x: box.x + box.w*a.x, y: box.y + box.h*a.y, r: a.r*box.w };
+}
+
+/* ---------- dados ---------- */
+async function fetchMap(){
+  try{
+    const res = await fetch('/api/mapa');
+    const data = await res.json();
+    if(data && data.nos && data.arestas){ mapa = data; decor = null; }
+  }catch(e){ /* mantem o grafo embutido */ }
+}
+async function fetchState(){
+  try{
+    const res = await fetch('/api/snapshot');
+    const data = await res.json();
+    if(data.estado && data.eventos){
+      stateData = data.estado;
+      eventsData = data.eventos.slice(-20).reverse();
+      updateUI();
+      renderPainelLocal();
+    }
+  }catch(e){ console.error('Erro fetch:', e); }
+}
+function seres(){ return stateData ? Object.values(stateData.seres) : []; }
+function vivos(){ return seres().filter(s => s.status !== 'morto'); }
+function falecidos(){ return seres().filter(s => s.status === 'morto'); }
+
+function getBarHTML(label, value, color, invertido){
+  let pct = Number(value) || 0;
+  if(pct > 100) pct = 100;
+  if(pct < 0) pct = 0;
+  let fillColor = color;
+  if(invertido){
+    if(pct > 70) fillColor = '#ef4444';
+    else if(pct > 40) fillColor = '#eab308';
+  }else{
+    if(pct < 30) fillColor = '#ef4444';
+    else if(pct < 60) fillColor = '#eab308';
+  }
+  return '<div style="display:flex; align-items:center; margin-top:4px;">'
+    + '<span class="label-bar">' + label + '</span>'
+    + '<div class="bar-container" style="flex:1;"><div class="bar-fill" style="width:' + pct + '%;background:' + fillColor + ';"></div></div>'
+    + '</div>';
+}
+function barrasDe(s){
+  const n = s.necessidades || {};
+  return getBarHTML('Água', n.agua, '#38bdf8')
+       + getBarHTML('Alimento', n.alimento, '#fb923c')
+       + getBarHTML('Sono', n.sono, '#c084fc', true)
+       + getBarHTML('Higiene', n.higiene, '#22d3ee');
+}
+function getCycleTimeLabel(periodo){
+  switch(periodo){
+    case 'manha': return 'MANHÃ';
+    case 'tarde': return 'TARDE';
+    case 'noite': return 'NOITE';
+    case 'madrugada': return 'MADRUGADA';
+    default: return 'INDEFINIDO';
+  }
+}
+
+function updateUI(){
+  if(!stateData) return;
+  const tempo = stateData.mundo.tempo || {};
+  const ciclo = tempo.ciclo;
+  const dia = tempo.dia || Math.floor(ciclo / 10);
+  const periodo = tempo.periodo || 'manha';
+  const climaRaw = stateData.mundo.clima;
+  const clima = typeof climaRaw === 'string' ? climaRaw : (climaRaw && climaRaw.tipo) || 'limpo';
+  const estacao = tempo.estacao;
+
+  document.getElementById('cycle-info').innerText = 'Ciclo ' + ciclo + ' • Dia ' + dia + (estacao ? ' • ' + estacao : '') + ' • Clima: ' + clima;
+  document.getElementById('time-display').innerText = getCycleTimeLabel(periodo);
+
+  const listSer = document.getElementById('list-seres');
+  listSer.innerHTML = '';
+
+  vivos().forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'ser-card';
+    const isNight = ['noite','madrugada'].includes(periodo);
+    const isHome = s.local === s.casa;
+    const isExposed = isNight && !isHome;
+    if(isExposed) card.classList.add('is-exposed');
+    else if(isHome) card.classList.add('is-home');
+    const shelterBadge = isExposed
+      ? '<span class="status-badge exposed">EXPOSTO À NOITE</span>'
+      : (isHome ? '<span class="status-badge home">EM CASA · PROTEGIDO</span>' : '');
+    const act = atividade(s);
+    const cor = act.atual ? '#a7f3d0' : '#bae6fd';
+    const ev = ultimoEvento(s.id);
+    const motivo = s.motivo || (ev && ev.motivo) || '';
+    card.innerHTML = ''
+      + '<div class="ser-name">'
+      +   '<span style="color:' + (PALETTE[s.id] || '#fff') + '">' + s.nome + '</span>'
+      +   '<span class="ser-status">' + nomeLocal(s.local) + ' · <span style="color:' + cor + '">' + act.texto + '</span> ' + shelterBadge + '</span>'
+      + '</div>'
+      + '<div class="agent-reason">"' + motivo + '"</div>'
+      + '<div class="ser-location" style="font-size:12px;color:#8fa4b8;margin-bottom:6px;">moradia: ' + nomeLocal(s.casa) + '</div>'
+      + barrasDe(s);
+    listSer.appendChild(card);
+  });
+
+  const mortos = falecidos();
+  if(mortos.length){
+    const bloco = document.createElement('div');
+    bloco.className = 'ser-card';
+    bloco.style.opacity = '.72';
+    bloco.innerHTML = '<div class="ser-name"><span style="color:#94a3b8;">Falecidos</span></div>'
+      + '<div class="pill-list">' + mortos.map(m =>
+          '<span style="border-left-color:' + (PALETTE[m.id] || '#64748b') + '">' + m.nome + ' — em ' + nomeLocal(m.local) + '</span>'
+        ).join('') + '</div>'
+      + '<div class="ser-location" style="font-size:12px;color:#8fa4b8;margin-top:6px;">sem atividade — veja o diário pelo clique no mapa</div>';
+    listSer.appendChild(bloco);
+  }
+
+  const listEv = document.getElementById('list-eventos');
+  listEv.innerHTML = eventsData.map(ev => ''
+    + '<div class="event-item">'
+    +   '<div class="event-meta">Ciclo ' + ev.ciclo + ' · <span style="color:' + (PALETTE[ev.serId] || '#cbd5e1') + '">' + (ev.nome || ev.serId) + '</span></div>'
+    +   '<div>' + fraseAcao(ev.acao, null) + (ev.local ? ' <span style="color:#9fb2c5">· ' + nomeLocal(ev.local) + '</span>' : '') + '</div>'
+    +   '<div class="event-meta" style="font-style:italic;">"' + (ev.motivo || '') + '"</div>'
+    + '</div>').join('') || '<div class="empty-state">Sem eventos.</div>';
+}
+
+/* ---------- painel da casa ---------- */
+function cartaoOcupante(s){
+  const act = atividade(s);
+  const diario = (s.cortex && Array.isArray(s.cortex.diario) ? s.cortex.diario : []).slice(-5).reverse();
+  const ev = ultimoEvento(s.id);
+  const motivo = s.motivo || (ev && ev.motivo) || '';
+  const cls = act.sem ? 'sem' : (act.atual ? '' : 'ultima');
+  const sufixo = (!act.atual && !act.sem && act.ciclo != null) ? ' · ciclo ' + act.ciclo : '';
+  const rotulo = act.atual ? act.texto : (act.sem ? act.texto : 'última: ' + act.texto + sufixo);
+  const diarioHTML = diario.length
+    ? diario.map(d => '<div><span class="dc">Ciclo ' + d.ciclo + '</span> · ' + fraseAcao(d.acao, s) + (d.motivo ? ' — ' + d.motivo : '') + '</div>').join('')
+    : '<div style="color:#91a4b7">Sem entradas no diário.</div>';
+  return '<div class="occ" style="border-left-color:' + (PALETTE[s.id] || '#64748b') + ';' + (s.status === 'morto' ? 'opacity:.72;' : '') + '">'
+    + '<div class="occ-top"><span class="occ-name" style="color:' + (PALETTE[s.id] || '#fff') + '">' + s.nome + '</span>'
+    + '<span class="occ-act ' + cls + '">' + rotulo + '</span></div>'
+    + '<div class="occ-motivo" style="font-style:normal;color:#8fa4b8;">em ' + nomeLocal(s.local) + ' · moradia: ' + nomeLocal(s.casa) + '</div>'
+    + (motivo ? '<div class="occ-motivo">"' + motivo + '"</div>' : '')
+    + (s.status === 'morto' ? '<div class="occ-motivo">Falecido neste mundo — sem atividade atual.</div>' : '')
+    + '<div class="occ-bars">' + barrasDe(s) + '</div>'
+    + '<div class="diary"><h4>Diário de bordo</h4>' + diarioHTML + '</div>'
+    + '</div>';
+}
+function renderPainelLocal(){
+  const panel = document.getElementById('house-panel');
+  const hint = document.getElementById('map-hint');
+  if(!selectedLocal){ panel.hidden = true; hint.style.display = ''; return; }
+  panel.hidden = false; hint.style.display = 'none';
+  document.getElementById('hp-title').textContent = nomeLocal(selectedLocal);
+
+  const todos = seres();
+  const presentes = todos.filter(s => s.local === selectedLocal);
+  const moradores = todos.filter(s => s.casa === selectedLocal);
+  const sub = document.getElementById('hp-sub');
+  if(moradores.length > 1) sub.textContent = 'Moradia de ' + moradores.map(m => m.nome).join(' e ');
+  else if(moradores.length === 1) sub.textContent = 'Moradia de ' + moradores[0].nome;
+  else sub.textContent = presentes.length ? 'Local de passagem ou de trabalho' : 'Ninguém mora aqui';
+
+  let html = '<div class="hp-block"><h3>Agora aqui</h3>';
+  if(!presentes.length) html += '<div class="empty-state">Ninguém está neste local agora.</div>';
+  presentes.forEach(s => { html += cartaoOcupante(s); });
+  html += '</div>';
+
+  if(moradores.length){
+    const morandoAqui = moradores.filter(m => m.local === selectedLocal);
+    const fora = moradores.filter(m => m.local !== selectedLocal);
+    html += '<div class="hp-block"><h3>Moram aqui</h3>';
+    if(morandoAqui.length){
+      html += '<div class="pill-list">' + morandoAqui.map(m =>
+        '<span style="border-left-color:' + (PALETTE[m.id] || '#64748b') + '">' + m.nome + ' — aqui agora</span>'
+      ).join('') + '</div>';
+    }
+    fora.forEach(m => { html += cartaoOcupante(m); });
+    html += '</div>';
+  }
+  document.getElementById('hp-body').innerHTML = html;
+}
+document.getElementById('hp-close').addEventListener('click', () => { selectedLocal = null; renderPainelLocal(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && selectedLocal){ selectedLocal = null; renderPainelLocal(); } });
+document.getElementById('btn-reiniciar').addEventListener('click', async () => {
+  if(!confirm('Reiniciar o mundo?\n\nO estado atual e o log serão salvos em backups/ e um novo mundo (4 habitantes vivos, ciclo inicial) começará do zero.')) return;
+  try {
+    const r = await fetch('/api/reiniciar', { method: 'POST' });
+    const j = await r.json();
+    if(j.ok) location.reload();
+    else alert('Falha ao reiniciar: ' + (j.erro || 'erro desconhecido'));
+  } catch(e) { alert('Falha ao reiniciar: ' + e.message); }
+});
+
+/* ---------- decoracao deterministica ---------- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function distNorm(ax, ay, bx, by){ return Math.hypot((ax-bx)*1.55, ay-by); }
+function todasLinhas(){
+  const n = nos(), out = [];
+  for(const r of arestas()){
+    const conv = q => Array.isArray(q) ? { x:q[0], y:q[1] } : q;
+    out.push([n[r.a], ...r.wp.map(conv), n[r.b]].filter(Boolean));
+  }
+  return out;
+}
+function pertoLinha(x, y, lim){
+  for(const pts of todasLinhas()){
+    for(let i=1;i<pts.length;i++){
+      const ax=pts[i-1].x, ay=pts[i-1].y, bx=pts[i].x, by=pts[i].y;
+      const vx=bx-ax, vy=by-ay, l2=vx*vx+vy*vy;
+      let t = l2 ? ((x-ax)*vx+(y-ay)*vy)/l2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      if(distNorm(x, y, ax+t*vx, ay+t*vy) < lim) return true;
+    }
+  }
+  return false;
+}
+function pertoNos(x, y, lim){
+  for(const id of Object.keys(nos())){
+    const n = nos()[id];
+    if(distNorm(x, y, n.x, n.y) < lim) return true;
+  }
+  return false;
+}
+function gerarDecor(){
+  if(decor) return decor;
+  const r = mulberry32(20261005);
+  const itens = [];
+  for(const g of REGIOES){
+    for(let i=0;i<g.n;i++){
+      const ang = r()*Math.PI*2, raio = Math.sqrt(r());
+      const x = g.cx + Math.cos(ang)*g.rx*raio;
+      const y = g.cy + Math.sin(ang)*g.ry*raio;
+      if(pertoLinha(x, y, .017)) continue;
+      if(pertoNos(x, y, .05)) continue;
+      const v = r();
+      itens.push({ x, y, esc:.7 + r()*.65,
+        tipo: v < .12 ? 'pedra' : (v < .30 ? 'arbusto' : (g.tipo === 'orla' ? 'palmeira' : (v < .85 ? 'arvore' : 'pinheiro'))) });
+    }
+  }
+  decor = itens;
+  return decor;
+}
+
+/* ---------- desenho base ---------- */
+function traceBez(pts){
+  ctx.beginPath();
+  for(const seg of pts){
+    if(seg[0] === 'M'){ const p = P(seg[1], seg[2]); ctx.moveTo(p.x, p.y); }
+    else {
+      const c1 = P(seg[1], seg[2]), c2 = P(seg[3], seg[4]), f = P(seg[5], seg[6]);
+      ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, f.x, f.y);
+    }
+  }
+}
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+function drawOcean(box, w, h, now, noite, tarde){
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, noite ? '#041d33' : (tarde ? '#0b5f80' : '#075985'));
+  g.addColorStop(1, noite ? '#062b46' : (tarde ? '#0e7490' : '#0891b2'));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  const s = box.scale;
+  ctx.strokeStyle = noite ? '#7dd3fc16' : '#e0f2fe26';
+  ctx.lineWidth = 1.6*s;
+  for(let i=0;i<14;i++){
+    const y0 = (i+.5)*h/14;
+    ctx.beginPath();
+    for(let x=0;x<=w;x+=14){
+      const y = y0 + Math.sin(x/90 + now/900 + i*1.7)*5*s;
+      if(x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  const sx = w*.78, sy = noite ? h*.14 : h*.10;
+  const gl = ctx.createRadialGradient(sx, sy, 2, sx, sy, 170*s);
+  gl.addColorStop(0, noite ? '#dbeafe30' : '#fff7ed55');
+  gl.addColorStop(1, '#ffffff00');
+  ctx.fillStyle = gl;
+  ctx.fillRect(0, 0, w, h);
+  if(noite){
+    ctx.fillStyle = '#e2e8f0';
+    for(let i=0;i<46;i++){
+      const x = ((i*197)%997)/997*w, y = ((i*389)%991)/991*h*.4;
+      ctx.globalAlpha = .25 + .55*Math.abs(Math.sin(now/1500 + i));
+      ctx.fillRect(x, y, 1.6*s, 1.6*s);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+function drawIlha(box, noite, tarde, agora){
+  const s = box.scale;
+  ctx.save();
+  ctx.shadowColor = 'rgba(2,20,40,.55)';
+  ctx.shadowBlur = 26*s;
+  ctx.shadowOffsetY = 10*s;
+  traceBez(ISAREIA);
+  ctx.fillStyle = noite ? '#c9b477' : (tarde ? '#f2dfa0' : '#f6e7b2');
+  ctx.fill();
+  ctx.restore();
+
+  traceBez(ISAREIA);
+  ctx.fillStyle = noite ? '#bda96e' : (tarde ? '#eedb98' : '#f3e3ab');
+  ctx.fill();
+  ctx.strokeStyle = noite ? '#ffffff26' : '#ffffff6e';
+  ctx.lineWidth = 3*s;
+  ctx.stroke();
+
+  traceBez(ISVERDE);
+  ctx.fillStyle = noite ? '#1e4f35' : (tarde ? '#3d8b4c' : '#489e56');
+  ctx.fill();
+
+  ctx.save();
+  traceBez(ISVERDE);
+  ctx.clip();
+
+  traceBez(FLORESTA);
+  ctx.fillStyle = noite ? '#123f26' : '#1c6135';
+  ctx.fill();
+  ctx.strokeStyle = noite ? '#0d3320' : '#17512d';
+  ctx.lineWidth = 2*s;
+  ctx.stroke();
+
+  traceBez(BOSQUE);
+  ctx.fillStyle = noite ? '#17512f' : '#2a7a3f';
+  ctx.fill();
+
+  traceBez(MATA);
+  ctx.fillStyle = noite ? '#1a4a30' : '#37924c';
+  ctx.fill();
+
+  const fz = P(.77, .43);
+  roundRect(fz.x - 46*s, fz.y - 34*s, 92*s, 66*s, 8*s);
+  ctx.fillStyle = noite ? '#4b3a22' : '#8a6032';
+  ctx.fill();
+  for(let row=0; row<3; row++){
+    for(let col=0; col<4; col++){
+      const px = fz.x - 32*s + col*21*s, py = fz.y - 20*s + row*20*s;
+      ctx.fillStyle = noite ? '#26593d' : '#46923a';
+      ctx.beginPath();
+      ctx.arc(px, py, 5*s, 0, Math.PI*2);
+      ctx.arc(px + 5*s, py - 4*s, 4*s, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  drawRio(box, agora, noite);
+}
+function drawRio(box, agora, noite){
+  const s = box.scale;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  let p = P(RIO[0][0], RIO[0][1]);
+  ctx.moveTo(p.x, p.y);
+  for(let i=1;i<RIO.length;i++){ p = P(RIO[i][0], RIO[i][1]); ctx.lineTo(p.x, p.y); }
+  ctx.strokeStyle = noite ? '#0a3550' : '#155e75';
+  ctx.lineWidth = 10*s;
+  ctx.stroke();
+  ctx.strokeStyle = noite ? '#155e75' : '#38bdf8';
+  ctx.lineWidth = 5.5*s;
+  ctx.stroke();
+  ctx.strokeStyle = '#dff6ff9a';
+  ctx.lineWidth = 1.6*s;
+  ctx.setLineDash([6*s, 11*s]);
+  ctx.lineDashOffset = -(agora/70)*s;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  const foz = P(RIO[RIO.length-1][0], RIO[RIO.length-1][1]);
+  ctx.fillStyle = noite ? '#ffffff2e' : '#ffffff88';
+  ctx.beginPath();
+  ctx.ellipse(foz.x, foz.y, 9*s, 5*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+function drawTrilhas(box, noite){
+  const s = box.scale;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for(const r of arestas()){
+    const conv = q => Array.isArray(q) ? { x:q[0], y:q[1] } : q;
+    const pts = [nos()[r.a], ...r.wp.map(conv), nos()[r.b]].filter(Boolean);
+    if(pts.length < 2) continue;
+    ctx.beginPath();
+    let p = P(pts[0].x, pts[0].y);
+    ctx.moveTo(p.x, p.y);
+    for(let i=1;i<pts.length;i++){ p = P(pts[i].x, pts[i].y); ctx.lineTo(p.x, p.y); }
+    ctx.strokeStyle = noite ? '#5b4a2eaa' : '#c9a86cbb';
+    ctx.lineWidth = 5*s;
+    ctx.stroke();
+    ctx.strokeStyle = noite ? '#7a6540' : '#ecd9a6';
+    ctx.lineWidth = 2.2*s;
+    ctx.setLineDash([7*s, 9*s]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+
+/* ---------- vegetacao ---------- */
+function drawArvore(x, y, r, noite, tipo){
+  ctx.fillStyle = noite ? '#0f2b1b' : '#153d24';
+  ctx.beginPath();
+  ctx.ellipse(x + r*.12, y + r*.4, r*.85, r*.32, 0, 0, Math.PI*2);
+  ctx.fill();
+  if(tipo === 'palmeira'){
+    ctx.strokeStyle = '#75502a';
+    ctx.lineWidth = Math.max(2, r*.34);
+    ctx.beginPath();
+    ctx.moveTo(x, y + r*.6);
+    ctx.quadraticCurveTo(x + r*.3, y, x, y - r*.4);
+    ctx.stroke();
+    ctx.strokeStyle = noite ? '#2f6a48' : '#318d45';
+    ctx.lineWidth = Math.max(1.6, r*.3);
+    for(let i=0;i<7;i++){
+      const a = -Math.PI*.95 + i*Math.PI*1.9/6;
+      ctx.beginPath();
+      ctx.moveTo(x, y - r*.38);
+      ctx.quadraticCurveTo(x + Math.cos(a)*r*.45, y - r*.6, x + Math.cos(a)*r, y - r*.18 + Math.sin(a)*r*.4);
+      ctx.stroke();
+    }
+    return;
+  }
+  ctx.fillStyle = '#704321';
+  ctx.fillRect(x - r*.16, y - r*.1, r*.32, r*.75);
+  const cores = noite ? ['#1c4f36','#205a3c','#194a33']
+    : (tipo === 'pinheiro' ? ['#166534','#1d7a3f','#23914b'] : ['#318b36','#43a53b','#5bb941']);
+  ctx.fillStyle = cores[(Math.abs(Math.round(x)) + Math.abs(Math.round(y))) % 3];
+  ctx.beginPath();
+  ctx.arc(x, y - r*.55, r*.75, 0, Math.PI*2);
+  ctx.arc(x - r*.5, y - r*.25, r*.5, 0, Math.PI*2);
+  ctx.arc(x + r*.48, y - r*.2, r*.48, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = noite ? '#ffffff14' : '#d8f77c55';
+  ctx.beginPath();
+  ctx.arc(x - r*.26, y - r*.7, r*.26, 0, Math.PI*2);
+  ctx.fill();
+}
+function drawPedra(x, y, r, noite){
+  ctx.fillStyle = noite ? '#334c55' : '#8e9b8a';
+  ctx.beginPath();
+  ctx.moveTo(x - r, y + 3);
+  ctx.lineTo(x - r*.55, y - r*.58);
+  ctx.lineTo(x + r*.14, y - r);
+  ctx.lineTo(x + r*.78, y - r*.48);
+  ctx.lineTo(x + r, y + 4);
+  ctx.lineTo(x + r*.45, y + r*.48);
+  ctx.lineTo(x - r*.6, y + r*.38);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffffff28';
+  ctx.beginPath();
+  ctx.moveTo(x - r*.5, y - r*.35);
+  ctx.lineTo(x + r*.1, y - r*.78);
+  ctx.lineTo(x + r*.35, y - r*.35);
+  ctx.closePath();
+  ctx.fill();
+}
+function drawArbusto(x, y, noite){
+  ctx.fillStyle = noite ? '#245a3e' : '#42983e';
+  ctx.beginPath();
+  ctx.arc(x - 6, y, 8, 0, Math.PI*2);
+  ctx.arc(x + 2, y - 4, 10, 0, Math.PI*2);
+  ctx.arc(x + 9, y + 1, 7, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#b8df5e';
+  ctx.beginPath();
+  ctx.arc(x + 4, y - 7, 2, 0, Math.PI*2);
+  ctx.fill();
+}
+function drawVegetacao(box, noite){
+  const s = box.scale;
+  for(const it of gerarDecor()){
+    const p = P(it.x, it.y);
+    const r = 11 * it.esc * s;
+    if(it.tipo === 'pedra') drawPedra(p.x, p.y, r*.7, noite);
+    else if(it.tipo === 'arbusto') drawArbusto(p.x, p.y, noite);
+    else drawArvore(p.x, p.y, r, noite, it.tipo);
+  }
+}
+
+/* ---------- estruturas ---------- */
+function drawCasa(x, y, s, noite, cores){
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.26)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 3*s, 25*s, 7*s, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = noite ? '#5d4128' : '#c98d52';
+  roundRect(x - 20*s, y - 24*s, 40*s, 24*s, 3*s);
+  ctx.fill();
+  ctx.strokeStyle = noite ? '#40301d' : '#9a6a3c';
+  ctx.lineWidth = 1.5*s;
+  ctx.stroke();
+
+  ctx.fillStyle = noite ? '#6b2d12' : '#b45309';
+  ctx.beginPath();
+  ctx.moveTo(x - 26*s, y - 23*s);
+  ctx.lineTo(x, y - 45*s);
+  ctx.lineTo(x + 26*s, y - 23*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = noite ? '#4c1f0c' : '#8a3f08';
+  ctx.lineWidth = 2*s;
+  ctx.stroke();
+
+  ctx.fillStyle = noite ? '#2f1c10' : '#5b3a1f';
+  ctx.fillRect(x - 5*s, y - 13*s, 10*s, 13*s);
+  ctx.fillStyle = noite ? '#ffd778' : '#8fd3e8';
+  ctx.fillRect(x - 15*s, y - 18*s, 8*s, 7*s);
+  ctx.fillRect(x + 7*s, y - 18*s, 8*s, 7*s);
+  ctx.strokeStyle = noite ? '#3a2614' : '#7a4f28';
+  ctx.lineWidth = 1*s;
+  ctx.strokeRect(x - 15*s, y - 18*s, 8*s, 7*s);
+  ctx.strokeRect(x + 7*s, y - 18*s, 8*s, 7*s);
+
+  /* Cores dos moradores na porta. */
+  (cores || []).forEach((cor, i) => {
+    ctx.fillStyle = cor;
+    ctx.beginPath();
+    ctx.arc(x - 15*s + i*7*s, y - 6*s, 2.4*s, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+function drawTenda(x, y, s, noite){
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 3*s, 21*s, 6*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = noite ? '#6f5033' : '#d9a05b';
+  ctx.beginPath();
+  ctx.moveTo(x - 19*s, y + 2*s);
+  ctx.lineTo(x, y - 30*s);
+  ctx.lineTo(x + 19*s, y + 2*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = noite ? '#4a3520' : '#a9743f';
+  ctx.beginPath();
+  ctx.moveTo(x, y - 30*s);
+  ctx.lineTo(x + 19*s, y + 2*s);
+  ctx.lineTo(x + 4*s, y + 2*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = noite ? '#3a2a18' : '#7c522c';
+  ctx.lineWidth = 1.6*s;
+  ctx.beginPath();
+  ctx.moveTo(x - 19*s, y + 2*s);
+  ctx.lineTo(x, y - 30*s);
+  ctx.lineTo(x + 19*s, y + 2*s);
+  ctx.stroke();
+  ctx.fillStyle = noite ? '#1c130c' : '#43301c';
+  ctx.beginPath();
+  ctx.moveTo(x - 6*s, y + 2*s);
+  ctx.lineTo(x, y - 15*s);
+  ctx.lineTo(x + 6*s, y + 2*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function drawFogueira(x, y, s, noite, now){
+  const flicker = Math.sin(now/75)*2.5*s;
+  ctx.save();
+  const glow = ctx.createRadialGradient(x, y, 1*s, x, y, 30*s);
+  glow.addColorStop(0, '#ffb52b66');
+  glow.addColorStop(1, '#ff8a1a00');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, 30*s, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#3d3930';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 5*s, 15*s, 9*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#ff6a1b';
+  ctx.beginPath();
+  ctx.moveTo(x, y + 8*s);
+  ctx.quadraticCurveTo(x - 17*s, y - 5*s - flicker, x - 2*s, y - 22*s - flicker);
+  ctx.quadraticCurveTo(x - 5*s, y - 7*s, x + 2*s, y - 14*s + flicker);
+  ctx.quadraticCurveTo(x + 19*s, y + 1*s + flicker, x, y + 8*s);
+  ctx.fill();
+  ctx.fillStyle = noite ? '#fff4a6' : '#ffe58c';
+  ctx.beginPath();
+  ctx.moveTo(x, y + 6*s);
+  ctx.quadraticCurveTo(x - 8*s, y - 4*s - flicker, x, y - 15*s - flicker);
+  ctx.quadraticCurveTo(x + 10*s, y - 2*s + flicker, x, y + 6*s);
+  ctx.fill();
+  ctx.restore();
+}
+function drawCachoeira(x, y, s, noite, now){
+  ctx.save();
+  drawPedra(x - 12*s, y - 4*s, 9*s, noite);
+  drawPedra(x + 13*s, y - 6*s, 10*s, noite);
+  drawPedra(x + 1*s, y - 13*s, 7*s, noite);
+  ctx.strokeStyle = noite ? '#bfe9ffbb' : '#ecfeffff';
+  ctx.lineWidth = 6*s;
+  ctx.lineCap = 'round';
+  ctx.setLineDash([8*s, 5*s]);
+  ctx.lineDashOffset = -(now/45)*s;
+  ctx.beginPath();
+  ctx.moveTo(x, y - 8*s);
+  ctx.lineTo(x, y + 8*s);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = noite ? '#0e3d5cdd' : '#38bdf8cc';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 11*s, 14*s, 5*s, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+function drawCais(x, y, s, noite, now){
+  ctx.save();
+  ctx.fillStyle = noite ? '#4a2f17' : '#633e21';
+  ctx.fillRect(x - 5*s, y, 10*s, 30*s);
+  ctx.fillStyle = noite ? '#6b4626' : '#b67a3d';
+  for(let i=0;i<4;i++) ctx.fillRect(x - 6*s, y + 2*s + i*8*s, 12*s, 5*s);
+  ctx.fillStyle = noite ? '#3c2512' : '#714726';
+  ctx.fillRect(x - 8*s, y - 3*s, 3*s, 10*s);
+  ctx.fillRect(x + 5*s, y - 3*s, 3*s, 10*s);
+  ctx.fillRect(x - 8*s, y + 27*s, 3*s, 10*s);
+  ctx.fillRect(x + 5*s, y + 27*s, 3*s, 10*s);
+
+  const bx = x + Math.sin(now/1550)*4*s, by = y + 40*s + Math.sin(now/720)*2*s;
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(Math.sin(now/1100)*.07);
+  ctx.fillStyle = '#472b16';
+  ctx.beginPath();
+  ctx.moveTo(-13*s, -8*s);
+  ctx.lineTo(13*s, -8*s);
+  ctx.lineTo(9*s, 8*s);
+  ctx.quadraticCurveTo(0, 17*s, -9*s, 8*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#b97a3c';
+  ctx.beginPath();
+  ctx.moveTo(-9*s, -5*s);
+  ctx.lineTo(9*s, -5*s);
+  ctx.lineTo(6*s, 6*s);
+  ctx.lineTo(0, 11*s);
+  ctx.lineTo(-6*s, 6*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#633e21';
+  ctx.lineWidth = 1.4*s;
+  for(let yy=-2; yy<6; yy+=4){
+    ctx.beginPath();
+    ctx.moveTo(-7*s, yy*s);
+    ctx.lineTo(7*s, yy*s);
+    ctx.stroke();
+  }
+  if(noite){
+    ctx.shadowColor = '#ffd778';
+    ctx.shadowBlur = 12*s;
+    ctx.fillStyle = '#ffd778';
+    ctx.beginPath();
+    ctx.arc(0, -12*s, 2.4*s, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+  ctx.restore();
+}
+function drawCercaHorta(box, noite){
+  const s = box.scale;
+  ctx.save();
+  ctx.strokeStyle = noite ? '#6b5433' : '#d0a45c';
+  ctx.lineWidth = 2.4*s;
+  const fz = P(.77, .43);
+  ctx.strokeRect(fz.x - 46*s, fz.y - 34*s, 92*s, 66*s);
+  for(let i=0;i<5;i++){
+    const px = fz.x - 46*s + i*23*s;
+    ctx.beginPath();
+    ctx.moveTo(px, fz.y - 34*s);
+    ctx.lineTo(px, fz.y + 32*s);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawEstruturas(box, now, noite){
+  const s = box.scale;
+  const coresDe = id => {
+    const m = seres().filter(x => x.casa === id && x.status !== 'morto').map(x => PALETTE[x.id]).filter(Boolean);
+    if(m.length) return m;
+    if(id === 'casa_icaro') return [PALETTE.icaro];
+    if(id === 'casa_maria') return [PALETTE.maria];
+    if(id === 'casa_joao') return [PALETTE.joao, PALETTE.maria];
+    return null;
+  };
+  drawCercaHorta(box, noite);
+  const cach = ancoraScreen('cachoeira', box);
+  drawCachoeira(cach.x, cach.y, s, noite, now);
+  const cj = ancoraScreen('casa_joao', box);
+  const cm = ancoraScreen('casa_maria', box);
+  const ci = ancoraScreen('casa_icaro', box);
+  drawCasa(cj.x, cj.y, s, noite, coresDe('casa_joao'));
+  drawCasa(cm.x, cm.y, s, noite, coresDe('casa_maria'));
+  drawCasa(ci.x, ci.y, s, noite, coresDe('casa_icaro'));
+  const ac = ancoraScreen('acampamento', box);
+  drawTenda(ac.x, ac.y, s, noite);
+  const fo = ancoraScreen('fogueira', box);
+  drawFogueira(fo.x, fo.y, s, noite, now);
+  const bc = ancoraScreen('barco', box);
+  drawCais(bc.x, bc.y, s, noite, now);
+}
+function luzesNoturnas(box){
+  const s = box.scale;
+  ctx.save();
+  for(const id of ['casa_joao','casa_maria','casa_icaro']){
+    const a = ancoraScreen(id, box);
+    const g = ctx.createRadialGradient(a.x, a.y - 12*s, 1*s, a.x, a.y - 12*s, 42*s);
+    g.addColorStop(0, '#ffd77855');
+    g.addColorStop(1, '#ffd77800');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(a.x, a.y - 12*s, 42*s, 0, Math.PI*2);
+    ctx.fill();
+  }
+  const fo = ancoraScreen('fogueira', box);
+  const g2 = ctx.createRadialGradient(fo.x, fo.y, 1*s, fo.x, fo.y, 55*s);
+  g2.addColorStop(0, '#ffab2b77');
+  g2.addColorStop(1, '#ff8a1a00');
+  ctx.fillStyle = g2;
+  ctx.beginPath();
+  ctx.arc(fo.x, fo.y, 55*s, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+function rotulo(x, y, txt, s, noite){
+  ctx.save();
+  ctx.font = '700 ' + (10*s) + 'px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  const w = ctx.measureText(txt).width + 12*s;
+  ctx.fillStyle = noite ? '#06131fd9' : '#071b2be0';
+  roundRect(x - w/2, y - 8*s, w, 16*s, 8*s);
+  ctx.fill();
+  ctx.strokeStyle = '#38536a';
+  ctx.lineWidth = 1*s;
+  ctx.stroke();
+  ctx.fillStyle = '#e8f3ff';
+  ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+/* Texto solto com contorno escuro — estilo dos rotulos da propria ilustracao. */
+function rotuloTexto(x, y, txt, s, fs){
+  ctx.save();
+  ctx.font = '800 ' + ((fs || 10.5)*s) + 'px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = 'rgba(0,0,0,.5)';
+  ctx.shadowBlur = 3*s;
+  ctx.shadowOffsetY = 1*s;
+  ctx.lineWidth = 3.6*s;
+  ctx.strokeStyle = 'rgba(8,20,32,.95)';
+  ctx.strokeText(txt, x, y);
+  ctx.fillStyle = '#f6fbff';
+  ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+function drawRotulos(box, noite){
+  const s = box.scale;
+  for(const id of Object.keys(nos())){
+    const a = ancoraScreen(id, box);
+    const dx = (ROT_DX[id] || 0) * s;
+    const dy = (ROT_DY[id] !== undefined ? ROT_DY[id] : 28) * s;
+    const foco = id === hoveredLocal || id === selectedLocal;
+    if(fundoPronto && !foco) rotuloTexto(a.x + dx, a.y + dy, nomeLocal(id), s);
+    else rotulo(a.x + dx, a.y + dy, nomeLocal(id), s, noite);
+  }
+}
+
+/* ---------- rotas e personagens ---------- */
+const CHAR_DY = { acampamento: 24 }; /* em frente a fogueira pintada, nao em cima dela */
+function screenFromSer(s, box){
+  const n = nos()[s.local] || { x:.5, y:.5 };
+  const base = { x: box.x + box.w*n.x, y: box.y + box.h*n.y };
+  const grupo = vivos().filter(o => o.local === s.local).sort((a,b) => a.id.localeCompare(b.id));
+  const i = grupo.findIndex(o => o.id === s.id);
+  const k = grupo.length || 1;
+  const dx = (i - (k-1)/2) * 34 * box.scale;
+  const dy = (17 + (CHAR_DY[s.local] || 0)) * box.scale + (k > 1 ? 6 * box.scale : 0);
+  return { x: base.x + dx, y: base.y + dy };
+}
+function casaScreen(s, box){
+  const id = s.casa && nos()[s.casa] ? s.casa : null;
+  if(!id) return null;
+  const a = ancoraScreen(id, box);
+  return { x:a.x, y:a.y - 14*box.scale };
+}
+function drawRoute(c, from, to, color, scale){
+  if(Math.hypot(to.x-from.x, to.y-from.y) < 18*scale) return;
+  c.save();
+  c.beginPath();
+  c.moveTo(from.x, from.y);
+  const bend = Math.max(-38, Math.min(38, (to.x-from.x)*.08));
+  const control = { x:(from.x+to.x)/2 + bend, y:(from.y+to.y)/2 - 15*scale };
+  c.quadraticCurveTo(control.x, control.y, to.x, to.y);
+  c.strokeStyle = color + 'a0';
+  c.lineWidth = 2*scale;
+  c.setLineDash([5*scale, 7*scale]);
+  c.lineDashOffset = -(performance.now()/80)*scale;
+  c.stroke();
+  const angle = Math.atan2(to.y-control.y, to.x-control.x);
+  const head = 6*scale;
+  c.setLineDash([]);
+  c.fillStyle = color;
+  c.beginPath();
+  c.moveTo(to.x, to.y);
+  c.lineTo(to.x - head*Math.cos(angle-.55), to.y - head*Math.sin(angle-.55));
+  c.lineTo(to.x - head*Math.cos(angle+.55), to.y - head*Math.sin(angle+.55));
+  c.closePath();
+  c.fill();
+  c.restore();
+}
+function animateActor(id, target, dt){
+  let p = animatedActors[id];
+  if(!p) return animatedActors[id] = { x:target.x, y:target.y };
+  const t = Math.min(1, dt*2.6);
+  p.x += (target.x - p.x)*t;
+  p.y += (target.y - p.y)*t;
+  return p;
+}
+function drawCharacter(x, y, ser, isNight, unit){
+  const u = unit;
+  const camisa = CAMISA[ser.id] || PALETTE[ser.id] || '#cbd5e1';
+  const cabelo = CABELO[ser.id] || { cor:'#3a2f28', longo:false };
+  const pele = '#f1c39a';
+  const bob = Math.sin(Date.now()/260 + ser.id.charCodeAt(0))*1.6*u;
+  y += bob;
+  const F = y;
+  ctx.fillStyle = 'rgba(10,26,16,.34)';
+  ctx.beginPath();
+  ctx.ellipse(x, F + 2*u, 13*u, 4.6*u, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.save();
+  if(isNight){ ctx.shadowBlur = 18*u; ctx.shadowColor = camisa; }
+  /* pernas e sapatos */
+  ctx.fillStyle = '#2f3f5a';
+  ctx.fillRect(x - 7.5*u, F - 11*u, 6*u, 8*u);
+  ctx.fillRect(x + 1.5*u, F - 11*u, 6*u, 8*u);
+  ctx.fillStyle = '#22303f';
+  ctx.fillRect(x - 8.5*u, F - 4*u, 7.5*u, 4*u);
+  ctx.fillRect(x + 1*u, F - 4*u, 7.5*u, 4*u);
+  /* braços */
+  ctx.fillStyle = camisa;
+  ctx.fillRect(x - 12*u, F - 25*u, 4.5*u, 12*u);
+  ctx.fillRect(x + 7.5*u, F - 25*u, 4.5*u, 12*u);
+  ctx.fillStyle = pele;
+  ctx.beginPath(); ctx.arc(x - 9.7*u, F - 12.5*u, 2.4*u, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 9.7*u, F - 12.5*u, 2.4*u, 0, Math.PI*2); ctx.fill();
+  /* tronco */
+  ctx.fillStyle = camisa;
+  roundRect(x - 9.5*u, F - 27*u, 19*u, 17*u, 5*u);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.26)';
+  ctx.fillRect(x - 1.2*u, F - 26*u, 2.4*u, 9*u);
+  /* cabelo longo atrás */
+  if(cabelo.longo){
+    ctx.fillStyle = cabelo.cor;
+    ctx.beginPath(); ctx.ellipse(x - 8.5*u, F - 32*u, 3.6*u, 9*u, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + 8.5*u, F - 32*u, 3.6*u, 9*u, 0, 0, Math.PI*2); ctx.fill();
+  }
+  /* cabeça */
+  const cy = F - 36*u;
+  ctx.fillStyle = pele;
+  ctx.beginPath(); ctx.arc(x, cy, 10*u, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - 9.5*u, cy + 1*u, 2*u, 0, Math.PI*2); ctx.arc(x + 9.5*u, cy + 1*u, 2*u, 0, Math.PI*2); ctx.fill();
+  /* cabelo: coroa + franja */
+  ctx.fillStyle = cabelo.cor;
+  ctx.beginPath();
+  ctx.arc(x, cy, 10.3*u, Math.PI*1.02, Math.PI*1.98);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(x, cy - 5.5*u, 8.6*u, 4.6*u, 0, 0, Math.PI*2);
+  ctx.fill();
+  /* contorno leve */
+  ctx.strokeStyle = 'rgba(18,28,40,.22)';
+  ctx.lineWidth = 1*u;
+  ctx.beginPath(); ctx.arc(x, cy, 10*u, 0, Math.PI*2); ctx.stroke();
+  /* rosto */
+  ctx.fillStyle = '#2b2b2b';
+  ctx.beginPath(); ctx.arc(x - 3.4*u, cy + 1.4*u, 1.5*u, 0, Math.PI*2); ctx.arc(x + 3.4*u, cy + 1.4*u, 1.5*u, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#8a5a3a';
+  ctx.lineWidth = 1.2*u;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(x, cy + 3.4*u, 3.2*u, Math.PI*.15, Math.PI*.85); ctx.stroke();
+  ctx.restore();
+
+  /* Nome abaixo dos pés — mesmo estilo da ilustração. */
+  rotuloTexto(x, F + 11*u, ser.nome, u, 12);
+
+  const act = atividade(ser);
+
+  if(hoveredSerId === ser.id){
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2*unit;
+    ctx.setLineDash([3*unit, 3*unit]);
+    ctx.beginPath();
+    ctx.arc(x, y - 22*unit, 24*unit, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    tooltip.style.display = 'block';
+    tooltip.style.left = (mouseX + 15) + 'px';
+    tooltip.style.top = (mouseY + 15) + 'px';
+    tooltip.innerText = ser.nome + '\nStatus: ' + ser.status + '\nAção: ' + act.texto
+      + '\nMoradia: ' + nomeLocal(ser.casa)
+      + '\nÁgua: ' + (Number(ser.necessidades && ser.necessidades.agua) || 0).toFixed(1)
+      + '\nComida: ' + (Number(ser.necessidades && ser.necessidades.alimento) || 0).toFixed(1)
+      + '\nSono: ' + (Number(ser.necessidades && ser.necessidades.sono) || 0).toFixed(1);
+  }
+}
+
+/* ---------- predador (acontecimento ativo do mundo) ---------- */
+function drawLobo(x, y, u, noite){
+  const now = performance.now();
+  y += Math.sin(now/300)*1.2*u;
+  ctx.save();
+  /* anel de perigo pulsante sob o predador */
+  const pulso = 1 + Math.sin(now/450)*0.09;
+  ctx.strokeStyle = 'rgba(225,45,45,' + (noite ? .7 : .9) + ')';
+  ctx.lineWidth = 2.2*u;
+  ctx.setLineDash([6*u, 5*u]);
+  ctx.lineDashOffset = -(now/60)*u;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 2*u, 21*u*pulso, 8.5*u*pulso, 0, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  /* sombra */
+  ctx.fillStyle = 'rgba(8,16,10,.42)';
+  ctx.beginPath(); ctx.ellipse(x, y + 2*u, 15*u, 5*u, 0, 0, Math.PI*2); ctx.fill();
+  const F = y;
+  const pelagem = '#4a4f56';
+  const escuro = '#2c3036';
+  /* pernas */
+  ctx.fillStyle = escuro;
+  ctx.fillRect(x - 11*u, F - 9*u, 4*u, 9*u);
+  ctx.fillRect(x - 5*u, F - 9*u, 4*u, 9*u);
+  ctx.fillRect(x + 5*u, F - 9*u, 4*u, 9*u);
+  ctx.fillRect(x + 11*u, F - 9*u, 4*u, 9*u);
+  /* rabo */
+  ctx.fillStyle = pelagem;
+  ctx.beginPath(); ctx.ellipse(x - 16*u, F - 14*u, 7.5*u, 3.4*u, -0.5, 0, Math.PI*2); ctx.fill();
+  /* corpo */
+  ctx.fillStyle = pelagem;
+  ctx.beginPath(); ctx.ellipse(x, F - 13*u, 14*u, 6.6*u, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = escuro;
+  ctx.beginPath(); ctx.ellipse(x, F - 10.5*u, 12*u, 3*u, 0, 0, Math.PI); ctx.fill();
+  /* cabeça */
+  const hx = x + 14*u, hy = F - 17*u;
+  ctx.fillStyle = pelagem;
+  ctx.beginPath(); ctx.arc(hx, hy, 6.2*u, 0, Math.PI*2); ctx.fill();
+  /* orelhas */
+  ctx.beginPath();
+  ctx.moveTo(hx - 4.4*u, hy - 4*u); ctx.lineTo(hx - 5.6*u, hy - 10.4*u); ctx.lineTo(hx - .4*u, hy - 5.6*u); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(hx + 2.6*u, hy - 5*u); ctx.lineTo(hx + 4.4*u, hy - 11*u); ctx.lineTo(hx + 6*u, hy - 4.4*u); ctx.closePath(); ctx.fill();
+  /* focinho */
+  ctx.fillStyle = escuro;
+  ctx.beginPath(); ctx.ellipse(hx + 5.4*u, hy + 2*u, 3.8*u, 2.4*u, .18, 0, Math.PI*2); ctx.fill();
+  /* olho */
+  ctx.fillStyle = noite ? '#ff5a3c' : '#ffd23f';
+  ctx.beginPath(); ctx.arc(hx + 1.8*u, hy - 1.4*u, 1.4*u, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  /* rótulo vermelho acima do predador (evita colidir com nomes dos seres) */
+  ctx.save();
+  ctx.font = '800 ' + (10.5*u) + 'px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 3.6*u;
+  ctx.strokeStyle = 'rgba(8,20,32,.95)';
+  ctx.strokeText('Predador', x, F - 36*u);
+  ctx.fillStyle = '#ff6b5a';
+  ctx.fillText('Predador', x, F - 36*u);
+  ctx.restore();
+}
+function acontecimentosAtivos(tipo){
+  const m = stateData && stateData.mundo;
+  return (m && Array.isArray(m.acontecimentos)) ? m.acontecimentos.filter(a => a && a.tipo === tipo && a.ativo !== false) : [];
+}
+function drawPredadores(box, noite, dt){
+  for(const a of acontecimentosAtivos('predador')){
+    const locais = Array.isArray(a.locais) ? a.locais : [];
+    /* halo de perigo sobre a região */
+    const on = 0.05 + 0.03*(0.5 + 0.5*Math.sin(performance.now()/500));
+    for(const l of locais){
+      if(!nos()[l]) continue;
+      const al = ancoraScreen(l, box);
+      ctx.save();
+      ctx.fillStyle = 'rgba(210,40,40,' + on.toFixed(3) + ')';
+      ctx.beginPath(); ctx.ellipse(al.x, al.y, 52*box.scale, 38*box.scale, 0, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = 'rgba(225,45,45,.35)';
+      ctx.lineWidth = 1.4*box.scale;
+      ctx.setLineDash([7*box.scale, 6*box.scale]);
+      ctx.stroke();
+      ctx.restore();
+    }
+    const no = (a.no && nos()[a.no]) ? a.no : locais.find(l => nos()[l]);
+    if(!no) continue;
+    const base = ancoraScreen(no, box);
+    const alvo = { x: base.x + 34*box.scale, y: base.y + 16*box.scale };
+    const pos = animateActor('predador:' + (a.id || 'x'), alvo, dt);
+    drawLobo(pos.x, pos.y, box.scale, noite);
+  }
+}
+
+/* ---------- casas sobre a arte nova (lotes cercados) ---------- */
+const CASAS = [
+  { id:'casa_joao',  cx:.477, cy:.160, telhado:'#c2582f', parede:'#e6b476' },
+  { id:'casa_icaro', cx:.213, cy:.448, telhado:'#b3523a', parede:'#e3ad6e' },
+  { id:'casa_maria', cx:.855, cy:.522, telhado:'#a85a35', parede:'#eab87e' }
+];
+function drawCasaLote(c, x, y, u, cor){
+  const W = 46*u, wall = 24*u, roof = 17*u;
+  c.save();
+  c.fillStyle = 'rgba(10,26,16,.32)';
+  c.beginPath(); c.ellipse(x, y + 2*u, W*.58, 6*u, 0, 0, Math.PI*2); c.fill();
+  c.fillStyle = cor.parede;
+  c.fillRect(x - W/2, y - wall, W, wall);
+  c.strokeStyle = 'rgba(110,70,35,.75)'; c.lineWidth = 1.4*u;
+  c.strokeRect(x - W/2, y - wall, W, wall);
+  c.strokeStyle = 'rgba(122,78,40,.35)'; c.lineWidth = 1*u;
+  for(let i=1;i<4;i++){ const px = x - W/2 + (W/4)*i; c.beginPath(); c.moveTo(px, y - wall); c.lineTo(px, y); c.stroke(); }
+  c.fillStyle = '#6b4226';
+  c.fillRect(x - 6*u, y - 17*u, 12*u, 17*u);
+  c.fillStyle = '#ffd27a';
+  c.beginPath(); c.arc(x + 3*u, y - 8.5*u, 1.3*u, 0, Math.PI*2); c.fill();
+  c.fillStyle = '#8ed3e8';
+  c.fillRect(x + 11*u, y - 19*u, 11*u, 9*u);
+  c.strokeStyle = '#5b8fa3'; c.lineWidth = 1.2*u;
+  c.strokeRect(x + 11*u, y - 19*u, 11*u, 9*u);
+  c.beginPath(); c.moveTo(x + 16.5*u, y - 19*u); c.lineTo(x + 16.5*u, y - 10*u);
+  c.moveTo(x + 11*u, y - 14.5*u); c.lineTo(x + 22*u, y - 14.5*u); c.stroke();
+  c.fillStyle = cor.telhado;
+  c.beginPath();
+  c.moveTo(x - W/2 - 5*u, y - wall);
+  c.lineTo(x + W/2 + 5*u, y - wall);
+  c.lineTo(x + W/2 - 8*u, y - wall - roof);
+  c.lineTo(x - W/2 + 8*u, y - wall - roof);
+  c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(90,40,20,.8)'; c.lineWidth = 1.4*u; c.stroke();
+  c.fillStyle = 'rgba(255,255,255,.22)';
+  c.fillRect(x - W/2 + 8*u, y - wall - roof, W - 16*u, 3*u);
+  c.restore();
+}
+function drawCasas(box){
+  for(const h of CASAS) drawCasaLote(ctx, box.x + box.w*h.cx, box.y + box.h*h.cy, box.scale, h);
+}
+
+/* ---------- interacao ---------- */
+function calcularHotspots(box){
+  hotspots = Object.keys(nos()).map(id => {
+    const a = ancoraScreen(id, box);
+    return { id, x:a.x, y:a.y, r:Math.max(16, a.r) };
+  });
+}
+function anelSelecao(box){
+  for(const hs of hotspots){
+    const ehSelecionado = hs.id === selectedLocal;
+    const ehHover = hs.id === hoveredLocal && !hoveredSerId;
+    if(!ehSelecionado && !ehHover) continue;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(hs.x, hs.y, hs.r * (ehSelecionado ? 1 : .92), 0, Math.PI*2);
+    ctx.strokeStyle = ehSelecionado ? '#7dd3fc' : '#ffffff88';
+    ctx.lineWidth = ehSelecionado ? 2.4*box.scale : 1.6*box.scale;
+    if(ehSelecionado) ctx.setLineDash([]);
+    else ctx.setLineDash([4*box.scale, 5*box.scale]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if(ehSelecionado){
+      ctx.fillStyle = '#7dd3fc1f';
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  mouseX = e.clientX - rect.left;
+  mouseY = e.clientY - rect.top;
+});
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  mouseX = e.clientX - rect.left;
+  mouseY = e.clientY - rect.top;
+  let alvo = null;
+  for(const hs of hotspots){
+    if(Math.hypot(mouseX - hs.x, mouseY - hs.y) <= hs.r){
+      if(!alvo || Math.hypot(mouseX - hs.x, mouseY - hs.y) < Math.hypot(mouseX - alvo.x, mouseY - alvo.y)) alvo = hs;
+    }
+  }
+  selectedLocal = (alvo && alvo.id !== selectedLocal) ? alvo.id : null;
+  renderPainelLocal();
+});
+
+/* ---------- cena ---------- */
+let jaDesenhou = false;
+window.addEventListener('error', ev => {
+  try{
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.fillStyle = '#7f1d1d';
+    ctx.fillRect(0, Math.max(0, canvas.height - 64), canvas.width, 64);
+    ctx.fillStyle = '#fff';
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('ERRO: ' + ev.message + ' @linha ' + (ev.lineno || '?'), 12, canvas.height - 38);
+    ctx.restore();
+  }catch(e){}
+});
+function drawScene(){
+  if(document.hidden && jaDesenhou) return;
+  jaDesenhou = true;
+  const w = canvas.width, h = canvas.height;
+  const periodo = stateData ? stateData.mundo.tempo.periodo : 'manha';
+  const noite = ['noite','madrugada'].includes(periodo);
+  const tarde = periodo === 'tarde';
+  const now = performance.now();
+  const dt = lastFrameAt ? Math.min(.05, (now - lastFrameAt)/1000) : 1/60;
+  lastFrameAt = now;
+  const box = computeBox(w, h);
+  currentBox = box;
+
+  if(fundoPronto){
+    /* Ilha pintada: a arte de referencia vira o fundo, recortada em modo cover. */
+    ctx.fillStyle = '#1478ad';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(fundoPronto, box.x, box.y, box.w, box.h);
+    if(tarde){
+      ctx.fillStyle = 'rgba(255,164,70,.10)';
+      ctx.fillRect(0, 0, w, h);
+    }
+  }else{
+    drawOcean(box, w, h, now, noite, tarde);
+    drawIlha(box, noite, tarde, now);
+    drawVegetacao(box, noite);
+    drawTrilhas(box, noite);
+    drawEstruturas(box, now, noite);
+  }
+
+  if(fundoPronto) drawCasas(box);
+
+  if(noite){
+    ctx.fillStyle = 'rgba(4,12,30,.42)';
+    ctx.fillRect(0, 0, w, h);
+    luzesNoturnas(box);
+  }
+  drawRotulos(box, noite);
+
+  calcularHotspots(box);
+  hoveredLocal = null;
+  hoveredSerId = null;
+  tooltip.style.display = 'none';
+  for(const hs of hotspots){
+    if(Math.hypot(mouseX - hs.x, mouseY - hs.y) <= hs.r){
+      if(!hoveredLocal || Math.hypot(mouseX - hs.x, mouseY - hs.y) < Math.hypot(mouseX - (ancoraScreen(hoveredLocal, box).x), mouseY - (ancoraScreen(hoveredLocal, box).y))) hoveredLocal = hs.id;
+    }
+  }
+
+  if(stateData){
+    const ativos = vivos();
+    for(const s of ativos){
+      const alvo = screenFromSer(s, box);
+      const pos = animateActor(s.id, alvo, dt);
+      const casa = casaScreen(s, box);
+      if(!fundoPronto && casa && s.local !== s.casa) drawRoute(ctx, casa, pos, PALETTE[s.id] || '#ffffff', box.scale);
+    }
+    for(const s of ativos){
+      const pos = animatedActors[s.id] || screenFromSer(s, box);
+      if(Math.hypot(mouseX - pos.x, mouseY - (pos.y - 22*box.scale)) < 27*box.scale) hoveredSerId = s.id;
+      drawCharacter(pos.x, pos.y, s, noite, box.scale);
+    }
+    drawPredadores(box, noite, dt);
+  }
+
+  anelSelecao(box);
+  canvas.style.cursor = (hoveredSerId || hoveredLocal) ? 'pointer' : 'default';
+
+  if(!hoveredSerId && hoveredLocal){
+    const presentes = seres().filter(s => s.local === hoveredLocal);
+    const moradores = seres().filter(s => s.casa === hoveredLocal);
+    tooltip.style.display = 'block';
+    tooltip.style.left = (mouseX + 15) + 'px';
+    tooltip.style.top = (mouseY + 15) + 'px';
+    tooltip.innerText = nomeLocal(hoveredLocal)
+      + '\nClique para abrir o painel'
+      + (moradores.length ? '\nMoram aqui: ' + moradores.map(m => m.nome).join(', ') : '')
+      + (presentes.length ? '\nAgora aqui: ' + presentes.map(p => p.nome + ' (' + atividade(p).texto + ')').join(', ') : '\nAgora aqui: ninguém');
+  }
+
+  window.setTimeout(() => { if(!document.hidden) requestAnimationFrame(drawScene); }, 70);
+}
+document.addEventListener('visibilitychange', () => { if(!document.hidden) requestAnimationFrame(drawScene); });
+
+/* ---------- inicializacao ---------- */
+resize();
+fetchMap().then(fetchState);
+setInterval(fetchState, 2000);
+drawScene();
 </script>
 </body>
 </html>

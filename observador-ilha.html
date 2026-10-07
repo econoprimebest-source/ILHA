@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ILHA · Observador</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--borda:#30363d;--texto:#c9d1d9;--fraco:#8b949e;--icaro:#ff9f43;--maria:#ee5253;--joao:#54a0ff;--ok:#2ecc71;--ruim:#e74c3c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--texto);font:13px/1.45 'Segoe UI',system-ui,sans-serif;padding:12px}
+h1{font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--fraco);margin-bottom:8px}
+h1 b{color:#fff}
+#topo{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.chip{background:var(--card);border:1px solid var(--borda);border-radius:20px;padding:4px 12px;font-size:12px}
+.chip b{color:#fff}
+#app{display:grid;grid-template-columns:minmax(420px,1fr) 340px;grid-template-rows:auto auto;gap:12px}
+#mapa{position:relative;background:var(--card);border:1px solid var(--borda);border-radius:10px;overflow:hidden;aspect-ratio:1/1;max-height:72vh}
+#mapa img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.92}
+#camada{position:absolute;inset:0;width:100%;height:100%}
+.lado{display:flex;flex-direction:column;gap:12px;min-height:0}
+.card{background:var(--card);border:1px solid var(--borda);border-radius:10px;padding:10px 12px}
+.card h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fraco);margin-bottom:8px;border-bottom:1px solid var(--borda);padding-bottom:6px}
+.mini{font-size:12px;color:var(--fraco);margin:2px 0}
+.mini b{color:var(--texto)}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs button{flex:1;background:#21262d;border:1px solid var(--borda);color:var(--fraco);border-radius:6px;padding:5px 0;cursor:pointer;font-size:12px}
+.tabs button.on{color:#fff;border-color:#8b949e;background:#30363d}
+.barra{display:grid;grid-template-columns:74px 1fr 30px;gap:6px;align-items:center;font-size:11px;margin:3px 0}
+.barra span{color:var(--fraco)}
+.trilho{height:7px;background:#0d1117;border-radius:4px;overflow:hidden;border:1px solid var(--borda)}
+.trilho i{display:block;height:100%;border-radius:4px}
+#timeline{grid-column:1/-1;max-height:26vh;overflow-y:auto}
+.tl{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #21262d;font-size:12px}
+.tl .h{color:var(--fraco);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tl .c{color:#fff}
+.ev{color:#f6c945}.dk{color:var(--fraco)}.fg{color:#e74c3c}
+#legenda{position:absolute;left:8px;bottom:8px;background:#0d1117d9;border:1px solid var(--borda);border-radius:8px;padding:6px 10px;font-size:11px}
+#legenda i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
+.pista{color:#f6c945;font-style:italic;margin:2px 0}
+.vazio{color:var(--fraco);font-style:italic;font-size:12px}
+@media(max-width:900px){#app{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1><b>ILHA</b> · observador · três verdades</h1>
+<div id="topo">
+	<div class="chip">ciclo <b id="t-ciclo">–</b></div>
+	<div class="chip">dia <b id="t-dia">–</b></div>
+	<div class="chip">período <b id="t-periodo">–</b></div>
+	<div class="chip">estação <b id="t-estacao">–</b></div>
+	<div class="chip">ano <b id="t-ano">–</b></div>
+	<div class="chip">clima <b id="t-clima">–</b></div>
+	<div class="chip">eventos <b id="t-ev">0</b></div>
+</div>
+<div id="app">
+	<div id="mapa">
+		<img src="/mapa.png" alt="mapa da ilha" onerror="this.style.display='none'">
+		<svg id="camada" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg>
+		<div id="legenda">
+			<span><i style="background:var(--icaro)"></i>Ícaro</span>
+			<span><i style="background:var(--maria)"></i>Maria</span>
+			<span><i style="background:var(--joao)"></i>João</span>
+			&nbsp;·&nbsp; tracejado animado = trajeto em curso
+		</div>
+	</div>
+	<div class="lado">
+		<div class="card">
+			<h2>Verdade do mundo (espectador vê tudo)</h2>
+			<div id="mundo-lista" class="mini">carregando…</div>
+		</div>
+		<div class="card">
+			<h2>Verdade do personagem (o que ele percebe)</h2>
+			<div class="tabs" id="tabs">
+				<button data-ser="icaro" class="on">Ícaro</button>
+				<button data-ser="maria">Maria</button>
+				<button data-ser="joao">João</button>
+			</div>
+			<div id="ser-info" class="mini"></div>
+			<div id="ser-nec"></div>
+			<div id="ser-pista"></div>
+			<div id="ser-cortex"></div>
+		</div>
+		<div class="card">
+			<h2>Verdade do espectador</h2>
+			<div class="mini">Modo <b>NÃO INTERFERIR</b> — comandos de condição (chuva, predador…) chegam aqui na Fase D.</div>
+			<div class="mini">Estado completo + eventos + linha do tempo são desta visão.</div>
+		</div>
+	</div>
+	<div class="card" id="timeline">
+		<h2>Linha do tempo contínua</h2>
+		<div id="tl-lista"><div class="vazio">aguardando o primeiro ciclo…</div></div>
+	</div>
+</div>
+<script>
+const CORES={icaro:'#ff9f43',maria:'#ee5253',joao:'#54a0ff'};
+let MAPA=null,serAtivo='icaro',estadoAnterior=null;
+const svg=document.getElementById('camada');
+const $=id=>document.getElementById(id);
+async function j(url){const r=await fetch(url,{cache:'no-store'});return r.json()}
+function chave(a,b){return a<b?a+'|'+b:b+'|'+a}
+function linhaEntre(a,b){if(!MAPA)return null;const e=MAPA.arestas.find(x=>chave(x.a,x.b)===chave(a,b));return e?e.linha:null}
+function pts(linha){return linha.map(p=>p[0]*1000+','+p[1]*1000).join(' ')}
+function rotulo(x,y,t,cor){const e=document.createElementNS('http://www.w3.org/2000/svg','text');e.setAttribute('x',x*1000);e.setAttribute('y',y*1000-14);e.setAttribute('fill',cor||'#fff');e.setAttribute('font-size','17');e.setAttribute('text-anchor','middle');e.setAttribute('paint-order','stroke');e.setAttribute('stroke','#0d1117');e.setAttribute('stroke-width','4');e.textContent=t;return e}
+function desenharMapa(){
+	while(svg.firstChild)svg.removeChild(svg.firstChild);
+	if(!MAPA)return;
+	for(const a of MAPA.arestas){
+		const p=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+		p.setAttribute('points',pts(a.linha));p.setAttribute('fill','none');
+		p.setAttribute('stroke','rgba(255,255,255,.28)');p.setAttribute('stroke-width','3');
+		p.setAttribute('stroke-dasharray','7 7');svg.appendChild(p);
+	}
+	for(const[id,n]of Object.entries(MAPA.nos)){
+		const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+		c.setAttribute('cx',n.x*1000);c.setAttribute('cy',n.y*1000);c.setAttribute('r','7');
+		c.setAttribute('fill','#0d1117');c.setAttribute('stroke','#fff');c.setAttribute('stroke-width','3');svg.appendChild(c);
+		svg.appendChild(rotulo(n.x,n.y,n.nome));
+	}
+}
+function desenharEventos(evts){
+	if(!MAPA||!evts)return;
+	for(const a of evts)for(const loc of a.locais){
+		const n=MAPA.nos[loc];if(!n)continue;
+		const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+		c.setAttribute('cx',n.x*1000);c.setAttribute('cy',n.y*1000);c.setAttribute('r','58');
+		c.setAttribute('fill',a.tipo==='predador'?'rgba(231,76,60,.28)':'rgba(84,160,255,.30)');
+		c.setAttribute('stroke',a.tipo==='predador'?'#e74c3c':'#54a0ff');c.setAttribute('stroke-width','2');
+		svg.appendChild(c);
+	}
+}
+function desenharSeres(seres){
+	if(!MAPA||!seres)return;
+	for(const[id,s]of Object.entries(seres)){
+		const cor=CORES[id]||'#fff';
+		if(s.deslocamento){
+			const cam=s.deslocamento.caminho,par=[];
+			for(let k=Math.max(0,s.deslocamento.i);k<cam.length-1;k++){
+				const l=linhaEntre(cam[k],cam[k+1]);if(l)par.push(l.map(p=>p[0]*1000+','+p[1]*1000).join(' '));
+			}
+			if(par.length){
+				const p=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+				p.setAttribute('points',par.join(' '));p.setAttribute('fill','none');
+				p.setAttribute('stroke',cor);p.setAttribute('stroke-width','6');
+				p.setAttribute('stroke-dasharray','14 10');p.setAttribute('opacity','.95');
+				p.style.animation='marcha 1.2s linear infinite';svg.appendChild(p);
+				const dest=MAPA.nos[s.deslocamento.destino];
+				if(dest){const alvo=document.createElementNS('http://www.w3.org/2000/svg','circle');
+					alvo.setAttribute('cx',dest.x*1000);alvo.setAttribute('cy',dest.y*1000);alvo.setAttribute('r','13');
+					alvo.setAttribute('fill','none');alvo.setAttribute('stroke',cor);alvo.setAttribute('stroke-width','4');svg.appendChild(alvo)}
+			}
+		}
+		const n=MAPA.nos[s.local];if(!n)continue;
+		const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+		c.setAttribute('cx',n.x*1000);c.setAttribute('cy',n.y*1000);c.setAttribute('r','12');
+		c.setAttribute('fill',cor);c.setAttribute('stroke','#0d1117');c.setAttribute('stroke-width','3');svg.appendChild(c);
+		svg.appendChild(rotulo(n.x,n.y,s.nome+(s.deslocamento?' ⤳':''),cor));
+	}
+}
+function barra(nome,v,cor){return '<div class="barra"><span>'+nome+'</span><div class="trilho"><i style="width:'+Math.max(0,Math.min(100,v))+'%;background:'+cor+'"></i></div><b>'+Math.round(v)+'</b></div>'}
+function textoEvento(e){
+	if(e.tipo==='deslocamento'){
+		if(e.fase==='partida')return '<span class="c">'+(e.nome||e.serId)+'</span> inicia caminho até <b>'+(e.destino||'')+'</b>';
+		if(e.fase==='abortado')return '<span class="c">'+(e.nome||e.serId)+'</span> cancela trajeto (assumiu o controle)';
+		if(e.fase==='chegada')return '<span class="c">'+(e.nome||e.serId)+'</span> chegou a <b>'+e.para+'</b>';
+		return '<span class="c">'+(e.nome||e.serId)+'</span> segue: '+e.de+' → '+e.para;
+	}
+	if(e.tipo==='acontecimento'){
+		if(e.fase==='ataque')return '<span class="fg">⚔ '+e.evento+'</span> feriu <span class="c">'+e.nome+'</span> em '+e.local+' (−'+e.dano+' saúde)';
+		if(e.fase==='comecou')return '<span class="ev">⚡ '+e.evento+'</span> começou em '+e.locais.join(', ');
+		if(e.fase==='terminou')return '<span class="ev">⏻ '+e.evento+'</span> terminou';
+	}
+	return JSON.stringify(e);
+}
+function textoDecisao(d){return '<span class="c">'+d.serId+'</span> · <b>'+d.acao+'</b> — '+(d.motivo||'')+(d.origem?' <span class="dk">('+d.origem+')</span>':'')}
+async function pintarSerie(){
+	const d=await j('/api/percepcao?ser='+serAtivo);
+	$('ser-info').innerHTML=d.local?'local atual: <b>'+d.local+'</b>':'sem dado';
+	$('ser-pista').innerHTML=(d.percepcoes&&d.percepcoes.length)?'<h2 style="margin-top:8px">percepções</h2>'+d.percepcoes.map(p=>'<div class="pista">· '+p+'</div>').join(''):'<div class="vazio">sem pistas novas</div>';
+	const cx=d.cortex||{};
+	$('ser-cortex').innerHTML='<div class="mini" style="margin-top:8px">objetivos: <b>'+((cx.objetivos||[]).join(' · ')||'—')+'</b></div>'+
+		((cx.diario&&cx.diario.length)?'<div class="mini">diário: '+(cx.diario.slice(-2)[0].texto||cx.diario.slice(-2)[0])+'</div>':'');
+}
+async function atualizar(){
+	try{
+		const[e,m]=await Promise.all([j('/api/estado'),MAPA?Promise.resolve(MAPA):j('/api/mapa')]);
+		if(!MAPA){MAPA=m;desenharMapa()}
+		if(!e)return;
+		const t=e.tempo||{};
+		$('t-ciclo').textContent=t.ciclo??'–';$('t-dia').textContent=t.dia??'–';
+		$('t-periodo').textContent=t.periodo??'–';$('t-estacao').textContent=(t.estacao||'–')+' '+(t.diaDaEstacao||'');
+		$('t-ano').textContent=t.ano??'–';$('t-clima').textContent=e.clima||'–';
+		$('t-ev').textContent=(e.acontecimentos||[]).length;
+		$('mundo-lista').innerHTML=(e.acontecimentos||[]).length
+			? e.acontecimentos.map(a=>'<div class="mini"><b>'+a.tipo+'</b> ('+a.origem+') · '+(a.idade)+'/'+a.duracao+' ciclos · '+a.locais.join(', ')+'</div>').join('')
+			: '<div class="vazio">nenhum acontecimento ativo — o mundo segue só com o calendário</div>';
+		const s=(e.seres||{})[serAtivo];
+		if(s){
+			const n=s.necessidades||{};
+			$('ser-nec').innerHTML=barra('sede',(n.agua||0),n.agua>65?'#e74c3c':'#f6c945')+barra('fome',(n.alimento||0),n.alimento>75?'#e74c3c':'#f39c12')+barra('saúde',(n.saude||100),n.saude<25?'#e74c3c':'#2ecc71')+barra('medo',(n.medo||0),'#9b59b6')+barra('energia',(n.energia||0),'#1abc9c');
+		}
+		while(svg.firstChild)svg.removeChild(svg.firstChild);
+		if(MAPA){desenharMapa();desenharEventos(e.acontecimentos);desenharSeres(e.seres)}
+		const lista=[...(e.historico.eventos||[]).map(x=>({...x,_tl:1})),...(e.historico.decisoes||[]).map(x=>({...x,_tl:0}))]
+			.sort((a,b)=>(b.ciclo-a.ciclo)||((b._tl||0)-(a._tl||0))).slice(0,150);
+		$('tl-lista').innerHTML=lista.length?lista.map(x=>'<div class="tl"><span class="h">['+(x.tempo||'--:--')+'] c'+x.ciclo+'</span><span>'+(x._tl?textoEvento(x):textoDecisao(x))+'</span></div>').join(''):'<div class="vazio">aguardando o primeiro ciclo…</div>';
+		estadoAnterior=e;
+		pintarSerie().catch(()=>{});
+	}catch(err){console.warn('observador:',err)}
+}
+document.getElementById('tabs').addEventListener('click',ev=>{
+	const b=ev.target.closest('button');if(!b)return;
+	serAtivo=b.dataset.ser;
+	document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+	pintarSerie().catch(()=>{});
+});
+const estilo=document.createElement('style');
+estilo.textContent='@keyframes marcha{to{stroke-dashoffset:-48}}';
+document.head.appendChild(estilo);
+atualizar();setInterval(atualizar,1500);
+</script>
+</body>
+</html>
