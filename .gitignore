@@ -5,6 +5,8 @@ memorias/*/chat.jsonl
 memorias/*/chat-arquivado.jsonl
 memorias/*/diario.jsonl
 memorias/*/self-model.json
+# --- campada cognitiva: cópias byte-idênticas dos módulos por personagem ---
+memorias/*/mecanismos/
 reinicio.pendente
 episodios/
 experimento/
@@ -30,3 +32,6 @@ node_modules/
 .env
 *.env
 .aider*
+intervencoes-fila.json
+patch-*.js
+reverter-psicologia.js

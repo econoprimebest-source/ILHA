@@ -1,34 +1,14 @@
 'use strict';
-// memoria-personagem.js — M1 · ADAPTADOR DE MEMÓRIA ILHA ↔ ICAROOVO.
+// memoria-personagem.js — M1 · SISTEMA DE MEMÓRIA INDIVIDUAL DA ILHA AURORA.
 //
-// PRINCÍPIO (obrigatório, ver condições do M1):
+// PRINCÍPIO:
 //   Não otimizar a memória para a aparência de um diário humano. Otimizá-la
 //   para continuidade comportamental verificável: aquilo que o personagem
 //   viveu deve poder modificar o contexto cognitivo de uma decisão futura.
 //
-// As 12 condições do M1:
-//  1. sem segunda arquitetura — os mecanismos são os do ICAROOVO; o adaptador
-//     só os direcciona para um personagem (cópias byte-idênticas do fonte).
-//  2. sem conversa artificial — só ação, mundo e social viram turno;
-//     `system` é identidade (não é conversa).
-//  3. nunca copiar identidade/memória do Ícaro — o seed vem de historia-previa
-//     e da bíblia; os textos do ICAROOVO ('Rafael', 'cortrajetor') nunca
-//     entram em chat nenhum.
-//  4. diretório + estado isolados por personagem (memorias/<id>/).
-//  5. usar os mecanismos reais via adaptador (chat append-only, papéis,
-//     checkpoint de identidade, compactador).
-//  6. não alterar icaro-clean (somente leitura) nem cerebro-icaro.
-//  7. não tocar estado de produção (estado-ilha.json / logs da ilha).
-//  8. testar restart (reabrir).
-//  9. testar experiência reaparece no contexto do MESMO personagem.
-// 10. testar João ≠ memória de Maria, e vice-versa.
-// 11. testar compactação sem perda (arquiva tudo, preserva âncoras).
-// 12. nada de agricultura/economia/construção no M1 — o adaptador não decide
-//     nem prioriza nada: só registra o que já aconteceu.
-//
-// Isolamento: cada módulo do ICAROOVO resolve seus arquivos por `__dirname`,
+// Isolamento: cada módulo resolve seus arquivos por `__dirname`,
 // então copiar os módulos para memorias/<id>/ e requerer as CÓPIAS dá estado
-// isolado por personagem sem nenhuma alteração no código de origem.
+// isolado por personagem.
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -224,6 +204,11 @@ const LEGENDAS = {
 	coletar_madeira: i => 'Juntei madeira caída em ' + i.local + '.',
 	'caçar': i => 'Tentei caçar perto de ' + i.local + '.',
 	melhorar_abrigo: i => 'Melhorei meu abrigo com o que encontrei em ' + i.local + '.',
+	plantar: i => 'Plantei sementes e cuidei dos canteiros da horta em ' + i.local + '.',
+	colher_horta: i => 'Colhi legumes e raízes maduras na horta de ' + i.local + '.',
+	acender_fogueira: i => 'Acendi e alimentei a fogueira em ' + i.local + ' para manter o fogo vivo e afastar predadores.',
+	abrir_suprimento: i => 'Abri uma caixa de suprimentos que encontrei em ' + i.local + '.',
+	investigar_artefato: i => 'Investiguei um artefato misterioso que encontrei em ' + i.local + '.',
 	continuar: i => 'Continuei a caminho de ' + (i.destino || 'destino') + ' saindo de ' + i.de + '.'
 };
 

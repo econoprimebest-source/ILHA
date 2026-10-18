@@ -12,10 +12,17 @@
 //
 // Filtros sao regex puras, sem LLM. A extracao de topico usa extrator-topico
 // (Qwen, com cache), injetavel via opts.extrair para teste sem Ollama.
+//
+// CANONIZACAO (EXPERIMENTO 09/10-02, pos critica): o topico extraido passa por
+// nucleo-topicos.normalizarTopicoCanonico ANTES de registrarCrenca, com guarda
+// de polaridade (nao dilui valor de crenca com sinais opostos). Aplicado aqui,
+// a montante, para nao alterar nucleo-tracos.js (arquivo protegido).
 
 const PESO_DONO = 0.85;   // fala direta de Rafael
 const PESO_ICARO = 0.72;  // posicao propria antes de ratificacao
 const PESO_RATIFICACAO = 0.85;
+
+const NTp = require('./nucleo-topicos');
 
 const RE_1PESSOA = /\b(eu|me|mim|meu|minha|comigo)\b/i;
 const RE_PERSPECTIVA = /\b(para mim|pra mim|na minha visao|na minha opiniao|eu diria|eu considero|eu vejo|eu acho|eu penso|ao meu ver|eu sinto|eu gosto|eu prefiro)\b/i;
@@ -67,8 +74,11 @@ function ehFormulaAssistente(texto) {
 
 // Posicao que o proprio Icaro afirmou sobre si: 1a pessoa, nao fala do dono,
 // nao e ausencia ("nao sei"), nao e formula de servico.
+// PROV-FIX (11/10/2026, exp-03): testa sobre texto NORMALIZADO. Antes, o \b
+// de RE_SUBJETO_DONO nao casava depois de "ê" ("voce" acentuado passava livre),
+// entao inferencia do Icaro SOBRE o dono virava auto-crencia do modelo.
 function candidatoProprio(texto) {
-  const t = String(texto || '').replace(/\s+/g, ' ').trim();
+  const t = normalizarTexto(texto);
   if (t.length < MIN_RESP) return false;
   if (RE_AUSENCIA.test(t)) return false;
   if (ehFormulaAssistente(t)) return false;
@@ -78,8 +88,10 @@ function candidatoProprio(texto) {
 
 // Fala de Rafael que descreve o Icaro: segunda pessoa, afirmacao (sem "?"),
 // sem "eu ..." (isso seria opiniao do dono sobre si proprio).
+// PROV-FIX (11/10/2026, exp-03): idem normalizacao — \b nao casa pos-nao-ASCII,
+// entao "voce gosta de xadrez" (acentuado) era PERDIDO do caminho dono.
 function candidatoFalaDoDono(texto) {
-  const t = String(texto || '').replace(/\s+/g, ' ').trim();
+  const t = normalizarTexto(texto);
   if (t.length < MIN_DONO || t.length > MAX_DONO) return false;
   if (/\?/.test(t)) return false;
   if (!RE_SOBRE_ICARO.test(t)) return false;
@@ -122,9 +134,10 @@ async function alimentarCrenca(opts) {
   if (candidatoFalaDoDono(o.entradaDono)) {
     const e = await extrair(o.entradaDono);
     if (e && e.topico) {
-      topicoAdjacente = e.topico;
+      const topico = NTp.escolherTopico(e.topico, e.valor, estado.crencas);
+      topicoAdjacente = topico;
       const c = NT.registrarCrenca(estado, {
-        topico: e.topico,
+        topico: topico,
         valorNovo: e.valor,
         peso: PESO_DONO,
         origem: 'dono',
@@ -144,7 +157,7 @@ async function alimentarCrenca(opts) {
       const contextos = [];
       if (topicoAdjacente) contextos.push('topico_adjacente:' + topicoAdjacente);
       const c = NT.registrarCrenca(estado, {
-        topico: e.topico,
+        topico: NTp.escolherTopico(e.topico, e.valor, estado.crencas),
         valorNovo: e.valor,
         peso: PESO_ICARO,
         origem: 'modelo',

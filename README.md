@@ -20,11 +20,16 @@ O ciclo do estado é a chave de retomada. O registro é acrescentado antes do es
 
 ### Módulos, testes e limites
 
-`calendario.js` define calendário/estações; `estado-v2.js` contém o contrato e migração; `ecossistema.js` executa dinâmica ambiental e agentes sociais; `percepcao-v2.js` filtra pistas observáveis; `motor-v2.js` valida ações e atualiza o mundo; `decisor.js` integra com Ollama; `persistencia-v2.js` grava estado e eventos; `ilha.js` orquestra. Execute `node testes.js` para a suíte de contrato V5, migração, ações, falhas, persistência, retomada, ecologia, agentes sociais e trajetória. Requer Node.js 18+ e Ollama para execução com o decisor padrão.
+`calendario.js` define calendário/estações; `estado-v2.js` contém o contrato e migração; `ecossistema.js` executa dinâmica ambiental e agentes sociais; `percepcao-v2.js` filtra pistas observáveis; `motor-v2.js` valida ações e atualiza o mundo; `decisor.js` integra com o LLM (Ollama ou DeepSeek, via `ILHA_LLM_PROVIDER`); `persistencia-v2.js` grava estado e eventos; `ilha.js` orquestra. Execute `node testes.js` para a suíte de contrato V5, migração, ações, falhas, persistência, retomada, ecologia, agentes sociais e trajetória. Requer Node.js 18+ e um provedor LLM configurado (abaixo).
 
 Limitações: um agente ativo (Ícaro), populações animais agregadas, descoberta explícita ainda sem regra própria além de preservar legado, sem doenças/qualidade da água/reprodução humana; estados emocionais antigos são preservados, sem dinâmica subjetiva inventada. O comportamento do decisor é experimental e não é evidência de consciência. Não existe conexão configurada com `icaro-pc` ou memória de produção.
 
-Execução: `node ilha.js 1` (um ciclo) ou `node ilha.js 30`. Requer Node.js 18+ e Ollama em `127.0.0.1:11434`; por padrão usa `qwen3:8b`. `ILHA_MODELO` e `OLLAMA_URL` podem selecionar modelo e endpoint. Falha de conexão ou resposta inválida interrompe o ciclo; não há decisor substituto.
+Execução: `node ilha.js 1` (um ciclo) ou `node ilha.js 30`. Requer Node.js 18+ e um provedor LLM, escolhido por `ILHA_LLM_PROVIDER`:
+
+- `ollama` (padrão): endpoint local `http://127.0.0.1:11434/api/chat` (`OLLAMA_URL` muda o endpoint, `ILHA_MODELO` o modelo, padrão `qwen3:8b`), no formato próprio do Ollama (saída estruturada por JSON-Schema com `enum` de ações).
+- `deepseek`: API oficial `https://api.deepseek.com/chat/completions`, com `DEEPSEEK_API_KEY` no ambiente (via somente no cabeçalho `Authorization: Bearer`; nunca gravada em código, arquivo ou log) e `DEEPSEEK_MODEL` opcional (padrão `deepseek-chat`). Como a API não aceita schema de saída, o contrato JSON (ação entre as possíveis + motivo, objetivos opcionais) vai explícito no prompt e a resposta é lida de `choices[0].message.content`.
+
+`ILHA_LLM_TIMEOUT_MS` (padrão 60000) limita a espera nos dois provedores. Falha de conexão, HTTP de erro, resposta vazia ou JSON inválido interrompe o ciclo com erro explícito; não há decisor substituto que finja sucesso. `node teste-deepseek.js` cobre o provedor DeepSeek offline (fetch stubado).
 
 ## Fluxo
 

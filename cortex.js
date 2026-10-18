@@ -22,16 +22,17 @@ function registrar(s,e){
 	c.memoria=c.memoria.slice(-200);
 	// Diário de bordo: o que este ser viveu neste ciclo.
 	if(e.acao){
-		c.diario.push({ciclo:e.ciclo,acao:e.acao,motivo:String(e.motivo||'').slice(0,180),consequencia:e.consequencia?{quantidade:e.consequencia.quantidade||0}:null});
+		const q=e.consequencia&&Number(e.consequencia.quantidade)>0?Math.round(Number(e.consequencia.quantidade)*10)/10:0;
+		c.diario.push({ciclo:e.ciclo,acao:e.acao,motivo:String(e.motivo||'').slice(0,180),consequencia:e.consequencia?{quantidade:q}:null});
 		c.diario=c.diario.slice(-400);
 		s.experiencia=Array.isArray(s.experiencia)?s.experiencia:[];
-		s.experiencia.push('ciclo '+e.ciclo+': '+e.acao);
+		s.experiencia.push('ciclo '+e.ciclo+': '+e.acao+(q>0?' (obteve +'+q+' e saciou necessidade)':''));
 		if(s.experiencia.length>40)s.experiencia.shift();
 	}
 	// Objetivos: propostos pelo próprio cérebro na decisão (nunca por regra externa).
 	if(Array.isArray(e.objetivos)){
-		for(const o of e.objetivos){const t=String(o||'').trim().slice(0,160);if(t&&!c.objetivos.some(x=>x.texto===t))c.objetivos.push({texto:t,ciclo:e.ciclo})}
-		if(c.objetivos.length>8)c.objetivos=c.objetivos.slice(-8);
+		const novos=e.objetivos.map(o=>String(o||'').trim().slice(0,160)).filter(Boolean);
+		if(novos.length)c.objetivos=novos.map(texto=>({texto,ciclo:e.ciclo})).slice(0,6);
 	}
 	// Crenças: reflexões propostas pelo próprio cérebro (espaço de FASE G):
 	// experiência → reflexão → crença. Guardadas só no proponente.
@@ -46,7 +47,7 @@ function contexto(s){
 	return{identidade:{nome:c.nome,idade:c.idade},
 		passado:c.biografia.passado,
 		conhecimentos:c.biografia.conhecimentos,
-		diario:c.diario.slice(-6).map(d=>'ciclo '+d.ciclo+': '+d.acao+(d.motivo?' — '+d.motivo:'')),
+		diario:c.diario.slice(-6).map(d=>{const q=d.consequencia&&d.consequencia.quantidade>0?' [resultado: +'+d.consequencia.quantidade+']':'';return'ciclo '+d.ciclo+': '+d.acao+q+(d.motivo?' — '+d.motivo:'')}),
 		memoria:c.memoria.slice(-12),
 		trajetoriaRecente:c.trajetoria.slice(-8).map(t=>({ciclo:t.ciclo,acao:t.acao,motivo:String(t.motivo||'').slice(0,120),consequencia:t.consequencia?t.consequencia.quantidade:null})),
 		objetivos:c.objetivos.slice(-6),

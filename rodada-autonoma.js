@@ -17,6 +17,12 @@ const {aplicarMetabolismo}=require('./metab');
 const acontecimentos=require('./acontecimentos');
 const memoria=require('./memoria-personagem');
 
+// CAMPADA COGNITIVA (opt-in `ILHA_COG=1`) — require atrasado: a camada é
+// opcional e uma falha dela nunca derruba o ciclo do mundo.
+function cog(){
+	try{return require('./cognicao')}catch(e){return null}
+}
+
 // Contexto de decisão — CONTRATO (FASE B): ver cerebro-personagem.js.
 // O contexto é montado por `montarContexto` (só fatos que este ser conhece;
 // `acontecimentos` chega apenas como PISTAS indiretas da própria região).
@@ -109,10 +115,23 @@ async function rodada(estado,opcoes={}){
 		const possiveis=acoes(estado,ser);
 		const contexto=montarContexto(estado,ser,possiveis,situacao);
 		const decidir=cerebroDe(opcoes,ser);
+		// TRILHA CAUSAL (cognição): abre ANTES da decisão para registrar o que
+		// entrou no contexto; fecha depois com a consequência real do motor.
+		const C=cog();
+		let trilha=null,itens=null;
+		if(C&&C.estaAtivo()){
+			try{
+				trilha=C.abrirTrilha(ser,contexto,possiveis);
+				itens=C.itensDoContexto(contexto);
+			}catch(e){trilha=null}
+		}
 		let d;
 		try{d=validarDecisao(await decidir(contexto,possiveis,ser),possiveis,ser)}
-		catch(err){if(err&&typeof err==='object')err.decisao=true;throw err}
-		decisoes.push({ser,decisao:d,percepcao:contexto.percepcoes,situacao});
+		catch(err){
+			if(trilha){const C2=cog();if(C2)try{C2.abortarTrilha(trilha,{ser,erro:err})}catch(e){}}
+			if(err&&typeof err==='object')err.decisao=true;throw err
+		}
+		decisoes.push({ser,decisao:d,percepcao:contexto.percepcoes,situacao,trilha,itens});
 	}
 
 	const eventos=[];
@@ -120,7 +139,7 @@ async function rodada(estado,opcoes={}){
 		const ser=item.ser;
 		if(ser.status==='morto')continue;
 		const antes={local:ser.local,necessidades:{...ser.necessidades},inventario:{...ser.inventario}};
-		const con=executar(estado,ser,item.decisao.acao,undefined,{texto:item.decisao.texto,motivo:item.decisao.motivo});
+		const con=executar(estado,ser,item.decisao.acao,undefined,{texto:item.decisao.texto,fala:item.decisao.fala,motivo:item.decisao.motivo});
 		// O QUE ESTE SER ESTÁ FAZENDO AGORO — espelho do mundo para o
 		// observador (o visualizador mostra a atividade real, não uma regra).
 		ser.acao=item.decisao.acao;
@@ -132,11 +151,28 @@ async function rodada(estado,opcoes={}){
 			estado.mundo.ecossistema.agua.nascente=f.nivel;
 		}
 		const h=historicoDe(estado);
-		h.decisoes.push({ciclo:estado.mundo.tempo.ciclo,tempo:horaDe(estado.mundo.tempo.ciclo),serId:ser.id,local:antes.local,acao:item.decisao.acao,motivo:item.decisao.motivo||'',origem:item.decisao.origem||'modelo',...(item.situacao?{situacao:item.situacao.tipo}:{})});
+		const falaEfetiva=con.texto||item.decisao.fala||'';
+		h.decisoes.push({ciclo:estado.mundo.tempo.ciclo,tempo:horaDe(estado.mundo.tempo.ciclo),serId:ser.id,local:antes.local,acao:item.decisao.acao,motivo:item.decisao.motivo||'',...(falaEfetiva?{fala:falaEfetiva}:{}),origem:item.decisao.origem||'modelo',...(item.situacao?{situacao:item.situacao.tipo}:{})});
 		if(h.decisoes.length>600)h.decisoes.splice(0,h.decisoes.length-600);
 		if(con.deslocamento)marcarTempo(estado,{tipo:'deslocamento',fase:con.deslocamento.estado,serId:ser.id,nome:ser.nome,destino:con.deslocamento.destino,local:ser.local});
-		eventos.push({tipo:'rodada-autonoma',ciclo:estado.mundo.tempo.ciclo,serId:ser.id,nome:ser.nome,percepcao:item.percepcao,decisao:{acao:item.decisao.acao,motivo:item.decisao.motivo,origem:item.decisao.origem||'modelo',...(Array.isArray(item.decisao.objetivos)?{objetivos:item.decisao.objetivos}:{}),...(Array.isArray(item.decisao.crencas)?{crencas:item.decisao.crencas}:{})},antes,consequencia:con});
+		eventos.push({tipo:'rodada-autonoma',ciclo:estado.mundo.tempo.ciclo,serId:ser.id,nome:ser.nome,percepcao:item.percepcao,decisao:{acao:item.decisao.acao,motivo:item.decisao.motivo,...(falaEfetiva?{fala:falaEfetiva}:{}),origem:item.decisao.origem||'modelo',...(Array.isArray(item.decisao.objetivos)?{objetivos:item.decisao.objetivos}:{}),...(Array.isArray(item.decisao.crencas)?{crencas:item.decisao.crencas}:{})},antes,consequencia:con});
 		guardarExperiencia(estado,ser,item,antes,con);
+		// CAMPADA COGNITIVA — a verdade é a do MOTOR: só aqui a trilha fecha
+		// (com a consequência real) e o pós-turno vira estado dos mecanismos
+		// individuais. Tudo em try/catch: mecanismo quebrado não quebra mundo.
+		const C=cog();
+		if(C&&C.estaAtivo()){
+			if(item.trilha)try{
+				C.fecharTrilha(item.trilha,{ser,decisao:item.decisao,consequencia:con,itens:item.itens||[]});
+			}catch(e){}
+			try{
+				const entradaC=item.situacao&&Array.isArray(item.situacao.pistas)&&item.situacao.pistas.length
+					?item.situacao.pistas.join(' ')
+					:(Array.isArray(item.percepcao)?item.percepcao.slice(0,3).join(' '):'');
+				C.posConsequencia(ser,{ciclo:estado.mundo.tempo.ciclo,decisao:item.decisao,consequencia:con,
+					percepcao:item.percepcao,falasRecebidas:[],entrada:entradaC});
+			}catch(e){}
+		}
 	}
 	for(const item of decisoes){
 		if(item.ser.status==='morto')continue;
@@ -154,7 +190,8 @@ async function rodada(estado,opcoes={}){
 		const ser=estado.seres[evento.serId];
 		cortex.registrar(ser,{ciclo:estado.mundo.tempo.ciclo,percepcao:evento.percepcao,acao:evento.decisao.acao,motivo:evento.decisao.motivo,consequencia:evento.consequencia,objetivos:evento.decisao.objetivos,crencas:evento.decisao.crencas,experiencia:ser.nome+' realizou '+evento.decisao.acao+'.'});
 		ser.memoria=Array.isArray(ser.memoria)?ser.memoria:[];
-		for(const texto of evento.percepcao){if(!ser.memoria.some(m=>m.texto===texto))ser.memoria.push({ciclo:estado.mundo.tempo.ciclo,texto,tipo:'ambiente'});}
+		const corporal=/^(Minha boca|Sinto |Meu estômago|Mal consigo|Um cansaço|Meu coração|O escuro|A noite me deixa|Cheguei em casa)/;
+		for(const texto of evento.percepcao){if(!corporal.test(texto)&&!ser.memoria.some(m=>m.texto===texto))ser.memoria.push({ciclo:estado.mundo.tempo.ciclo,texto,tipo:'ambiente'});}
 		ser.memoria=ser.memoria.slice(-120);
 		evento.cicloFinal=estado.mundo.tempo.ciclo;
 		evento.statusFinal=ser.status;

@@ -14,6 +14,25 @@
   #cycle-info { display:inline-block; color:#dbeafe; font-weight:600; letter-spacing:.02em; }
   #btn-reiniciar { position:absolute; right:16px; top:16px; z-index:11; padding:10px 16px; border-radius:12px; border:1px solid #7f1d1d; background:rgba(127,29,29,.88); color:#fecaca; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
   #btn-reiniciar:hover { background:rgba(153,27,27,.95); transform:translateY(-1px); }
+  #btn-diretor { position:absolute; right:190px; top:16px; z-index:11; padding:10px 16px; border-radius:12px; border:1px solid #0284c7; background:rgba(3,105,161,.92); color:#e0f2fe; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
+  #btn-diretor:hover { background:rgba(2,132,199,.98); transform:translateY(-1px); }
+  #btn-predador-rapido { position:absolute; right:378px; top:16px; z-index:11; padding:10px 15px; border-radius:12px; border:1px solid #dc2626; background:linear-gradient(135deg,rgba(153,27,27,.94),rgba(127,29,29,.94)); color:#fee2e2; font-size:13.5px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #450a0a90; transition:all .2s ease; }
+  #btn-predador-rapido:hover { background:linear-gradient(135deg,#dc2626,#991b1b); transform:translateY(-1px); box-shadow:0 12px 30px #ef444466; }
+  .ev-pill { display:inline-flex; align-items:center; gap:5px; margin:4px 6px 0 0; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:700; background:rgba(15,23,42,.92); border:1px solid #38bdf8; color:#e0f2fe; box-shadow:0 4px 12px #0006; }
+  .ev-pill.predador { border-color:#ef4444; background:rgba(127,29,29,.92); color:#fecaca; animation:pulseDanger 1.4s infinite ease-in-out; }
+  .ev-pill.suprimento { border-color:#fbbf24; background:rgba(120,53,15,.92); color:#fef3c7; }
+  .ev-pill.artefato { border-color:#a855f7; background:rgba(88,28,135,.92); color:#f3e8ff; }
+  @keyframes pulseDanger { 0%,100%{transform:scale(1);} 50%{transform:scale(1.04);} }
+  #director-panel { position:absolute; right:16px; top:68px; z-index:15; width:min(380px,calc(100% - 32px)); max-height:calc(100% - 96px); overflow:auto; background:rgba(8,24,39,.96); backdrop-filter:blur(14px); border:1px solid #0284c7; border-radius:16px; padding:15px 16px; box-shadow:0 18px 44px #000b; }
+  #director-panel[hidden] { display:none; }
+  .dir-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .dir-btn { padding:9px 10px; border-radius:10px; border:1px solid #334155; background:#0f172a; color:#e2e8f0; font-size:12.5px; font-weight:600; text-align:left; cursor:pointer; transition:all .15s ease; }
+  .dir-btn:hover, .dir-btn.active { border-color:#38bdf8; background:#0c4a6e; color:#fff; }
+  .dir-field { margin-top:10px; display:flex; flex-direction:column; gap:4px; font-size:12px; color:#9fb2c5; }
+  .dir-field select, .dir-field input { padding:8px 10px; border-radius:8px; border:1px solid #334155; background:#091524; color:#fff; font-family:inherit; font-size:13px; }
+  .dir-submit { margin-top:12px; width:100%; padding:10px; border-radius:10px; border:none; background:linear-gradient(135deg,#0284c7,#2563eb); color:#fff; font-weight:700; font-size:13.5px; cursor:pointer; }
+  .dir-submit:hover { filter:brightness(1.1); }
+  .active-ev-pill { display:inline-flex; align-items:center; gap:6px; margin:4px 6px 0 0; padding:4px 10px; border-radius:99px; font-size:12px; font-weight:600; background:#1e293b; border:1px solid #38bdf8; color:#bae6fd; }
   #time-display { font-size:18px; font-weight:bold; color:#fbbf24; margin-top:5px; display:block; letter-spacing:.08em; text-shadow:0 0 18px #fbbf2460; }
   #tooltip { position:absolute; display:none; background:rgba(15,23,42,.95); color:#fff; padding:11px 13px; border-radius:8px; font-size:15px; line-height:1.5; pointer-events:none; border:1px solid #38bdf8; z-index:20; max-width:320px; white-space:pre-wrap; box-shadow:0 10px 15px -3px rgba(0,0,0,.5); }
   #side-column { min-height:0; display:grid; grid-template-rows:minmax(0,1.15fr) minmax(190px,.85fr); gap:14px; }
@@ -84,8 +103,58 @@
     <div id="header">
       <span id="cycle-info">Carregando estado...</span><br>
       <span id="time-display">--:--</span>
+      <div id="active-events-bar" style="margin-top:4px;"></div>
     </div>
+    <button id="btn-predador-rapido" title="Soltar um predador feroz imediatamente na ilha para testar a reação livre dos habitantes">&#128058; Soltar Predador</button>
+    <button id="btn-diretor" title="Manipular o mundo físico (Drops da Audiência, Clima, Artefatos, Predadores)">&#127916; Console do Diretor</button>
     <button id="btn-reiniciar" title="Salvar o estado atual em backups/ e iniciar um novo mundo">&#10227; Reiniciar mundo</button>
+    <div id="director-panel" hidden>
+      <div class="hp-head">
+        <div>
+          <div class="hp-title">Console do Diretor · Audiência</div>
+          <div class="hp-sub">Manipule apenas o MUNDO. Os habitantes percebem e decidem livremente.</div>
+        </div>
+        <button id="dir-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
+      </div>
+      <div class="dir-grid" id="dir-types">
+        <button type="button" class="dir-btn active" data-tipo="suprimento">&#127873; Drop de Suprimentos</button>
+        <button type="button" class="dir-btn" data-tipo="artefato">&#128302; Artefato Misterioso</button>
+        <button type="button" class="dir-btn" data-tipo="tempestade">&#9928; Tempestade Severa</button>
+        <button type="button" class="dir-btn" data-tipo="predador">&#128058; Soltar Predador</button>
+        <button type="button" class="dir-btn" data-tipo="cardume">&#128031; Abundância / Cardume</button>
+        <button type="button" class="dir-btn" data-tipo="seca">&#9728; Onda de Seca</button>
+      </div>
+      <div class="dir-field">
+        <label for="dir-local">Local da Intervenção no Mapa:</label>
+        <select id="dir-local">
+          <option value="acampamento">Acampamento</option>
+          <option value="fogueira">Fogueira</option>
+          <option value="rio">Rio</option>
+          <option value="bosque">Bosque</option>
+          <option value="floresta">Floresta</option>
+          <option value="mar">Mar / Praia</option>
+          <option value="barco">Cais do Barco</option>
+          <option value="cachoeira">Cachoeira</option>
+          <option value="fazenda">Fazenda</option>
+          <option value="casa_icaro">Casa do Ícaro e Lara</option>
+          <option value="casa_joao">Casa do João e Maria</option>
+        </select>
+      </div>
+      <div class="dir-field">
+        <label for="dir-patrocinador">Enviado por (Espectador / Patrocinador):</label>
+        <input id="dir-patrocinador" type="text" placeholder="Ex: Audiência VIP, Diretor..." value="Audiência Ao Vivo">
+      </div>
+      <div class="dir-field">
+        <label for="dir-msg">Bilhete / Inscrição física no objeto (opcional):</label>
+        <input id="dir-msg" type="text" placeholder="Ex: Apenas um pode ficar com a caixa...">
+      </div>
+      <div class="dir-field">
+        <label for="dir-duracao">Duração (ciclos):</label>
+        <input id="dir-duracao" type="number" min="1" max="30" value="6">
+      </div>
+      <button type="button" class="dir-submit" id="dir-enviar">&#9889; Disparar Evento no Mundo</button>
+      <div id="dir-feedback" style="margin-top:8px;font-size:12.5px;color:#38bdf8;"></div>
+    </div>
     <canvas id="game"></canvas>
     <div id="map-hint">Clique numa casa ou lugar da ilha para ver quem está lá, o que cada um está fazendo e o diário de bordo.</div>
     <div id="house-panel" hidden>
@@ -236,15 +305,18 @@ const ACOES = {
   comer:'comendo', beber:'bebendo água', banho:'tomando banho', arrumar_casa:'arrumando a casa',
   descansar:'descansando', esperar:'aguardando', observar:'observando', conviver:'conversando',
   falar:'falando', pescar:'pescando', colher_frutas:'colhendo frutos', coletar_agua:'coletando água',
-  coletar_madeira:'coletando madeira', cacar:'caçando', melhorar_abrigo:'melhorando o abrigo',
+  coletar_madeira:'coletando madeira', cacar:'caçando', 'caçar':'caçando', melhorar_abrigo:'melhorando o abrigo',
+  plantar:'plantando na horta', colher_horta:'colhendo na horta', acender_fogueira:'alimentando o fogo',
   continuar:'caminhando', moradia:'em casa', dormir:'dormindo', inspecionar:'inspecionando',
-  explorar:'explorando'
+  explorar:'explorando', abrir_suprimento:'abrindo caixa de suprimentos', investigar_artefato:'investigando artefato misterioso'
 };
 const CURTAS = {
   comer:'comer', beber:'beber', banho:'banho', arrumar_casa:'arrumar casa', descansar:'descansar',
   dormir:'dormir', esperar:'esperar', observar:'observar', conviver:'conversar', falar:'conversar',
   pescar:'pescar', colher_frutas:'colher', coletar_agua:'água', coletar_madeira:'madeira',
-  cacar:'caçar', melhorar_abrigo:'construir', continuar:'caminho', moradia:'em casa'
+  cacar:'caçar', 'caçar':'caçar', melhorar_abrigo:'construir', plantar:'plantar', colher_horta:'colher horta',
+  acender_fogueira:'acender fogo', continuar:'caminho', moradia:'em casa',
+  abrir_suprimento:'suprimento', investigar_artefato:'artefato'
 };
 
 /* Contorno da ilha: curvas bezier em coordenadas 0..1 do retangulo do mundo. */
@@ -304,24 +376,23 @@ const REGIOES = [
 
 /* Ancoras visuais dos locais com estrutura (deslocamento em relacao ao no). */
 const ANC = {
-  acampamento:{ dx:.016, dy:-.014, r:.030 },
-  fogueira:{ dx:-.005, dy:.014, r:.026 },
+  acampamento:{ dx:-.018, dy:.010, r:.030 },
+  fogueira:{ dx:0, dy:-.012, r:.028 },
   barco:{ dx:0, dy:-.012, r:.030 },
-  cachoeira:{ dx:0, dy:0, r:.026 },
-  fazenda:{ dx:0, dy:0, r:.030 },
-  bosque:{ dx:0, dy:0, r:.030 },
-  floresta:{ dx:0, dy:0, r:.030 }
+  cachoeira:{ dx:.076, dy:.005, r:.030 },
+  fazenda:{ dx:.002, dy:-.005, r:.032 },
+  bosque:{ dx:0, dy:0, r:.032 },
+  floresta:{ dx:0, dy:0, r:.032 }
 };
 /* Deslocamento vertical dos rotulos de texto (unidades do mundo).
-   Positivos precisam ficar >= 46 para nao colidir com o nome dos personagens
-   (nome fica ~26u abaixo dos pes). */
+   Positivos ficam abaixo das cercas/estruturas para nao colidir com personagens. */
 const ROT_DY = {
-  casa_icaro:46, casa_joao:46, casa_maria:46, acampamento:-40, cachoeira:-30,
-  fazenda:-46, mar:46, barco:56, rio:48, bosque:48, floresta:48, fogueira:68
+  casa_icaro:54, casa_joao:56, casa_maria:46, acampamento:36, cachoeira:36,
+  fazenda:42, mar:34, barco:48, rio:34, bosque:-32, floresta:-32, fogueira:-36
 };
 /* Deslocamento horizontal: evita rotulos sobrepostos em nos vizinhos. */
 const ROT_DX = {
-  fazenda:-30
+  fazenda:-6, cachoeira:0, fogueira:0, acampamento:-26
 };
 function nos(){ return (mapa && mapa.nos) || NOS_FALLBACK; }
 function arestas(){ return (mapa && mapa.arestas) || ARESTAS_FALLBACK; }
@@ -440,10 +511,16 @@ function getBarHTML(label, value, color, invertido){
 }
 function barrasDe(s){
   const n = s.necessidades || {};
-  return getBarHTML('Água', n.agua, '#38bdf8')
-       + getBarHTML('Alimento', n.alimento, '#fb923c')
-       + getBarHTML('Sono', n.sono, '#c084fc', true)
-       + getBarHTML('Higiene', n.higiene, '#22d3ee');
+  /* No motor, agua/alimento/sono são faltas (0 = pleno/saciado, 100 = crítico).
+     Convertemos para vitalidade positiva (100% = cheio/saudável) para leitura intuitiva! */
+  const hidratacao = Math.max(0, 100 - (Number(n.agua) || 0));
+  const saciedade  = Math.max(0, 100 - (Number(n.alimento) || 0));
+  const descanso   = Math.max(0, 100 - (Number(n.sono) || 0));
+  const saude      = Number(n.saude ?? 100);
+  return getBarHTML('Hidrata.', hidratacao, '#38bdf8')
+       + getBarHTML('Sacied.', saciedade, '#fb923c')
+       + getBarHTML('Energia', descanso, '#c084fc')
+       + getBarHTML('Saúde', saude, '#34d399');
 }
 function getCycleTimeLabel(periodo){
   switch(periodo){
@@ -465,15 +542,60 @@ function updateUI(){
   const clima = typeof climaRaw === 'string' ? climaRaw : (climaRaw && climaRaw.tipo) || 'limpo';
   const estacao = tempo.estacao;
 
-  document.getElementById('cycle-info').innerText = 'Ciclo ' + ciclo + ' • Dia ' + dia + (estacao ? ' • ' + estacao : '') + ' • Clima: ' + clima;
+  const ecoTop = (stateData.mundo && stateData.mundo.ecossistema) || {};
+  const saz = ecoTop.sazonalidade || {};
+  const mesTxt = saz.nome ? ('Mês ' + saz.mes + ' (' + saz.nome + ' · ' + (saz.icone || '🌱') + ' ' + saz.cultura + ')') : (estacao || '');
+  const peixesRio = ecoTop.peixes && ecoTop.peixes.rio ? Math.round(ecoTop.peixes.rio.populacao || 0) : 0;
+  const peixeTxt = (peixesRio > 0 && saz.cardumeNoRio !== false) ? ('🐟 Rio: ' + peixesRio) : '🐟 Rio: sem peixe';
+
+  document.getElementById('cycle-info').innerText = 'Ciclo ' + ciclo + ' • Dia ' + dia + ' • ' + mesTxt + ' • ' + peixeTxt + ' • Clima: ' + clima;
   document.getElementById('time-display').innerText = getCycleTimeLabel(periodo);
+
+  const barEv = document.getElementById('active-events-bar');
+  if(barEv){
+    const evsAtivos = (stateData.mundo && Array.isArray(stateData.mundo.acontecimentos))
+      ? stateData.mundo.acontecimentos.filter(a => a && a.ativo !== false)
+      : [];
+    const icones = { suprimento:'📦', artefato:'🔮', predador:'🐺', tempestade:'⛈️', seca:'☀️', cardume:'🐟', abundante:'🌿' };
+    barEv.innerHTML = evsAtivos.map(a => {
+      const rest = a.ateCiclo ? Math.max(1, a.ateCiclo - ciclo) : Math.max(1, (a.duracao || 6) - (a.idade || 0) + 1);
+      const loc = a.no ? nomeLocal(a.no) : (Array.isArray(a.locais) && a.locais.length <= 2 ? a.locais.map(nomeLocal).join(', ') : 'Ilha');
+      const pat = a.patrocinador ? ' · Patrocínio: ' + a.patrocinador : '';
+      const usos = a.usosRestantes != null ? ' (' + a.usosRestantes + ' usos)' : '';
+      return '<div class="ev-pill ' + a.tipo + '" title="' + (a.mensagem || a.descricao || '') + '">'
+        + (icones[a.tipo] || '✨') + ' <b>' + a.tipo.toUpperCase() + '</b> em ' + loc + usos + ' · ' + rest + 'c' + pat
+        + '</div>';
+    }).join('');
+  }
 
   const listSer = document.getElementById('list-seres');
   listSer.innerHTML = '';
 
+  const uDir = stateData && stateData.mundo && stateData.mundo.ultimoDiretor;
+  if (uDir && uDir.tipo) {
+    const dirCard = document.createElement('div');
+    dirCard.className = 'ser-card';
+    dirCard.style.background = 'rgba(139, 92, 246, 0.14)';
+    dirCard.style.borderColor = 'rgba(167, 139, 250, 0.45)';
+    dirCard.innerHTML = ''
+      + '<div class="ser-name">'
+      +   '<span style="color:#c4b5fd;">🎬 Cérebro do Mundo (Diretor IA)</span>'
+      +   '<span class="ser-status" style="color:#fde68a;">Ciclo ' + (uDir.ciclo || '?') + ' · ' + String(uDir.tipo).toUpperCase() + ' em ' + nomeLocal(uDir.local) + '</span>'
+      + '</div>'
+      + (uDir.raciocinio ? '<div class="agent-reason" style="color:#e9d5ff;font-style:italic;margin-bottom:4px;">🧠 "' + uDir.raciocinio + '"</div>' : '')
+      + (uDir.descricao ? '<div style="font-size:11.5px;color:#cbd5e1;">⚡ Pista física: ' + uDir.descricao + '</div>' : '');
+    listSer.appendChild(dirCard);
+  }
+
   vivos().forEach(s => {
     const card = document.createElement('div');
     card.className = 'ser-card';
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => {
+      selectedLocal = s.local;
+      renderPainelLocal();
+      carregarCortexSer(s.id);
+    });
     const isNight = ['noite','madrugada'].includes(periodo);
     const isHome = s.local === s.casa;
     const isExposed = isNight && !isHome;
@@ -486,13 +608,19 @@ function updateUI(){
     const cor = act.atual ? '#a7f3d0' : '#bae6fd';
     const ev = ultimoEvento(s.id);
     const motivo = s.motivo || (ev && ev.motivo) || '';
+    const o0 = s.cortex && Array.isArray(s.cortex.objetivos) && s.cortex.objetivos[0];
+    const textoMeta = typeof o0 === 'string' ? o0 : (o0 && (o0.texto || o0.tipo || ''));
+    const objAtivo = textoMeta
+      ? '<div style="font-size:11.5px;color:#fcd34d;margin-bottom:5px;">🎯 Meta: ' + textoMeta + '</div>'
+      : '';
     card.innerHTML = ''
       + '<div class="ser-name">'
       +   '<span style="color:' + (PALETTE[s.id] || '#fff') + '">' + s.nome + '</span>'
       +   '<span class="ser-status">' + nomeLocal(s.local) + ' · <span style="color:' + cor + '">' + act.texto + '</span> ' + shelterBadge + '</span>'
       + '</div>'
       + '<div class="agent-reason">"' + motivo + '"</div>'
-      + '<div class="ser-location" style="font-size:12px;color:#8fa4b8;margin-bottom:6px;">moradia: ' + nomeLocal(s.casa) + '</div>'
+      + objAtivo
+      + '<div class="ser-location" style="font-size:12px;color:#8fa4b8;margin-bottom:6px;">moradia: ' + nomeLocal(s.casa) + ' · 📦 água:' + Math.round(s.inventario?.agua||0) + ' alim:' + Math.round(s.inventario?.alimento||0) + ' · <span style="color:#a78bfa">ver CORTEX ↗</span></div>'
       + barrasDe(s);
     listSer.appendChild(card);
   });
@@ -519,6 +647,19 @@ function updateUI(){
     + '</div>').join('') || '<div class="empty-state">Sem eventos.</div>';
 }
 
+/* ---------- cache e inspetor CORTEX ---------- */
+const cortexCache = {};
+async function carregarCortexSer(serId){
+  try{
+    const r = await fetch('/api/cortex?ser=' + encodeURIComponent(serId));
+    const j = await r.json();
+    if(j && j.ok){
+      cortexCache[serId] = j;
+      renderPainelLocal();
+    }
+  }catch(e){}
+}
+
 /* ---------- painel da casa ---------- */
 function cartaoOcupante(s){
   const act = atividade(s);
@@ -531,6 +672,26 @@ function cartaoOcupante(s){
   const diarioHTML = diario.length
     ? diario.map(d => '<div><span class="dc">Ciclo ' + d.ciclo + '</span> · ' + fraseAcao(d.acao, s) + (d.motivo ? ' — ' + d.motivo : '') + '</div>').join('')
     : '<div style="color:#91a4b7">Sem entradas no diário.</div>';
+
+  const cx = cortexCache[s.id];
+  const tracos = (s.tracos || []).join(', ') || 'em formação';
+  const rels = s.relacoes ? Object.entries(s.relacoes).map(([k,v]) => k + ': afeto ' + Number(v.afeto||0).toFixed(0) + ' / conf ' + Number(v.confianca||0).toFixed(0)).join(' · ') : '';
+  let cortexHTML = '<div class="diary" style="border-top:1px solid #2b1d42;margin-top:8px;padding-top:8px;">'
+    + '<h4 style="color:#c4b5fd;">🧠 CORTEX Autônomo (Livre Arbítrio)</h4>'
+    + '<div style="font-size:11px;color:#cbd5e1;margin-bottom:4px;"><b>Traços:</b> ' + tracos + '</div>'
+    + (rels ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;"><b>Vínculos:</b> ' + rels + '</div>' : '');
+  if(cx){
+    const sm = cx.selfModel && cx.selfModel.resumo ? cx.selfModel.resumo : (cx.selfModel && cx.selfModel.identidade ? JSON.stringify(cx.selfModel.identidade) : '');
+    const prov = Array.isArray(cx.ultimasProveniencia) && cx.ultimasProveniencia.length
+      ? cx.ultimasProveniencia.slice(-3).reverse().map(p => '<div style="font-size:11px;color:#a78bfa;">• [' + (p.camada || 'cognição') + '] ' + (p.fala || p.resumo || p.acao || '') + '</div>').join('')
+      : '';
+    if(sm) cortexHTML += '<div style="font-size:11px;color:#e2e8f0;margin-bottom:4px;"><b>Auto-modelo:</b> ' + sm + '</div>';
+    if(prov) cortexHTML += '<div style="margin-top:4px;"><b style="font-size:10px;color:#94a3b8;text-transform:uppercase;">Fluxo Mental Recente:</b>' + prov + '</div>';
+  } else {
+    cortexHTML += '<button onclick="carregarCortexSer(\'' + s.id + '\')" style="background:#2e1065;color:#ddd6fe;border:1px solid #7c3aed;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;margin-top:4px;">Inspecionar Memória Profunda CORTEX</button>';
+  }
+  cortexHTML += '</div>';
+
   return '<div class="occ" style="border-left-color:' + (PALETTE[s.id] || '#64748b') + ';' + (s.status === 'morto' ? 'opacity:.72;' : '') + '">'
     + '<div class="occ-top"><span class="occ-name" style="color:' + (PALETTE[s.id] || '#fff') + '">' + s.nome + '</span>'
     + '<span class="occ-act ' + cls + '">' + rotulo + '</span></div>'
@@ -538,6 +699,7 @@ function cartaoOcupante(s){
     + (motivo ? '<div class="occ-motivo">"' + motivo + '"</div>' : '')
     + (s.status === 'morto' ? '<div class="occ-motivo">Falecido neste mundo — sem atividade atual.</div>' : '')
     + '<div class="occ-bars">' + barrasDe(s) + '</div>'
+    + cortexHTML
     + '<div class="diary"><h4>Diário de bordo</h4>' + diarioHTML + '</div>'
     + '</div>';
 }
@@ -556,7 +718,66 @@ function renderPainelLocal(){
   else if(moradores.length === 1) sub.textContent = 'Moradia de ' + moradores[0].nome;
   else sub.textContent = presentes.length ? 'Local de passagem ou de trabalho' : 'Ninguém mora aqui';
 
-  let html = '<div class="hp-block"><h3>Agora aqui</h3>';
+  let html = '';
+  if(['casa_joao','casa_icaro','casa_maria'].includes(selectedLocal)){
+    const noQuarto = presentes.filter(s => ['dormir','descansar'].includes(s.acao || (ultimoEvento(s.id)&&ultimoEvento(s.id).acao)));
+    const naCozinha = presentes.filter(s => ['comer','beber'].includes(s.acao || (ultimoEvento(s.id)&&ultimoEvento(s.id).acao)));
+    const naSala = presentes.filter(s => !noQuarto.includes(s) && !naCozinha.includes(s));
+    const badgeSer = s => '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;background:#0f172a;border:1px solid '+(PALETTE[s.id]||'#38bdf8')+';color:'+(PALETTE[s.id]||'#fff')+';font-size:11.5px;font-weight:700;margin:2px;">👤 '+s.nome+' ('+atividade(s).curta+')</span>';
+    html += '<div class="hp-block">'
+      + '<h3>🔍 Visão de Cima (Casa Sem Teto)</h3>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#1e1610;border:3px solid #5c3a1e;border-radius:12px;padding:10px;box-shadow:inset 0 2px 12px #000a;">'
+      +   '<div style="background:#2b1d12;border:1px dashed #785536;border-radius:8px;padding:8px;">'
+      +     '<div style="font-size:11px;font-weight:800;color:#fcd34d;margin-bottom:4px;">🛏️ QUARTO (Camas & Baú)</div>'
+      +     (noQuarto.length ? noQuarto.map(badgeSer).join('') : '<div style="font-size:11px;color:#94a3b8;">Cama vazia</div>')
+      +   '</div>'
+      +   '<div style="background:#262930;border:1px dashed #64748b;border-radius:8px;padding:8px;">'
+      +     '<div style="font-size:11px;font-weight:800;color:#38bdf8;margin-bottom:4px;">🍳 COZINHA (Fogão, Pia & Mesa)</div>'
+      +     (naCozinha.length ? naCozinha.map(badgeSer).join('') : '<div style="font-size:11px;color:#94a3b8;">Ninguém na cozinha</div>')
+      +   '</div>'
+      +   '<div style="grid-column:1 / -1;background:#311b1b;border:1px dashed #991b1b;border-radius:8px;padding:8px;">'
+      +     '<div style="font-size:11px;font-weight:800;color:#fca5a5;margin-bottom:4px;">🏠 SALA DE ESTAR & ENTRADA</div>'
+      +     (naSala.length ? naSala.map(badgeSer).join('') : '<div style="font-size:11px;color:#94a3b8;">Ninguém na sala</div>')
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }
+  if(selectedLocal === 'fazenda' && stateData && stateData.mundo && stateData.mundo.ecossistema){
+    const ecoP = stateData.mundo.ecossistema;
+    const h = ecoP.horta || {};
+    const saz = ecoP.sazonalidade || {};
+    const ativoH = Boolean(h.plantadoPor) && (Number(h.vida) || 0) > 0;
+    const vidaPct = ativoH ? Math.max(0, Math.min(100, Math.round(h.vida || 0))) : 0;
+    const corBar = vidaPct > 60 ? '#22c55e' : (vidaPct > 30 ? '#fbbf24' : '#ef4444');
+    html += '<div class="hp-block">'
+      + '<h3>🌱 Horta Sazonal · Mês de ' + (saz.nome || '—') + '</h3>'
+      + '<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px;font-size:12px;">'
+      +   '<div style="margin-bottom:6px;color:#cbd5e1;">Cultura do mês: <b>' + (saz.icone || '🌱') + ' ' + (saz.cultura || '—') + '</b></div>'
+      +   (ativoH
+            ? ('<div style="margin-bottom:6px;color:#a7f3d0;">Plantado por: <b>' + h.plantadoPor + '</b> (' + (h.cultura || saz.cultura) + ')</div>'
+               + '<div style="margin-bottom:6px;color:#94a3b8;">Sementes: ' + Math.round(h.plantados||0) + ' · Crescendo: ' + Math.round(h.crescendo||0) + ' · Maduros: <b>' + Math.round(h.maduros||0) + '</b></div>'
+               + '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span>❤️ Life da Plantação</span><b>' + vidaPct + '%</b></div>'
+               + '<div style="height:8px;background:#1e293b;border-radius:99px;overflow:hidden;"><div style="width:' + vidaPct + '%;height:100%;background:' + corBar + ';"></div></div>')
+            : '<div style="color:#94a3b8;">Canteiros vazios — só nasce quando um sobrevivente vier plantar.</div>')
+      + '</div></div>';
+  }
+  const evsLocal = (stateData && stateData.mundo && Array.isArray(stateData.mundo.acontecimentos))
+    ? stateData.mundo.acontecimentos.filter(a => a && a.ativo !== false && (a.no === selectedLocal || (Array.isArray(a.locais) && a.locais.includes(selectedLocal))))
+    : [];
+  if(evsLocal.length){
+    html += '<div class="hp-block"><h3>Fenômenos / Objetos no Local</h3>';
+    evsLocal.forEach(a => {
+      html += '<div class="occ" style="border-left-color:#fbbf24;">'
+        + '<div class="occ-top"><span class="occ-name" style="color:#fde68a;">' + a.tipo.toUpperCase() + '</span>'
+        + (a.patrocinador ? '<span class="occ-act">Patrocínio: ' + a.patrocinador + '</span>' : '') + '</div>'
+        + (a.mensagem ? '<div class="occ-motivo">"' + a.mensagem + '"</div>' : '')
+        + '<div style="font-size:11px;color:#94a3b8;">Expira no ciclo ' + a.ateCiclo + (a.usosRestantes != null ? ' · Usos restantes: ' + a.usosRestantes : '') + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="hp-block"><h3>Agora aqui</h3>';
   if(!presentes.length) html += '<div class="empty-state">Ninguém está neste local agora.</div>';
   presentes.forEach(s => { html += cartaoOcupante(s); });
   html += '</div>';
@@ -577,6 +798,80 @@ function renderPainelLocal(){
 }
 document.getElementById('hp-close').addEventListener('click', () => { selectedLocal = null; renderPainelLocal(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && selectedLocal){ selectedLocal = null; renderPainelLocal(); } });
+
+/* ---------- Console do Diretor / Audiência ---------- */
+let dirSelectedTipo = 'suprimento';
+const dirPanel = document.getElementById('director-panel');
+document.getElementById('btn-diretor').addEventListener('click', () => {
+  dirPanel.hidden = !dirPanel.hidden;
+  if(!dirPanel.hidden && selectedLocal){
+    const sel = document.getElementById('dir-local');
+    if(sel) sel.value = selectedLocal;
+  }
+});
+document.getElementById('dir-close').addEventListener('click', () => { dirPanel.hidden = true; });
+document.querySelectorAll('.dir-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    dirSelectedTipo = btn.getAttribute('data-tipo');
+  });
+});
+document.getElementById('dir-enviar').addEventListener('click', async () => {
+  const no = document.getElementById('dir-local').value;
+  const patrocinador = (document.getElementById('dir-patrocinador').value || '').trim() || 'Audiência';
+  const msgEl = document.getElementById('dir-msg') || document.getElementById('dir-mensagem');
+  const mensagem = msgEl ? msgEl.value.trim() : '';
+  const durEl = document.getElementById('dir-duracao');
+  const duracao = durEl ? (Number(durEl.value) || 6) : 6;
+  const fb = document.getElementById('dir-feedback');
+  const btn = document.getElementById('dir-enviar');
+  btn.disabled = true;
+  btn.textContent = 'Enviando para a Ilha...';
+  if(fb) fb.textContent = '';
+  try{
+    const r = await fetch('/api/intervir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: dirSelectedTipo, no, local: no, patrocinador, mensagem, duracao })
+    });
+    const j = await r.json();
+    if(j.ok){
+      if(msgEl) msgEl.value = '';
+      if(fb) fb.textContent = '✓ ' + dirSelectedTipo.toUpperCase() + ' materializado em ' + nomeLocal(no) + '!';
+      await fetchState();
+      setTimeout(() => { dirPanel.hidden = true; if(fb) fb.textContent = ''; }, 700);
+    } else {
+      alert('Erro na intervenção: ' + (j.erro || 'desconhecido'));
+    }
+  }catch(e){
+    alert('Falha de rede: ' + e.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '⚡ Disparar Evento no Mundo';
+  }
+});
+
+document.getElementById('btn-predador-rapido').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-predador-rapido');
+  const alvo = selectedLocal || 'bosque';
+  btn.disabled = true;
+  btn.textContent = '🐺 Soltando...';
+  try{
+    const r = await fetch('/api/intervir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: 'predador', no: alvo, local: alvo, patrocinador: 'Diretor', duracao: 8 })
+    });
+    const j = await r.json();
+    if(j.ok) await fetchState();
+  }catch(e){}
+  finally{
+    btn.disabled = false;
+    btn.innerHTML = '&#128058; Soltar Predador';
+  }
+});
+
 document.getElementById('btn-reiniciar').addEventListener('click', async () => {
   if(!confirm('Reiniciar o mundo?\n\nO estado atual e o log serão salvos em backups/ e um novo mundo (4 habitantes vivos, ciclo inicial) começará do zero.')) return;
   try {
@@ -1188,15 +1483,15 @@ function drawRotulos(box, noite){
 }
 
 /* ---------- rotas e personagens ---------- */
-const CHAR_DY = { acampamento: 24 }; /* em frente a fogueira pintada, nao em cima dela */
+const CHAR_DY = { acampamento: 18, fogueira: 22 }; /* em frente a fogueira pintada, nao em cima dela */
 function screenFromSer(s, box){
   const n = nos()[s.local] || { x:.5, y:.5 };
   const base = { x: box.x + box.w*n.x, y: box.y + box.h*n.y };
   const grupo = vivos().filter(o => o.local === s.local).sort((a,b) => a.id.localeCompare(b.id));
   const i = grupo.findIndex(o => o.id === s.id);
   const k = grupo.length || 1;
-  const dx = (i - (k-1)/2) * 34 * box.scale;
-  const dy = (17 + (CHAR_DY[s.local] || 0)) * box.scale + (k > 1 ? 6 * box.scale : 0);
+  const dx = (i - (k-1)/2) * 28 * box.scale;
+  const dy = (12 + (CHAR_DY[s.local] || 0)) * box.scale + (k > 1 ? 5 * box.scale : 0);
   return { x: base.x + dx, y: base.y + dy };
 }
 function casaScreen(s, box){
@@ -1239,82 +1534,296 @@ function animateActor(id, target, dt){
   return p;
 }
 function drawCharacter(x, y, ser, isNight, unit){
-  const u = unit;
+  /* Escala proporcional às pontes, árvores e casas de mapa-ilha-nova.png */
+  const u = unit * 0.78;
+  const now = performance.now();
+  const seed = ser.id.charCodeAt(0) * 17 + (ser.id.charCodeAt(1) || 0);
   const camisa = CAMISA[ser.id] || PALETTE[ser.id] || '#cbd5e1';
+  const corAura = PALETTE[ser.id] || '#38bdf8';
   const cabelo = CABELO[ser.id] || { cor:'#3a2f28', longo:false };
-  const pele = '#f1c39a';
-  const bob = Math.sin(Date.now()/260 + ser.id.charCodeAt(0))*1.6*u;
-  y += bob;
-  const F = y;
-  ctx.fillStyle = 'rgba(10,26,16,.34)';
-  ctx.beginPath();
-  ctx.ellipse(x, F + 2*u, 13*u, 4.6*u, 0, 0, Math.PI*2);
-  ctx.fill();
-  ctx.save();
-  if(isNight){ ctx.shadowBlur = 18*u; ctx.shadowColor = camisa; }
-  /* pernas e sapatos */
-  ctx.fillStyle = '#2f3f5a';
-  ctx.fillRect(x - 7.5*u, F - 11*u, 6*u, 8*u);
-  ctx.fillRect(x + 1.5*u, F - 11*u, 6*u, 8*u);
-  ctx.fillStyle = '#22303f';
-  ctx.fillRect(x - 8.5*u, F - 4*u, 7.5*u, 4*u);
-  ctx.fillRect(x + 1*u, F - 4*u, 7.5*u, 4*u);
-  /* braços */
-  ctx.fillStyle = camisa;
-  ctx.fillRect(x - 12*u, F - 25*u, 4.5*u, 12*u);
-  ctx.fillRect(x + 7.5*u, F - 25*u, 4.5*u, 12*u);
-  ctx.fillStyle = pele;
-  ctx.beginPath(); ctx.arc(x - 9.7*u, F - 12.5*u, 2.4*u, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + 9.7*u, F - 12.5*u, 2.4*u, 0, Math.PI*2); ctx.fill();
-  /* tronco */
-  ctx.fillStyle = camisa;
-  roundRect(x - 9.5*u, F - 27*u, 19*u, 17*u, 5*u);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.26)';
-  ctx.fillRect(x - 1.2*u, F - 26*u, 2.4*u, 9*u);
-  /* cabelo longo atrás */
-  if(cabelo.longo){
-    ctx.fillStyle = cabelo.cor;
-    ctx.beginPath(); ctx.ellipse(x - 8.5*u, F - 32*u, 3.6*u, 9*u, 0, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(x + 8.5*u, F - 32*u, 3.6*u, 9*u, 0, 0, Math.PI*2); ctx.fill();
-  }
-  /* cabeça */
-  const cy = F - 36*u;
-  ctx.fillStyle = pele;
-  ctx.beginPath(); ctx.arc(x, cy, 10*u, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x - 9.5*u, cy + 1*u, 2*u, 0, Math.PI*2); ctx.arc(x + 9.5*u, cy + 1*u, 2*u, 0, Math.PI*2); ctx.fill();
-  /* cabelo: coroa + franja */
-  ctx.fillStyle = cabelo.cor;
-  ctx.beginPath();
-  ctx.arc(x, cy, 10.3*u, Math.PI*1.02, Math.PI*1.98);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(x, cy - 5.5*u, 8.6*u, 4.6*u, 0, 0, Math.PI*2);
-  ctx.fill();
-  /* contorno leve */
-  ctx.strokeStyle = 'rgba(18,28,40,.22)';
-  ctx.lineWidth = 1*u;
-  ctx.beginPath(); ctx.arc(x, cy, 10*u, 0, Math.PI*2); ctx.stroke();
-  /* rosto */
-  ctx.fillStyle = '#2b2b2b';
-  ctx.beginPath(); ctx.arc(x - 3.4*u, cy + 1.4*u, 1.5*u, 0, Math.PI*2); ctx.arc(x + 3.4*u, cy + 1.4*u, 1.5*u, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = '#8a5a3a';
-  ctx.lineWidth = 1.2*u;
-  ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.arc(x, cy + 3.4*u, 3.2*u, Math.PI*.15, Math.PI*.85); ctx.stroke();
-  ctx.restore();
-
-  /* Nome abaixo dos pés — mesmo estilo da ilustração. */
-  rotuloTexto(x, F + 11*u, ser.nome, u, 12);
+  const pele = ser.id === 'joao' ? '#e5b287' : (ser.id === 'maria' ? '#f3c6a0' : (ser.id === 'lara' ? '#f6ceb0' : '#eac096'));
+  const peleSombra = '#c89267';
 
   const act = atividade(ser);
+  const acaoId = ser.acao || (ultimoEvento(ser.id) && ultimoEvento(ser.id).acao) || '';
+  const caminhando = acaoId === 'continuar' || acaoId.startsWith('ir_');
+  const dormindo = acaoId === 'dormir' || (isNight && (acaoId === 'descansar' || acaoId === 'esperar'));
+  const pescando = acaoId === 'pescar';
+  const cacando = acaoId === 'cacar' || acaoId === 'caçar';
+  const colhendo = acaoId === 'colher_frutas' || acaoId === 'coletar_madeira' || acaoId === 'coletar_agua' || acaoId === 'plantar' || acaoId === 'colher_horta' || acaoId === 'acender_fogueira';
+  const naTempestade = acontecimentosAtivos('tempestade').length > 0 && !(ser.casa && ser.local === ser.casa);
+
+  const passo = caminhando ? Math.sin(now/110 + seed)*5.0*u : Math.sin(now/320 + seed)*0.8*u;
+  const resp = Math.sin(now/240 + seed)*1.2*u;
+  const tremor = naTempestade ? Math.sin(now/45 + seed)*1.1*u : 0;
+  x += tremor;
+  y += (caminhando ? Math.abs(Math.sin(now/110 + seed))*2.0*u : resp*0.5);
+  const F = y;
+
+  ctx.save();
+  /* Sombra projetada no solo + aura real de estado emocional/físico */
+  const nec = ser.necessidades || {};
+  const frustrado = (Number(nec.frustracao) || 0) > 60 || acaoId === 'confrontar';
+  const assustado = (Number(nec.medo) || 0) > 60;
+  const feliz = (Number(nec.satisfacao) || 0) > 65 || acaoId === 'brincar' || acaoId === 'conviver';
+  const corEmo = frustrado ? '#ef4444' : (assustado ? '#f59e0b' : (feliz ? '#22c55e' : corAura));
+  if(frustrado || assustado || feliz){
+    const pulsoEmo = 1 + Math.sin(now/220)*0.12;
+    const gEmo = ctx.createRadialGradient(x, F + 2*u, 2*u, x, F + 2*u, 19*u*pulsoEmo);
+    gEmo.addColorStop(0, corEmo + '66');
+    gEmo.addColorStop(1, corEmo + '00');
+    ctx.fillStyle = gEmo;
+    ctx.beginPath(); ctx.ellipse(x, F + 2*u, 19*u*pulsoEmo, 7.5*u*pulsoEmo, 0, 0, Math.PI*2); ctx.fill();
+  }
+
+  ctx.fillStyle = 'rgba(10,18,14,.48)';
+  ctx.beginPath();
+  ctx.ellipse(x, F + 2*u, 14*u, 5*u, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.strokeStyle = corEmo + 'cc';
+  ctx.lineWidth = (frustrado || assustado) ? 2.2*u : 1.6*u;
+  ctx.beginPath();
+  ctx.ellipse(x, F + 2*u, 12*u, 4*u, 0, 0, Math.PI*2);
+  ctx.stroke();
+
+  if(isNight){
+    const lanterna = ctx.createRadialGradient(x, F - 22*u, 2*u, x, F - 22*u, 38*u);
+    lanterna.addColorStop(0, 'rgba(255,220,130,.32)');
+    lanterna.addColorStop(1, 'rgba(255,180,60,0)');
+    ctx.fillStyle = lanterna;
+    ctx.beginPath(); ctx.arc(x, F - 22*u, 38*u, 0, Math.PI*2); ctx.fill();
+  }
+
+  /* Cabelo longo (camada traseira com movimento de vento) */
+  if(cabelo.longo){
+    const ventoCab = Math.sin(now/380 + seed)*(naTempestade ? 4.0 : 1.6)*u;
+    ctx.fillStyle = cabelo.cor;
+    ctx.strokeStyle = '#1a1c2c';
+    ctx.lineWidth = 1.2*u;
+    ctx.beginPath();
+    ctx.moveTo(x - 10*u, F - 39*u);
+    ctx.quadraticCurveTo(x - 14*u + ventoCab, F - 27*u, x - 9.5*u + ventoCab, F - 19*u);
+    ctx.lineTo(x + 9.5*u + ventoCab, F - 19*u);
+    ctx.quadraticCurveTo(x + 14*u + ventoCab, F - 27*u, x + 10*u, F - 39*u);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  /* Pernas articuladas com calça e botas de couro */
+  const legL = passo * 0.45, legR = -passo * 0.45;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#1f2937';
+  ctx.lineWidth = 5.6*u;
+  ctx.beginPath();
+  ctx.moveTo(x - 4.5*u, F - 15*u);
+  ctx.lineTo(x - 5.2*u + legL*0.4, F - 8*u);
+  ctx.lineTo(x - 5.2*u + legL, F - 2.5*u);
+  ctx.moveTo(x + 4.5*u, F - 15*u);
+  ctx.lineTo(x + 5.2*u + legR*0.4, F - 8*u);
+  ctx.lineTo(x + 5.2*u + legR, F - 2.5*u);
+  ctx.stroke();
+
+  /* Botas de explorador */
+  ctx.fillStyle = '#451a03';
+  ctx.strokeStyle = '#1a1c2c';
+  ctx.lineWidth = 1.2*u;
+  roundRect(x - 8.5*u + legL, F - 4.5*u, 6.8*u, 4.5*u, 2*u); ctx.fill(); ctx.stroke();
+  roundRect(x + 1.8*u + legR, F - 4.5*u, 6.8*u, 4.5*u, 2*u); ctx.fill(); ctx.stroke();
+
+  /* Mochila de sobrevivência nas costas */
+  ctx.fillStyle = '#5c3a1e';
+  roundRect(x - 11.2*u, F - 30*u, 22.4*u, 13*u, 4*u);
+  ctx.fill(); ctx.stroke();
+
+  /* Tronco com jaqueta/túnica de aventura e contorno escuro estilo RPG */
+  const gradTorso = ctx.createLinearGradient(x - 10*u, F - 31*u, x + 10*u, F - 14*u);
+  gradTorso.addColorStop(0, camisa);
+  gradTorso.addColorStop(1, '#1e293b');
+  ctx.fillStyle = gradTorso;
+  ctx.beginPath();
+  ctx.moveTo(x - 9.5*u, F - 30*u);
+  ctx.quadraticCurveTo(x, F - 32*u, x + 9.5*u, F - 30*u);
+  ctx.lineTo(x + 8*u, F - 14*u);
+  ctx.quadraticCurveTo(x, F - 13*u, x - 8*u, F - 14*u);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#1a1c2c';
+  ctx.lineWidth = 1.5*u;
+  ctx.stroke();
+
+  /* Gola e cinto com fivela dourada */
+  ctx.fillStyle = peleSombra;
+  ctx.beginPath(); ctx.moveTo(x - 3.5*u, F - 30.5*u); ctx.lineTo(x, F - 26.5*u); ctx.lineTo(x + 3.5*u, F - 30.5*u); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#3e2723';
+  ctx.fillRect(x - 8.2*u, F - 16.5*u, 16.4*u, 2.8*u);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillRect(x - 2*u, F - 16.7*u, 4*u, 3.2*u);
+
+  /* Braços articulados */
+  const swing = caminhando ? -passo * 0.55 : Math.sin(now/280 + seed)*1.5*u;
+  const maoDirY = (pescando || cacando || colhendo) ? (F - 24*u + Math.sin(now/160)*2.5*u) : (F - 16*u - swing);
+  const maoDirX = (pescando || cacando) ? (x + 15*u) : (x + 11.5*u);
+
+  ctx.strokeStyle = camisa;
+  ctx.lineWidth = 4.6*u;
+  ctx.beginPath(); ctx.moveTo(x - 9.2*u, F - 28.5*u); ctx.lineTo(x - 11.8*u, F - 21*u + swing*0.5); ctx.stroke();
+  ctx.strokeStyle = pele;
+  ctx.lineWidth = 3.8*u;
+  ctx.beginPath(); ctx.moveTo(x - 11.8*u, F - 21*u + swing*0.5); ctx.lineTo(x - 11.2*u, F - 15.5*u + swing); ctx.stroke();
+  ctx.fillStyle = pele;
+  ctx.beginPath(); ctx.arc(x - 11.2*u, F - 15.2*u + swing, 2.5*u, 0, Math.PI*2); ctx.fill();
+
+  ctx.strokeStyle = camisa;
+  ctx.lineWidth = 4.6*u;
+  ctx.beginPath(); ctx.moveTo(x + 9.2*u, F - 28.5*u); ctx.lineTo(x + 11.8*u, F - 22*u); ctx.stroke();
+  ctx.strokeStyle = pele;
+  ctx.lineWidth = 3.8*u;
+  ctx.beginPath(); ctx.moveTo(x + 11.8*u, F - 22*u); ctx.lineTo(maoDirX, maoDirY); ctx.stroke();
+  ctx.fillStyle = pele;
+  ctx.beginPath(); ctx.arc(maoDirX, maoDirY, 2.5*u, 0, Math.PI*2); ctx.fill();
+
+  /* Ferramentas conforme a ação */
+  if(pescando){
+    ctx.strokeStyle = '#92400e';
+    ctx.lineWidth = 2*u;
+    ctx.beginPath(); ctx.moveTo(maoDirX, maoDirY); ctx.lineTo(x + 32*u, F - 38*u); ctx.stroke();
+    ctx.strokeStyle = 'rgba(224,242,254,.85)';
+    ctx.lineWidth = 1.1*u;
+    ctx.beginPath(); ctx.moveTo(x + 32*u, F - 38*u); ctx.lineTo(x + 34*u, F + 4*u); ctx.stroke();
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(x + 34*u, F + 4*u + Math.sin(now/200)*1.5*u, 2.4*u, 0, Math.PI*2); ctx.fill();
+  } else if(cacando){
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2.2*u;
+    ctx.beginPath(); ctx.moveTo(maoDirX - 6*u, maoDirY + 8*u); ctx.lineTo(maoDirX + 14*u, maoDirY - 18*u); ctx.stroke();
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath(); ctx.moveTo(maoDirX + 14*u, maoDirY - 18*u); ctx.lineTo(maoDirX + 18*u, maoDirY - 23*u); ctx.lineTo(maoDirX + 12*u, maoDirY - 21*u); ctx.closePath(); ctx.fill();
+  } else if(acaoId === 'plantar'){
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2.2*u;
+    ctx.beginPath(); ctx.moveTo(maoDirX - 3*u, maoDirY - 10*u); ctx.lineTo(maoDirX + 9*u, maoDirY + 12*u); ctx.stroke();
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(maoDirX + 6*u, maoDirY + 10*u, 6*u, 3*u);
+  } else if(acaoId === 'acender_fogueira' || acaoId === 'coletar_madeira'){
+    ctx.fillStyle = '#5c3a1e';
+    roundRect(maoDirX - 3*u, maoDirY - 3*u, 11*u, 4.5*u, 1.5*u); ctx.fill();
+  } else if(acaoId === 'beber' || acaoId === 'coletar_agua'){
+    ctx.fillStyle = '#0284c7';
+    roundRect(maoDirX - 2*u, maoDirY - 4*u, 5.5*u, 7*u, 1.5*u); ctx.fill();
+  } else if(acaoId === 'comer' || acaoId === 'colher_frutas' || acaoId === 'colher_horta'){
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath(); ctx.arc(maoDirX + 1*u, maoDirY - 2*u, 3.2*u, 0, Math.PI*2); ctx.fill();
+  }
+
+  /* Pescoço e Cabeça */
+  ctx.fillStyle = peleSombra;
+  ctx.fillRect(x - 2.6*u, F - 34*u, 5.2*u, 4.5*u);
+
+  const cy = F - 41*u + resp*0.35;
+  const gradFace = ctx.createRadialGradient(x - 2.5*u, cy - 2.5*u, 1.5*u, x, cy, 11.5*u);
+  gradFace.addColorStop(0, '#ffe4c4');
+  gradFace.addColorStop(0.65, pele);
+  gradFace.addColorStop(1, peleSombra);
+  ctx.fillStyle = gradFace;
+  ctx.strokeStyle = '#1a1c2c';
+  ctx.lineWidth = 1.4*u;
+  ctx.beginPath(); ctx.ellipse(x, cy, 9.8*u, 10.6*u, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+
+  /* Olhos e expressão */
+  const piscando = dormindo || ((Math.floor((now + seed*300)/3400) % 11 === 0) && ((now % 3400) < 150));
+  const olharX = caminhando ? Math.sin(now/400)*0.8*u : 0;
+  if(piscando){
+    ctx.strokeStyle = '#3a281e';
+    ctx.lineWidth = 1.5*u;
+    ctx.beginPath();
+    ctx.moveTo(x - 5.5*u, cy + 0.2*u); ctx.quadraticCurveTo(x - 3.8*u, cy + 1.4*u, x - 2*u, cy + 0.2*u);
+    ctx.moveTo(x + 2*u, cy + 0.2*u); ctx.quadraticCurveTo(x + 3.8*u, cy + 1.4*u, x + 5.5*u, cy + 0.2*u);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(x - 3.8*u, cy + 0.2*u, 2.2*u, 1.7*u, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + 3.8*u, cy + 0.2*u, 2.2*u, 1.7*u, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = ser.id === 'lara' ? '#2563eb' : (ser.id === 'icaro' ? '#15803d' : '#1e1b18');
+    ctx.beginPath(); ctx.arc(x - 3.8*u + olharX, cy + 0.3*u, 1.3*u, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 3.8*u + olharX, cy + 0.3*u, 1.3*u, 0, Math.PI*2); ctx.fill();
+  }
+
+  /* Boca */
+  const medoAlto = (ser.necessidades && ser.necessidades.medo > 65);
+  ctx.strokeStyle = '#7c4328';
+  ctx.lineWidth = 1.4*u;
+  ctx.beginPath();
+  if(acaoId === 'falar' || acaoId === 'conviver'){
+    ctx.fillStyle = '#7f1d1d';
+    ctx.ellipse(x, cy + 5.2*u, 2.2*u, (1.1 + Math.abs(Math.sin(now/120))*1.2)*u, 0, 0, Math.PI*2);
+    ctx.fill();
+  } else if(medoAlto){
+    ctx.arc(x, cy + 6.5*u, 2.4*u, Math.PI*1.15, Math.PI*1.85);
+    ctx.stroke();
+  } else {
+    ctx.arc(x, cy + 4.2*u, 2.8*u, Math.PI*.18, Math.PI*.82);
+    ctx.stroke();
+  }
+
+  /* Cabelo superior volumoso */
+  ctx.fillStyle = cabelo.cor;
+  ctx.strokeStyle = '#1a1c2c';
+  ctx.lineWidth = 1.3*u;
+  ctx.beginPath();
+  ctx.arc(x, cy - 1.8*u, 10.5*u, Math.PI*0.92, Math.PI*2.08);
+  ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - 10*u, cy - 3*u);
+  ctx.quadraticCurveTo(x - 3*u, cy - 9.5*u, x + 2*u, cy - 4.5*u);
+  ctx.quadraticCurveTo(x + 6*u, cy - 8*u, x + 10*u, cy - 2.5*u);
+  ctx.quadraticCurveTo(x, cy - 12*u, x - 10*u, cy - 3*u);
+  ctx.fill();
+
+  ctx.restore();
+
+  /* Crachá de nome + barra de saúde compacta */
+  rotuloTexto(x, F + 11*unit, ser.nome, unit, 11.2);
+  const saudePct = Math.max(0, Math.min(100, Number(ser.necessidades && ser.necessidades.saude) || 100));
+  ctx.save();
+  ctx.fillStyle = 'rgba(8,20,32,.85)';
+  roundRect(x - 12*unit, F + 16.5*unit, 24*unit, 3.2*unit, 1.6*unit);
+  ctx.fill();
+  ctx.fillStyle = saudePct > 60 ? '#34d399' : (saudePct > 30 ? '#fbbf24' : '#ef4444');
+  roundRect(x - 11.5*unit, F + 17*unit, 23*unit*(saudePct/100), 2.2*unit, 1.2*unit);
+  ctx.fill();
+  ctx.restore();
+
+  const evSer = ultimoEvento(ser.id);
+  const falaRecente = (evSer && evSer.fala) || ser.ultimaFala || '';
+  const balaoTexto = falaRecente ? ('💬 "' + falaRecente.slice(0, 28) + (falaRecente.length > 28 ? '…"' : '"')) : (act.curta ? act.curta : '');
+  if(balaoTexto){
+    ctx.save();
+    ctx.font = '700 ' + (9.2*unit) + 'px Segoe UI';
+    const tw = ctx.measureText(balaoTexto).width + 10*unit;
+    const bh = 14*unit;
+    const bx = x - tw/2, by = F - 53*unit;
+    ctx.fillStyle = falaRecente ? 'rgba(30,27,75,.92)' : 'rgba(15,23,42,.88)';
+    ctx.strokeStyle = falaRecente ? '#a78bfa' : (PALETTE[ser.id] || '#64748b');
+    ctx.lineWidth = 1.2*unit;
+    roundRect(bx, by, tw, bh, 5*unit);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#f8fafc';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(balaoTexto, x, by + bh/2);
+    ctx.restore();
+  }
 
   if(hoveredSerId === ser.id){
     ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2*unit;
+    ctx.lineWidth = 1.8*unit;
     ctx.setLineDash([3*unit, 3*unit]);
     ctx.beginPath();
-    ctx.arc(x, y - 22*unit, 24*unit, 0, Math.PI*2);
+    ctx.arc(x, y - 18*unit, 22*unit, 0, Math.PI*2);
     ctx.stroke();
     ctx.setLineDash([]);
     tooltip.style.display = 'block';
@@ -1322,74 +1831,569 @@ function drawCharacter(x, y, ser, isNight, unit){
     tooltip.style.top = (mouseY + 15) + 'px';
     tooltip.innerText = ser.nome + '\nStatus: ' + ser.status + '\nAção: ' + act.texto
       + '\nMoradia: ' + nomeLocal(ser.casa)
-      + '\nÁgua: ' + (Number(ser.necessidades && ser.necessidades.agua) || 0).toFixed(1)
-      + '\nComida: ' + (Number(ser.necessidades && ser.necessidades.alimento) || 0).toFixed(1)
-      + '\nSono: ' + (Number(ser.necessidades && ser.necessidades.sono) || 0).toFixed(1);
+      + '\nSaúde: ' + saudePct.toFixed(0) + '%'
+      + '\nHidratação: ' + Math.max(0, 100 - (Number(ser.necessidades && ser.necessidades.agua) || 0)).toFixed(0) + '%'
+      + '\nSaciedade: ' + Math.max(0, 100 - (Number(ser.necessidades && ser.necessidades.alimento) || 0)).toFixed(0) + '%'
+      + '\nEnergia: ' + Math.max(0, 100 - (Number(ser.necessidades && ser.necessidades.sono) || 0)).toFixed(0) + '%';
   }
 }
 
-/* ---------- predador (acontecimento ativo do mundo) ---------- */
+/* ---------- vida ambiental alinhada 100% ao pixel-art de mapa-ilha-nova.png ---------- */
+const COPAS_PIXEL_MAPA = [
+  /* Bosque (Noroeste) */
+  { u:.272, v:.265, r:.028, frutifera:true }, { u:.315, v:.250, r:.030, frutifera:true },
+  { u:.352, v:.282, r:.028, frutifera:true }, { u:.288, v:.320, r:.028, frutifera:true },
+  { u:.338, v:.338, r:.026, frutifera:false }, { u:.242, v:.310, r:.026, frutifera:false },
+  /* Floresta Densa (Nordeste) */
+  { u:.762, v:.220, r:.030, frutifera:false }, { u:.805, v:.235, r:.032, frutifera:false },
+  { u:.848, v:.255, r:.030, frutifera:false }, { u:.778, v:.285, r:.030, frutifera:false },
+  { u:.825, v:.305, r:.030, frutifera:false }, { u:.868, v:.320, r:.028, frutifera:false },
+  { u:.752, v:.348, r:.028, frutifera:false }, { u:.802, v:.365, r:.028, frutifera:false },
+  /* Árvores centrais e costeiras */
+  { u:.620, v:.435, r:.026, frutifera:true },  { u:.585, v:.625, r:.028, frutifera:false },
+  { u:.632, v:.655, r:.028, frutifera:false }, { u:.165, v:.585, r:.026, frutifera:false },
+  { u:.305, v:.815, r:.028, frutifera:false }, { u:.552, v:.785, r:.026, frutifera:false }
+];
+/* Os 3 trechos reais de água do rio em mapa-ilha-nova.png (respeitando as 2 pontes de madeira!) */
+const TRECHOS_RIO_PIXEL = [
+  [[.733,.142],[.722,.195],[.708,.245],[.702,.274]], /* Cachoeira até Ponte Norte (ponte em y=.285..330) */
+  [[.696,.342],[.699,.395],[.700,.445],[.697,.492]], /* Entre Ponte Norte e Ponte Sul (ponte em y=.502..552) */
+  [[.693,.562],[.689,.625],[.689,.685],[.693,.745],[.698,.800]] /* Abaixo da Ponte Sul até a Foz */
+];
+/* Os 3 canteiros cercados de madeira pintados em mapa-ilha-nova.png */
+const CANTEIROS_MAPA = [
+  { id:'fazenda_principal', u0:.924, v0:.522, u1:.977, v1:.588, principal:true },
+  { id:'horta_joao',        u0:.556, v0:.156, u1:.605, v1:.230, principal:false },
+  { id:'horta_icaro',       u0:.290, v0:.444, u1:.349, v1:.516, principal:false }
+];
+
+function drawAmbienteVivo(box, w, h, now, noite, tarde){
+  const u = box.scale;
+  const climaStr = (stateData && stateData.mundo && (typeof stateData.mundo.clima === 'string' ? stateData.mundo.clima : (stateData.mundo.clima && stateData.mundo.clima.tipo))) || '';
+  const chovendo = climaStr.includes('chuva') || acontecimentosAtivos('tempestade').length > 0;
+  const temTempestade = acontecimentosAtivos('tempestade').length > 0 || climaStr === 'chuva_forte';
+  const ventoForca = temTempestade ? 2.4 : (chovendo ? 1.45 : 0.75);
+  const eco = (stateData && stateData.mundo && stateData.mundo.ecossistema) || {};
+  const fogueira = eco.fogueira || { acesa: !temTempestade, lenha: 5 };
+  const horta = eco.horta || { plantados: 0, crescendo: 0, maduros: 0, vida: 0, capacidade: 12 };
+  const saz = eco.sazonalidade || {};
+
+  ctx.save();
+
+  /* 1. VEGETAÇÃO VIVA E FRUTOS SAZONAIS (Sem distorcer a imagem de fundo — zero efeito de vertigem!) */
+  const temFrutos = Object.values(eco.arvores || {}).some(a => a && a.viva !== false && (a.frutos || 0) >= 0.5);
+  COPAS_PIXEL_MAPA.forEach((tr, idx) => {
+    const cx = box.x + box.w * tr.u;
+    const cy = box.y + box.h * tr.v;
+    const rad = box.w * tr.r;
+    const fase = now / (temTempestade ? 480 : 950) + idx * 1.7;
+    const brisa = Math.sin(fase) * (temTempestade ? 1.6 : 0.7) * u;
+
+    /* Pequenos tufos de folhas vivas na borda da copa (sem recortar nem mexer a imagem do mapa!) */
+    ctx.save();
+    const folhasCopa = [[-0.45, -0.25], [0.42, -0.20], [-0.25, 0.30], [0.32, 0.25]];
+    for(let f = 0; f < folhasCopa.length; f++){
+      const [ox, oy] = folhasCopa[f];
+      const fx = cx + ox * rad + brisa * (f % 2 === 0 ? 1 : 0.7);
+      const fy = cy + oy * rad;
+      const ang = Math.sin(fase + f) * (temTempestade ? 0.28 : 0.12);
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.rotate(ang);
+      ctx.fillStyle = noite ? 'rgba(22, 101, 52, 0.45)' : 'rgba(74, 222, 128, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 3.2 * u, 1.5 * u, 0.3 * f, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+
+    /* Frutos da estação nas copas do Bosque quando há frutos maduros no mês */
+    if(tr.frutifera && temFrutos){
+      ctx.save();
+      ctx.fillStyle = saz.cor || '#ef4444';
+      ctx.strokeStyle = '#450a0a';
+      ctx.lineWidth = 0.9 * u;
+      const ptsF = [[-0.35, -0.15], [0.28, -0.22], [0.08, 0.22], [-0.18, 0.28]];
+      for(const [ox, oy] of ptsF){
+        const fx = cx + ox * rad + brisa * 0.35;
+        const fy = cy + oy * rad;
+        ctx.beginPath(); ctx.arc(fx, fy, 2.3 * u, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  });
+
+  /* Folhas sopradas pelo vento através da ilha (mais intensas na chuva/tempestade) */
+  const numFolhas = temTempestade ? 18 : 7;
+  for(let i = 0; i < numFolhas; i++){
+    const prog = ((now / (temTempestade ? 2400 : 5800)) + i * 0.13) % 1;
+    const lx = box.x + box.w * (0.88 - prog * 0.76);
+    const ly = box.y + box.h * (0.18 + ((i * 0.19) % 0.58) + Math.sin(now/280 + i)*0.02);
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(now/220 + i);
+    ctx.fillStyle = i % 2 === 0 ? '#4ade80' : '#22c55e';
+    ctx.beginPath(); ctx.ellipse(0, 0, 2.8*u, 1.4*u, 0, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  /* 2. ÁGUA CORRENTE DO RIO E CACHOEIRA (Estritamente dentro da calha pintada, sem cruzar as pontes!) */
+  ctx.save();
+  ctx.lineCap = 'round';
+  for(const seg of TRECHOS_RIO_PIXEL){
+    for(let f = 0; f < 3; f++){
+      ctx.beginPath();
+      for(let i = 0; i < seg.length; i++){
+        const rp = P(seg[i][0], seg[i][1]);
+        const dx = (f - 1)*3.6*u + Math.sin(now/340 + i*1.5 + f)*1.6*u;
+        if(i === 0) ctx.moveTo(rp.x + dx, rp.y);
+        else ctx.lineTo(rp.x + dx, rp.y);
+      }
+      ctx.strokeStyle = noite ? 'rgba(186,230,253,.38)' : 'rgba(240,249,255,.68)';
+      ctx.lineWidth = (1.7 - f*0.25)*u;
+      ctx.setLineDash([6*u, 11*u]);
+      ctx.lineDashOffset = -((now/(26 + f*8)) % 90)*u;
+      ctx.stroke();
+    }
+  }
+  ctx.setLineDash([]);
+
+  /* Queda d'água viva exatamente na Cachoeira pintada em (0.733, 0.038..0.138) */
+  const cachTop = P(0.733, 0.042), cachBot = P(0.733, 0.138);
+  for(let k = 0; k < 6; k++){
+    const drop = ((now/210 + k*0.17) % 1);
+    const dy = cachTop.y + (cachBot.y - cachTop.y) * drop;
+    ctx.fillStyle = noite ? 'rgba(186,230,253,.55)' : 'rgba(255,255,255,.82)';
+    ctx.beginPath();
+    ctx.ellipse(cachTop.x + (k - 2.5)*2.5*u, dy, 1.8*u, 4.8*u, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.fillStyle = noite ? 'rgba(186,230,253,.38)' : 'rgba(255,255,255,.72)';
+  ctx.beginPath();
+  ctx.ellipse(cachBot.x, cachBot.y + 2*u, (12 + Math.sin(now/160)*2.5)*u, 4.2*u, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  /* 3. HORTA SAZONAL COM BARRA DE LIFE (SÓ TEM PLANTAS SE ELES PLANTARAM!) */
+  const plantouReal = Boolean(horta.plantadoPor) && (Number(horta.vida) || 0) > 0;
+  const totalPl = plantouReal ? Math.min(12, Math.round((horta.plantados || 0) + (horta.crescendo || 0) + (horta.maduros || 0))) : 0;
+  const madurosN = plantouReal ? Math.round(horta.maduros || 0) : 0;
+  const crescN = plantouReal ? Math.round(horta.crescendo || 0) : 0;
+  const corFrutoHorta = horta.cor || saz.cor || '#f97316';
+  CANTEIROS_MAPA.forEach(cant => {
+    const p0 = P(cant.u0, cant.v0), p1 = P(cant.u1, cant.v1);
+    const cw = p1.x - p0.x, ch = p1.y - p0.y;
+    ctx.save();
+    let slot = 0;
+    for(let r = 0; r < 3; r++){
+      const ry = p0.y + ch * (0.24 + r * 0.27);
+      /* Sulco de terra arada */
+      ctx.strokeStyle = 'rgba(48,26,12,.58)';
+      ctx.lineWidth = 2.6*u;
+      ctx.beginPath(); ctx.moveTo(p0.x + 4*u, ry); ctx.lineTo(p1.x - 4*u, ry); ctx.stroke();
+      if(!plantouReal) continue;
+      for(let c = 0; c < 4; c++){
+        slot++;
+        const cx = p0.x + cw * (0.16 + c * 0.225);
+        const swayPl = Math.sin(now/400 + slot)*1.1*u;
+        if(slot <= madurosN){
+          /* Planta madura da cultura do mês pronta para colher */
+          ctx.fillStyle = '#16a34a';
+          ctx.beginPath(); ctx.arc(cx + swayPl, ry - 2*u, 3.8*u, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = corFrutoHorta;
+          ctx.beginPath();
+          ctx.arc(cx + swayPl + 1.4*u, ry - 1.2*u, 2.0*u, 0, Math.PI*2);
+          ctx.arc(cx + swayPl - 1.4*u, ry - 2.6*u, 1.8*u, 0, Math.PI*2);
+          ctx.fill();
+        } else if(slot <= madurosN + crescN){
+          /* Broto verde em crescimento */
+          ctx.strokeStyle = '#4ade80';
+          ctx.lineWidth = 1.7*u;
+          ctx.beginPath();
+          ctx.moveTo(cx, ry); ctx.lineTo(cx + swayPl, ry - 4.2*u);
+          ctx.moveTo(cx + swayPl, ry - 2.6*u); ctx.lineTo(cx + swayPl - 2.2*u, ry - 4.5*u);
+          ctx.moveTo(cx + swayPl, ry - 2.6*u); ctx.lineTo(cx + swayPl + 2.2*u, ry - 4.5*u);
+          ctx.stroke();
+        } else if(slot <= totalPl){
+          /* Semente germinando */
+          ctx.fillStyle = '#86efac';
+          ctx.beginPath(); ctx.arc(cx, ry - 0.8*u, 1.6*u, 0, Math.PI*2); ctx.fill();
+        }
+      }
+    }
+    if(cant.principal){
+      const cxH = (p0.x + p1.x)/2 - 12*u;
+      if(plantouReal && totalPl > 0){
+        const vidaPct = Math.max(0, Math.min(100, Number(horta.vida) || 0));
+        const iconeC = horta.icone || saz.icone || '🌱';
+        const nomeC = horta.cultura || saz.cultura || 'Plantação';
+        const acabando = vidaPct <= 35;
+        const txtHorta = iconeC + ' ' + nomeC + ' (' + horta.plantadoPor + ') · Life ' + Math.round(vidaPct) + '%' + (acabando ? ' ⚠️ ACABANDO' : '');
+        rotuloTexto(cxH, p0.y - 14*u, txtHorta, u, 8.6);
+        /* Barra de Life visual da plantação */
+        const bw = 74*u, bh = 5.2*u;
+        const bx = cxH - bw/2, by = p0.y - 8*u;
+        ctx.fillStyle = 'rgba(8,20,32,.88)';
+        roundRect(bx, by, bw, bh, 2.5*u); ctx.fill();
+        ctx.strokeStyle = acabando ? '#f87171' : '#334155';
+        ctx.lineWidth = 1*u; ctx.stroke();
+        ctx.fillStyle = vidaPct > 60 ? '#22c55e' : (vidaPct > 30 ? '#fbbf24' : '#ef4444');
+        roundRect(bx + 1*u, by + 1*u, Math.max(2*u, (bw - 2*u)*(vidaPct/100)), bh - 2*u, 2*u);
+        ctx.fill();
+      } else {
+        const epocaTxt = saz.cultura ? ('Época: ' + (saz.icone || '🌱') + ' ' + saz.cultura) : 'sem plantio';
+        rotuloTexto(cxH, p0.y - 7*u, '🌱 Horta vazia (' + epocaTxt + ')', u, 8.2);
+      }
+    }
+    ctx.restore();
+  });
+
+  /* 4. PEIXES NADANDO NO RIO E NA COSTA (Respeitando a sazonalidade e esgotamento do rio!) */
+  const peixesRioPop = (eco.peixes && eco.peixes.rio) ? (Number(eco.peixes.rio.populacao) || 0) : 0;
+  const diaAtual = (stateData && stateData.mundo && stateData.mundo.tempo && stateData.mundo.tempo.dia) || 1;
+  const limPescaDia = Math.max(2, Math.round(4 * (saz.fatorPeixes || 1)));
+  const esgHoje = eco.peixes && eco.peixes.rio && eco.peixes.rio.ultimoDiaPesca === diaAtual && (eco.peixes.rio.pescadosHoje || 0) >= limPescaDia;
+  const temPeixeNoRio = peixesRioPop > 0 && saz.cardumeNoRio !== false && !esgHoje;
+  const pontosAgua = [
+    { u:.698, v:.420, rx:5, rio:true }, { u:.690, v:.640, rx:6, rio:true }, { u:.694, v:.740, rx:6, rio:true },
+    { u:.360, v:.900, rx:14, rio:false }, { u:.460, v:.885, rx:14, rio:false }
+  ];
+  pontosAgua.forEach((pt, idx) => {
+    if(pt.rio && !temPeixeNoRio) return;
+    const p = P(pt.u, pt.v);
+    const fase = now/520 + idx*2.1;
+    const ox = p.x + Math.cos(fase)*pt.rx*u;
+    const oy = p.y + Math.sin(fase*1.3)*4*u;
+    ctx.strokeStyle = noite ? 'rgba(125,211,252,.32)' : 'rgba(255,255,255,.52)';
+    ctx.lineWidth = 1*u;
+    ctx.beginPath();
+    ctx.ellipse(ox, oy, (4.5 + Math.sin(fase)*2)*u, 2*u, 0, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.fillStyle = noite ? '#38bdf8aa' : '#0284c7cc';
+    ctx.beginPath();
+    ctx.ellipse(ox, oy, 3.8*u, 1.5*u, Math.sin(fase)*0.3, 0, Math.PI*2);
+    ctx.fill();
+  });
+  if(!temPeixeNoRio){
+    const rpVazio = P(0.695, 0.635);
+    rotuloTexto(rpVazio.x, rpVazio.y, '🐟 Sem peixe no rio', u, 8.0);
+  }
+
+  /* 5. BANDO DE AVES TROPICAIS VOANDO SOBRE A ILHA */
+  if(!noite){
+    for(let i = 0; i < 5; i++){
+      const t = (now/9500 + i*0.19) % 1;
+      const ax = box.x + box.w * (0.14 + t * 0.74 + Math.sin(now/1200 + i)*0.03);
+      const ay = box.y + box.h * (0.20 + Math.sin(t*Math.PI*2 + i)*0.15);
+      const asa = Math.sin(now/115 + i*1.4) * 4.0 * u;
+      ctx.strokeStyle = tarde ? '#1e293b' : '#0f172a';
+      ctx.lineWidth = 1.6*u;
+      ctx.beginPath();
+      ctx.moveTo(ax - 5*u, ay - asa);
+      ctx.quadraticCurveTo(ax - 1.8*u, ay - 1.8*u, ax, ay);
+      ctx.quadraticCurveTo(ax + 1.8*u, ay - 1.8*u, ax + 5*u, ay - asa);
+      ctx.stroke();
+    }
+  }
+
+  /* 6. FOGUEIRA DO ACAMPAMENTO EM (0.492, 0.462) (Apaga na tempestade e cobre a chama pintada no mapa!) */
+  const fo = P(0.492, 0.462);
+  ctx.save();
+  if(fogueira.acesa){
+    const intensidade = Math.max(0.5, Math.min(1.2, (fogueira.lenha || 5) / 6));
+    const flk = Math.sin(now/75)*2.2*u;
+    const glow = ctx.createRadialGradient(fo.x, fo.y - 4*u, 2*u, fo.x, fo.y - 4*u, 42*u*intensidade);
+    glow.addColorStop(0, 'rgba(255,180,43,.58)');
+    glow.addColorStop(0.6, 'rgba(251,146,60,.22)');
+    glow.addColorStop(1, 'rgba(255,138,26,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(fo.x, fo.y - 4*u, 42*u*intensidade, 0, Math.PI*2); ctx.fill();
+
+    /* Chamas vivas dançando sobre a fogueira pintada */
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.moveTo(fo.x - 8*u*intensidade, fo.y);
+    ctx.quadraticCurveTo(fo.x - 10*u, fo.y - 12*u*intensidade - flk, fo.x, fo.y - 22*u*intensidade - flk);
+    ctx.quadraticCurveTo(fo.x + 10*u, fo.y - 12*u*intensidade + flk, fo.x + 8*u*intensidade, fo.y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.moveTo(fo.x - 4*u*intensidade, fo.y);
+    ctx.quadraticCurveTo(fo.x - 4*u, fo.y - 8*u*intensidade, fo.x, fo.y - 14*u*intensidade - flk*0.6);
+    ctx.quadraticCurveTo(fo.x + 4*u, fo.y - 8*u*intensidade, fo.x + 4*u*intensidade, fo.y);
+    ctx.closePath();
+    ctx.fill();
+
+    for(let i = 0; i < 5; i++){
+      const age = ((now/1100 + i*0.2) % 1);
+      const sx = fo.x + Math.sin(now/450 + i*2)*7*u*age;
+      const sy = fo.y - 14*u - age*40*u;
+      ctx.fillStyle = 'rgba(203,213,225,' + ((1 - age)*0.22).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(sx, sy, (3.5 + age*9)*u, 0, Math.PI*2); ctx.fill();
+      const fy = fo.y - 8*u - ((now/600 + i*0.23) % 1)*26*u;
+      const fx = fo.x + Math.cos(now/200 + i*3)*6*u;
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.arc(fx, fy, 1.2*u, 0, Math.PI*2); ctx.fill();
+    }
+  } else {
+    /* Cobre a chama pintada no fundoPronto com terra úmida, pedras frias e carvão apagado */
+    ctx.fillStyle = noite ? '#26221e' : '#6b533b';
+    ctx.beginPath(); ctx.ellipse(fo.x, fo.y - 6*u, 15*u, 14*u, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#1c1917';
+    ctx.beginPath(); ctx.ellipse(fo.x, fo.y - 2*u, 12*u, 6.5*u, 0, 0, Math.PI*2); ctx.fill();
+    /* Anel de pedras molhadas */
+    ctx.fillStyle = '#57534e';
+    for(let a = 0; a < 8; a++){
+      const ang = (a / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.ellipse(fo.x + Math.cos(ang)*11*u, fo.y - 2*u + Math.sin(ang)*5.5*u, 3.2*u, 2.2*u, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+    /* Toras carbonizadas e brasa fria */
+    ctx.strokeStyle = '#292524';
+    ctx.lineWidth = 3.2*u;
+    ctx.beginPath();
+    ctx.moveTo(fo.x - 8*u, fo.y); ctx.lineTo(fo.x + 8*u, fo.y - 4*u);
+    ctx.moveTo(fo.x - 7*u, fo.y - 4*u); ctx.lineTo(fo.x + 7*u, fo.y);
+    ctx.stroke();
+    for(let i = 0; i < 4; i++){
+      const age = ((now/1300 + i*0.25) % 1);
+      const sx = fo.x + Math.sin(now/480 + i)*5*u*age;
+      const sy = fo.y - 6*u - age*24*u;
+      ctx.fillStyle = 'rgba(148,163,184,' + ((1 - age)*0.36).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(sx, sy, (2.8 + age*6.5)*u, 0, Math.PI*2); ctx.fill();
+    }
+    rotuloTexto(fo.x, fo.y - 20*u, '🌧️ FOGO APAGADO (Vulnerável)', u, 9.0);
+  }
+  ctx.restore();
+
+  /* 7. Vaga-lumes bioluminescentes à noite */
+  if(noite){
+    for(let i = 0; i < 20; i++){
+      const ang = now/800 + i*1.9;
+      const cx = (i % 2 === 0 ? 0.78 : 0.31) + Math.sin(i*7.3)*0.08 + Math.cos(ang)*0.015;
+      const cy = (i % 2 === 0 ? 0.28 : 0.30) + Math.cos(i*5.1)*0.06 + Math.sin(ang*1.3)*0.015;
+      const fp = P(cx, cy);
+      const brilho = 0.3 + 0.7*Math.abs(Math.sin(now/320 + i*1.7));
+      ctx.fillStyle = 'rgba(190,242,100,' + brilho.toFixed(2) + ')';
+      ctx.shadowBlur = 7*u;
+      ctx.shadowColor = '#a3e635';
+      ctx.beginPath(); ctx.arc(fp.x, fp.y, 1.8*u, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.restore();
+}
+
+/* ---------- predador e objetos do mundo (intervenções da audiência/diretor) ---------- */
+function drawObjetosMundo(box, noite){
+  const u = box.scale;
+  const now = performance.now();
+  /* Caixas de Suprimento */
+  for(const a of acontecimentosAtivos('suprimento')){
+    const no = a.no || (Array.isArray(a.locais) && a.locais[0]);
+    if(!no || !nos()[no]) continue;
+    const base = ancoraScreen(no, box);
+    const x = base.x - 28*u, y = base.y + 10*u;
+    ctx.save();
+    const pulso = 1 + Math.sin(now/350)*0.08;
+    ctx.strokeStyle = 'rgba(251,191,36,.9)';
+    ctx.lineWidth = 2*u;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 2*u, 15*u*pulso, 5.5*u*pulso, 0, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(248,250,252,.78)';
+    ctx.beginPath();
+    ctx.arc(x - 11*u, y - 5*u, 8*u, Math.PI*0.9, Math.PI*2.1);
+    ctx.fill();
+    ctx.fillStyle = '#92400e';
+    roundRect(x - 9*u, y - 14*u, 18*u, 14*u, 2.5*u);
+    ctx.fill();
+    ctx.strokeStyle = '#fde68a';
+    ctx.lineWidth = 1.5*u;
+    ctx.stroke();
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(x - 2*u, y - 14*u, 4*u, 14*u);
+    ctx.fillRect(x - 9*u, y - 8*u, 18*u, 3*u);
+    const rot = a.patrocinador ? ('📦 ' + a.patrocinador) : '📦 Suprimento';
+    rotuloTexto(x, y - 20*u, rot, u, 9.2);
+    ctx.restore();
+  }
+  /* Artefatos Misteriosos */
+  for(const a of acontecimentosAtivos('artefato')){
+    const no = a.no || (Array.isArray(a.locais) && a.locais[0]);
+    if(!no || !nos()[no]) continue;
+    const base = ancoraScreen(no, box);
+    const x = base.x + 28*u, y = base.y - 6*u;
+    const flutuacao = Math.sin(now/280)*2.5*u;
+    ctx.save();
+    ctx.shadowBlur = 16*u;
+    ctx.shadowColor = '#a855f7';
+    ctx.fillStyle = 'rgba(168,85,247,.28)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 3*u, 16*u, 5.5*u, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#7e22ce';
+    ctx.beginPath();
+    ctx.moveTo(x, y - 22*u + flutuacao);
+    ctx.lineTo(x + 8*u, y - 9*u + flutuacao);
+    ctx.lineTo(x, y + flutuacao);
+    ctx.lineTo(x - 8*u, y - 9*u + flutuacao);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#e9d5ff';
+    ctx.lineWidth = 1.5*u;
+    ctx.stroke();
+    rotuloTexto(x, y - 28*u + flutuacao, '🔮 Artefato', u, 9.2);
+    ctx.restore();
+  }
+  /* Cardume / Fartura */
+  for(const a of acontecimentosAtivos('cardume')){
+    const locais = Array.isArray(a.locais) ? a.locais : (a.no ? [a.no] : []);
+    for(const l of locais){
+      if(!nos()[l]) continue;
+      const al = ancoraScreen(l, box);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(56,189,248,.75)';
+      ctx.lineWidth = 2*u;
+      ctx.beginPath();
+      ctx.arc(al.x, al.y + 8*u, (18 + Math.sin(now/300)*3.5)*u, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+function drawClimaMundo(w, h, now){
+  const temTempestade = acontecimentosAtivos('tempestade').length > 0
+    || (stateData && stateData.mundo && stateData.mundo.clima && (stateData.mundo.clima === 'tempestade' || stateData.mundo.clima.tipo === 'tempestade'));
+  const temSeca = acontecimentosAtivos('seca').length > 0;
+  if(temSeca){
+    ctx.save();
+    ctx.fillStyle = 'rgba(245,158,11,.14)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+  if(temTempestade){
+    ctx.save();
+    ctx.fillStyle = 'rgba(15,23,42,.26)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(186,230,253,.46)';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    const offset = (now * 0.55) % h;
+    for(let i = 0; i < 85; i++){
+      const rx = ((i * 97) % w);
+      const ry = ((i * 53 + offset) % h);
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx - 7, ry + 18);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+}
 function drawLobo(x, y, u, noite){
   const now = performance.now();
-  y += Math.sin(now/300)*1.2*u;
+  const s = u * 1.05;
+  const passo = Math.sin(now/150)*2.8*s;
+  y += Math.abs(Math.sin(now/150))*1.2*s;
   ctx.save();
-  /* anel de perigo pulsante sob o predador */
-  const pulso = 1 + Math.sin(now/450)*0.09;
-  ctx.strokeStyle = 'rgba(225,45,45,' + (noite ? .7 : .9) + ')';
-  ctx.lineWidth = 2.2*u;
-  ctx.setLineDash([6*u, 5*u]);
-  ctx.lineDashOffset = -(now/60)*u;
+
+  const pulso = 1 + Math.sin(now/260)*0.12;
+  const gradDanger = ctx.createRadialGradient(x, y, 2*s, x, y, 26*s*pulso);
+  gradDanger.addColorStop(0, 'rgba(239,68,68,.40)');
+  gradDanger.addColorStop(0.65, 'rgba(220,38,38,.16)');
+  gradDanger.addColorStop(1, 'rgba(220,38,38,0)');
+  ctx.fillStyle = gradDanger;
+  ctx.beginPath(); ctx.ellipse(x, y + 2*s, 26*s*pulso, 11*s*pulso, 0, 0, Math.PI*2); ctx.fill();
+
+  ctx.strokeStyle = 'rgba(248,113,113,.92)';
+  ctx.lineWidth = 2.0*s;
+  ctx.setLineDash([5*s, 4*s]);
+  ctx.lineDashOffset = -(now/45)*s;
   ctx.beginPath();
-  ctx.ellipse(x, y + 2*u, 21*u*pulso, 8.5*u*pulso, 0, 0, Math.PI*2);
+  ctx.ellipse(x, y + 2*s, 20*s*pulso, 8.5*s*pulso, 0, 0, Math.PI*2);
   ctx.stroke();
   ctx.setLineDash([]);
-  /* sombra */
-  ctx.fillStyle = 'rgba(8,16,10,.42)';
-  ctx.beginPath(); ctx.ellipse(x, y + 2*u, 15*u, 5*u, 0, 0, Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = 'rgba(8,12,16,.58)';
+  ctx.beginPath(); ctx.ellipse(x, y + 2*s, 15*s, 5*s, 0, 0, Math.PI*2); ctx.fill();
+
   const F = y;
-  const pelagem = '#4a4f56';
-  const escuro = '#2c3036';
-  /* pernas */
-  ctx.fillStyle = escuro;
-  ctx.fillRect(x - 11*u, F - 9*u, 4*u, 9*u);
-  ctx.fillRect(x - 5*u, F - 9*u, 4*u, 9*u);
-  ctx.fillRect(x + 5*u, F - 9*u, 4*u, 9*u);
-  ctx.fillRect(x + 11*u, F - 9*u, 4*u, 9*u);
-  /* rabo */
-  ctx.fillStyle = pelagem;
-  ctx.beginPath(); ctx.ellipse(x - 16*u, F - 14*u, 7.5*u, 3.4*u, -0.5, 0, Math.PI*2); ctx.fill();
-  /* corpo */
-  ctx.fillStyle = pelagem;
-  ctx.beginPath(); ctx.ellipse(x, F - 13*u, 14*u, 6.6*u, 0, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = escuro;
-  ctx.beginPath(); ctx.ellipse(x, F - 10.5*u, 12*u, 3*u, 0, 0, Math.PI); ctx.fill();
-  /* cabeça */
-  const hx = x + 14*u, hy = F - 17*u;
-  ctx.fillStyle = pelagem;
-  ctx.beginPath(); ctx.arc(hx, hy, 6.2*u, 0, Math.PI*2); ctx.fill();
-  /* orelhas */
+  const pelagem = '#333942';
+  const escuro = '#181c22';
+  const dorso = '#1f242b';
+
+  ctx.strokeStyle = escuro;
+  ctx.lineWidth = 3.4*s;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(hx - 4.4*u, hy - 4*u); ctx.lineTo(hx - 5.6*u, hy - 10.4*u); ctx.lineTo(hx - .4*u, hy - 5.6*u); ctx.closePath(); ctx.fill();
+  ctx.moveTo(x - 10*s, F - 10*s); ctx.lineTo(x - 11*s + passo*0.5, F - 1*s);
+  ctx.moveTo(x - 4.5*s, F - 10*s); ctx.lineTo(x - 3.5*s - passo*0.5, F - 1*s);
+  ctx.moveTo(x + 5.5*s, F - 10*s); ctx.lineTo(x + 6.5*s - passo*0.5, F - 1*s);
+  ctx.moveTo(x + 11*s, F - 10*s); ctx.lineTo(x + 12*s + passo*0.5, F - 1*s);
+  ctx.stroke();
+
+  ctx.fillStyle = dorso;
   ctx.beginPath();
-  ctx.moveTo(hx + 2.6*u, hy - 5*u); ctx.lineTo(hx + 4.4*u, hy - 11*u); ctx.lineTo(hx + 6*u, hy - 4.4*u); ctx.closePath(); ctx.fill();
-  /* focinho */
+  ctx.moveTo(x - 12*s, F - 14*s);
+  ctx.quadraticCurveTo(x - 22*s, F - 17*s + Math.sin(now/220)*2*s, x - 20*s, F - 9*s);
+  ctx.quadraticCurveTo(x - 15*s, F - 10*s, x - 11*s, F - 12*s);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = pelagem;
+  ctx.strokeStyle = '#111827';
+  ctx.lineWidth = 1.2*s;
+  ctx.beginPath();
+  ctx.ellipse(x - 1*s, F - 13*s, 13.5*s, 6.8*s, -0.05, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = dorso;
+  ctx.beginPath();
+  ctx.ellipse(x + 4.5*s, F - 15.5*s, 8*s, 5.8*s, 0.1, 0, Math.PI*2);
+  ctx.fill();
+
+  const hx = x + 14*s, hy = F - 17.5*s;
+  ctx.fillStyle = pelagem;
+  ctx.beginPath(); ctx.arc(hx, hy, 6.2*s, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = dorso;
+  ctx.beginPath();
+  ctx.moveTo(hx - 4.5*s, hy - 3.8*s); ctx.lineTo(hx - 6*s, hy - 11*s); ctx.lineTo(hx - 0.5*s, hy - 5.2*s); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(hx + 1.5*s, hy - 4.5*s); ctx.lineTo(hx + 3.8*s, hy - 11.5*s); ctx.lineTo(hx + 5.2*s, hy - 4.2*s); ctx.closePath(); ctx.fill();
   ctx.fillStyle = escuro;
-  ctx.beginPath(); ctx.ellipse(hx + 5.4*u, hy + 2*u, 3.8*u, 2.4*u, .18, 0, Math.PI*2); ctx.fill();
-  /* olho */
-  ctx.fillStyle = noite ? '#ff5a3c' : '#ffd23f';
-  ctx.beginPath(); ctx.arc(hx + 1.8*u, hy - 1.4*u, 1.4*u, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(hx + 6*s, hy + 1*s, 4.4*s, 2.4*s, 0.1, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#f8fafc';
+  ctx.beginPath();
+  ctx.moveTo(hx + 4.6*s, hy + 2.5*s); ctx.lineTo(hx + 5.4*s, hy + 4.8*s); ctx.lineTo(hx + 6.2*s, hy + 2.5*s);
+  ctx.moveTo(hx + 7.4*s, hy + 2.4*s); ctx.lineTo(hx + 8.1*s, hy + 4.5*s); ctx.lineTo(hx + 8.8*s, hy + 2.4*s);
+  ctx.fill();
+  ctx.shadowBlur = 9*s;
+  ctx.shadowColor = '#ef4444';
+  ctx.fillStyle = '#ff3b30';
+  ctx.beginPath(); ctx.arc(hx + 2*s, hy - 1.4*s, 1.5*s, 0, Math.PI*2); ctx.fill();
   ctx.restore();
-  /* rótulo vermelho acima do predador (evita colidir com nomes dos seres) */
+
   ctx.save();
-  ctx.font = '800 ' + (10.5*u) + 'px Segoe UI';
+  ctx.font = '800 ' + (9.6*u) + 'px Segoe UI';
+  const txt = '🐺 PREDADOR';
+  const tw = ctx.measureText(txt).width + 10*u;
+  const bh = 14*u;
+  const bx = x - tw/2, by = F - 40*s;
+  ctx.fillStyle = 'rgba(127,29,29,.92)';
+  ctx.strokeStyle = '#f87171';
+  ctx.lineWidth = 1.4*u;
+  roundRect(bx, by, tw, bh, 5*u);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#fef2f2';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = 3.6*u;
-  ctx.strokeStyle = 'rgba(8,20,32,.95)';
-  ctx.strokeText('Predador', x, F - 36*u);
-  ctx.fillStyle = '#ff6b5a';
-  ctx.fillText('Predador', x, F - 36*u);
+  ctx.fillText(txt, x, by + bh/2);
   ctx.restore();
 }
 function acontecimentosAtivos(tipo){
@@ -1399,77 +2403,301 @@ function acontecimentosAtivos(tipo){
 function drawPredadores(box, noite, dt){
   for(const a of acontecimentosAtivos('predador')){
     const locais = Array.isArray(a.locais) ? a.locais : [];
-    /* halo de perigo sobre a região */
-    const on = 0.05 + 0.03*(0.5 + 0.5*Math.sin(performance.now()/500));
+    const on = 0.08 + 0.05*(0.5 + 0.5*Math.sin(performance.now()/380));
     for(const l of locais){
       if(!nos()[l]) continue;
       const al = ancoraScreen(l, box);
       ctx.save();
-      ctx.fillStyle = 'rgba(210,40,40,' + on.toFixed(3) + ')';
-      ctx.beginPath(); ctx.ellipse(al.x, al.y, 52*box.scale, 38*box.scale, 0, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = 'rgba(225,45,45,.35)';
-      ctx.lineWidth = 1.4*box.scale;
-      ctx.setLineDash([7*box.scale, 6*box.scale]);
+      ctx.fillStyle = 'rgba(220,38,38,' + on.toFixed(3) + ')';
+      ctx.beginPath(); ctx.ellipse(al.x, al.y, 48*box.scale, 34*box.scale, 0, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = 'rgba(239,68,68,.55)';
+      ctx.lineWidth = 1.6*box.scale;
+      ctx.setLineDash([6*box.scale, 5*box.scale]);
       ctx.stroke();
       ctx.restore();
     }
     const no = (a.no && nos()[a.no]) ? a.no : locais.find(l => nos()[l]);
     if(!no) continue;
     const base = ancoraScreen(no, box);
-    const alvo = { x: base.x + 34*box.scale, y: base.y + 16*box.scale };
+    const alvo = { x: base.x + 26*box.scale, y: base.y + 12*box.scale };
     const pos = animateActor('predador:' + (a.id || 'x'), alvo, dt);
     drawLobo(pos.x, pos.y, box.scale, noite);
   }
 }
 
-/* ---------- casas sobre a arte nova (lotes cercados) ---------- */
+/* ---------- casas dimensionadas exatamente nos 3 lotes cercados de mapa-ilha-nova.png ---------- */
+/* Lotes cercados em mapa-ilha-nova.png:
+   - casa_joao:  x = 0.408..0.540 (centro 0.474), y = 0.120..0.256 (base da casa em cy = 0.228)
+   - casa_icaro: x = 0.153..0.277 (centro 0.215), y = 0.402..0.542 (base da casa em cy = 0.512)
+   - casa_maria: x = 0.798..0.911 (centro 0.854), y = 0.472..0.606 (base da casa em cy = 0.578) */
 const CASAS = [
-  { id:'casa_joao',  cx:.477, cy:.160, telhado:'#c2582f', parede:'#e6b476' },
-  { id:'casa_icaro', cx:.213, cy:.448, telhado:'#b3523a', parede:'#e3ad6e' },
-  { id:'casa_maria', cx:.855, cy:.522, telhado:'#a85a35', parede:'#eab87e' }
+  { id:'casa_joao',  cx:.474, cy:.228, lotCy:.188, telhado:'#b94a24', parede:'#e6b476', chamine:true },
+  { id:'casa_icaro', cx:.215, cy:.512, lotCy:.472, telhado:'#a3412b', parede:'#e3ad6e', chamine:true },
+  { id:'casa_maria', cx:.854, cy:.578, lotCy:.539, telhado:'#964928', parede:'#eab87e', chamine:true }
 ];
-function drawCasaLote(c, x, y, u, cor){
-  const W = 46*u, wall = 24*u, roof = 17*u;
+function drawCasaInterior(c, x, yLotCenter, u, h, presentes){
+  /* Planta arquitetônica vista de cima (sem teto) encaixada exatamente dentro da cerca do lote */
+  const W = 108*u, H = 80*u;
+  const x0 = x - W/2, y0 = yLotCenter - H/2;
   c.save();
-  c.fillStyle = 'rgba(10,26,16,.32)';
-  c.beginPath(); c.ellipse(x, y + 2*u, W*.58, 6*u, 0, 0, Math.PI*2); c.fill();
-  c.fillStyle = cor.parede;
-  c.fillRect(x - W/2, y - wall, W, wall);
-  c.strokeStyle = 'rgba(110,70,35,.75)'; c.lineWidth = 1.4*u;
-  c.strokeRect(x - W/2, y - wall, W, wall);
-  c.strokeStyle = 'rgba(122,78,40,.35)'; c.lineWidth = 1*u;
-  for(let i=1;i<4;i++){ const px = x - W/2 + (W/4)*i; c.beginPath(); c.moveTo(px, y - wall); c.lineTo(px, y); c.stroke(); }
-  c.fillStyle = '#6b4226';
-  c.fillRect(x - 6*u, y - 17*u, 12*u, 17*u);
-  c.fillStyle = '#ffd27a';
-  c.beginPath(); c.arc(x + 3*u, y - 8.5*u, 1.3*u, 0, Math.PI*2); c.fill();
-  c.fillStyle = '#8ed3e8';
-  c.fillRect(x + 11*u, y - 19*u, 11*u, 9*u);
-  c.strokeStyle = '#5b8fa3'; c.lineWidth = 1.2*u;
-  c.strokeRect(x + 11*u, y - 19*u, 11*u, 9*u);
-  c.beginPath(); c.moveTo(x + 16.5*u, y - 19*u); c.lineTo(x + 16.5*u, y - 10*u);
-  c.moveTo(x + 11*u, y - 14.5*u); c.lineTo(x + 22*u, y - 14.5*u); c.stroke();
-  c.fillStyle = cor.telhado;
+
+  /* Sombra projetada no terreno cercado */
+  c.fillStyle = 'rgba(6,14,22,.62)';
+  roundRect(x0 - 3*u, y0 - 3*u, W + 6*u, H + 8*u, 6*u);
+  c.fill();
+
+  /* Piso de tábuas de madeira corrida */
+  c.fillStyle = '#c89662';
+  roundRect(x0, y0, W, H, 5*u);
+  c.fill();
+  c.strokeStyle = 'rgba(92,58,30,.32)';
+  c.lineWidth = 1*u;
+  for(let py = y0 + 8*u; py < y0 + H; py += 8*u){
+    c.beginPath(); c.moveTo(x0 + 2*u, py); c.lineTo(x0 + W - 2*u, py); c.stroke();
+  }
+
+  /* Divisórias internas: Quarto (Esquerda Superior), Cozinha (Direita Superior), Sala (Inferior) */
+  const mx = x0 + W*0.52, my = y0 + H*0.56;
+  c.fillStyle = '#d6cfc2';
+  c.fillRect(mx, y0 + 3*u, W*0.48 - 3*u, H*0.56 - 3*u);
+  c.strokeStyle = 'rgba(100,116,139,.25)';
+  for(let gx = mx; gx < x0 + W - 3*u; gx += 9*u){
+    c.beginPath(); c.moveTo(gx, y0 + 3*u); c.lineTo(gx, my); c.stroke();
+  }
+
+  /* Paredes externas e internas vistas de cima */
+  c.strokeStyle = '#451a03';
+  c.lineWidth = 4*u;
+  c.strokeRect(x0, y0, W, H);
+  c.lineWidth = 2.8*u;
   c.beginPath();
-  c.moveTo(x - W/2 - 5*u, y - wall);
-  c.lineTo(x + W/2 + 5*u, y - wall);
-  c.lineTo(x + W/2 - 8*u, y - wall - roof);
-  c.lineTo(x - W/2 + 8*u, y - wall - roof);
-  c.closePath(); c.fill();
-  c.strokeStyle = 'rgba(90,40,20,.8)'; c.lineWidth = 1.4*u; c.stroke();
-  c.fillStyle = 'rgba(255,255,255,.22)';
-  c.fillRect(x - W/2 + 8*u, y - wall - roof, W - 16*u, 3*u);
+  c.moveTo(mx, y0); c.lineTo(mx, my - 8*u);
+  c.moveTo(x0, my); c.lineTo(x0 + W*0.35, my);
+  c.moveTo(x0 + W*0.50, my); c.lineTo(x0 + W, my);
+  c.stroke();
+
+  /* 1. QUARTO (Cama de casal/solteiro, travesseiros e cobertor) */
+  const bx = x0 + 6*u, by = y0 + 6*u, bw = 42*u, bh = 28*u;
+  c.fillStyle = '#4a2c16';
+  roundRect(bx, by, bw, bh, 3*u); c.fill();
+  c.fillStyle = '#f8fafc';
+  roundRect(bx + 2*u, by + 2*u, bw - 4*u, bh - 4*u, 2*u); c.fill();
+  c.fillStyle = h.id === 'casa_joao' ? '#0284c7' : (h.id === 'casa_icaro' ? '#16a34a' : '#9333ea');
+  roundRect(bx + 2*u, by + 11*u, bw - 4*u, bh - 13*u, 2*u); c.fill();
+  c.fillStyle = '#e2e8f0';
+  roundRect(bx + 5*u, by + 4*u, 14*u, 6*u, 1.5*u); c.fill();
+  roundRect(bx + 23*u, by + 4*u, 14*u, 6*u, 1.5*u); c.fill();
+
+  /* 2. COZINHA (Fogão a lenha aceso, pia e mesa de refeições) */
+  const kx = mx + 5*u, ky = y0 + 6*u;
+  c.fillStyle = '#475569';
+  roundRect(kx, ky, 40*u, 11*u, 2*u); c.fill();
+  c.fillStyle = '#1e293b';
+  c.fillRect(kx + 3*u, ky + 2*u, 15*u, 7*u);
+  c.fillStyle = '#f97316';
+  c.beginPath(); c.arc(kx + 7*u, ky + 5.5*u, 2*u, 0, Math.PI*2); c.arc(kx + 13.5*u, ky + 5.5*u, 2*u, 0, Math.PI*2); c.fill();
+  c.fillStyle = '#bae6fd';
+  roundRect(kx + 22*u, ky + 2*u, 14*u, 7*u, 1.5*u); c.fill();
+  c.fillStyle = '#78350f';
+  roundRect(kx + 7*u, ky + 19*u, 25*u, 14*u, 3*u); c.fill();
+  c.fillStyle = '#fef3c7';
+  c.beginPath(); c.arc(kx + 14*u, ky + 26*u, 2.8*u, 0, Math.PI*2); c.arc(kx + 25*u, ky + 26*u, 2.8*u, 0, Math.PI*2); c.fill();
+
+  /* 3. SALA DE ESTAR (Tapete tecido, baú de provisões e porta) */
+  c.fillStyle = '#991b1b';
+  roundRect(x0 + 16*u, my + 7*u, 46*u, 18*u, 4*u); c.fill();
+  c.strokeStyle = '#fde68a'; c.lineWidth = 1.1*u;
+  c.strokeRect(x0 + 18*u, my + 9*u, 42*u, 14*u);
+  c.fillStyle = '#713f12';
+  roundRect(x0 + W - 25*u, my + 9*u, 17*u, 11*u, 2*u); c.fill();
+  c.fillStyle = '#b45309';
+  c.fillRect(x - 9*u, y0 + H - 3*u, 18*u, 5*u);
+
+  c.font = '700 ' + (7.2*u) + 'px Segoe UI';
+  c.fillStyle = 'rgba(15,23,42,.78)';
+  c.textAlign = 'left';
+  c.fillText('🛏️ QUARTO', x0 + 6*u, my - 3*u);
+  c.fillText('🍳 COZINHA', mx + 5*u, my - 3*u);
+  c.fillText('🏠 SALA', x0 + 6*u, y0 + H - 5*u);
+
+  /* 4. MORADORES DENTRO DOS CÔMODOS */
+  presentes.forEach((s, idx) => {
+    const acaoId = s.acao || (ultimoEvento(s.id) && ultimoEvento(s.id).acao) || '';
+    let px, py;
+    if(acaoId === 'dormir' || acaoId === 'descansar'){
+      px = bx + 13*u + (idx % 2)*18*u;
+      py = by + 16*u;
+    } else if(acaoId === 'comer' || acaoId === 'beber'){
+      px = kx + 13*u + (idx % 2)*13*u;
+      py = ky + 26*u;
+    } else {
+      px = x0 + 28*u + idx*22*u;
+      py = my + 16*u;
+    }
+    const cor = PALETTE[s.id] || '#38bdf8';
+    const camisa = CAMISA[s.id] || cor;
+    const cab = (CABELO[s.id] && CABELO[s.id].cor) || '#3a2f28';
+    c.fillStyle = 'rgba(0,0,0,.38)';
+    c.beginPath(); c.ellipse(px, py + 2*u, 8*u, 5*u, 0, 0, Math.PI*2); c.fill();
+    c.fillStyle = camisa;
+    c.beginPath(); c.ellipse(px, py, 7.5*u, 4.8*u, 0, 0, Math.PI*2); c.fill();
+    c.strokeStyle = '#fff'; c.lineWidth = 1.2*u; c.stroke();
+    c.fillStyle = '#f3c6a0';
+    c.beginPath(); c.arc(px, py - 1*u, 4.5*u, 0, Math.PI*2); c.fill();
+    c.fillStyle = cab;
+    c.beginPath(); c.arc(px, py - 2*u, 4.5*u, Math.PI, Math.PI*2); c.fill();
+    rotuloTexto(px, py + 9.5*u, s.nome + ' (' + (curtaAcao(acaoId) || 'em casa') + ')', u, 8.2);
+  });
+
+  const titulo = '🔍 ' + nomeLocal(h.id).toUpperCase() + (presentes.length ? ' · ' + presentes.map(p => p.nome).join(', ') : ' · VAZIA');
+  rotuloTexto(x, y0 - 8*u, titulo, u, 9.2);
   c.restore();
 }
-function drawCasas(box){
-  for(const h of CASAS) drawCasaLote(ctx, box.x + box.w*h.cx, box.y + box.h*h.cy, box.scale, h);
+
+function drawCasaLote(c, x, y, yLotCenter, u, cor, noite){
+  const presentes = vivos().filter(s => s.local === cor.id && !s.deslocamento);
+  if(selectedLocal === cor.id){
+    drawCasaInterior(c, x, yLotCenter, u, cor, presentes);
+    return;
+  }
+  /* Cabana colonial em escala real preenchendo o lote cercado */
+  const W = 84*u, wall = 36*u, roof = 25*u;
+  const now = performance.now();
+  c.save();
+
+  /* Sombra no pátio cercado e fundação de pedra rústica */
+  c.fillStyle = 'rgba(10,22,16,.44)';
+  c.beginPath(); c.ellipse(x, y + 4*u, W*.60, 9*u, 0, 0, Math.PI*2); c.fill();
+  c.fillStyle = '#57534e';
+  roundRect(x - W/2 - 3*u, y - 6*u, W + 6*u, 8*u, 2.5*u); c.fill();
+  c.strokeStyle = '#1c1917'; c.lineWidth = 1.3*u; c.stroke();
+
+  /* Parede de toras de madeira com textura e vigas verticais */
+  const gradWall = c.createLinearGradient(x - W/2, y - wall, x + W/2, y);
+  gradWall.addColorStop(0, noite ? '#7c5836' : cor.parede);
+  gradWall.addColorStop(1, noite ? '#4a341f' : '#b8824c');
+  c.fillStyle = gradWall;
+  c.fillRect(x - W/2, y - wall, W, wall - 4*u);
+  c.strokeStyle = '#29170b'; c.lineWidth = 1.6*u;
+  c.strokeRect(x - W/2, y - wall, W, wall - 4*u);
+
+  /* Tábuas horizontais + pilares de madeira nos cantos */
+  c.strokeStyle = 'rgba(78,46,20,.38)'; c.lineWidth = 1.1*u;
+  for(let i = 1; i < 5; i++){
+    const py = y - wall + ((wall - 4*u)/5)*i;
+    c.beginPath(); c.moveTo(x - W/2, py); c.lineTo(x + W/2, py); c.stroke();
+  }
+  c.fillStyle = '#5c3a1e';
+  c.fillRect(x - W/2, y - wall, 5*u, wall - 4*u);
+  c.fillRect(x + W/2 - 5*u, y - wall, 5*u, wall - 4*u);
+
+  /* Chaminé de pedra/tijolo soltando fumaça quando habitada ou à noite */
+  const chX = x + W/2 - 16*u, chY = y - wall - roof + 2*u;
+  c.fillStyle = '#78350f';
+  c.fillRect(chX, chY - 9*u, 9*u, 18*u);
+  c.strokeStyle = '#29170b'; c.lineWidth = 1.3*u;
+  c.strokeRect(chX, chY - 9*u, 9*u, 18*u);
+  if(presentes.length > 0 || noite){
+    for(let k = 0; k < 3; k++){
+      const age = ((now/1300 + k*0.33) % 1);
+      c.fillStyle = 'rgba(226,232,240,' + ((1 - age)*0.38).toFixed(2) + ')';
+      c.beginPath();
+      c.arc(chX + 4.5*u + Math.sin(now/400 + k)*5*u*age, chY - 11*u - age*24*u, (3 + age*5.5)*u, 0, Math.PI*2);
+      c.fill();
+    }
+  }
+
+  /* Porta central de madeira trabalhada + tapete de entrada */
+  c.fillStyle = '#4a2c16';
+  roundRect(x - 8.5*u, y - 25*u, 17*u, 22*u, 2.5*u); c.fill();
+  c.strokeStyle = '#1e130c'; c.lineWidth = 1.4*u; c.stroke();
+  c.fillStyle = '#fbbf24';
+  c.beginPath(); c.arc(x + 5*u, y - 13*u, 1.5*u, 0, Math.PI*2); c.fill();
+
+  /* Duas janelas amplas (com silhueta/rosto de quem está lá dentro!) */
+  const temGente = presentes.length > 0;
+  const luzJanela = (temGente || noite) ? '#fde047' : '#7dd3fc';
+  const janelasX = [x - W/2 + 9*u, x + 13*u];
+  janelasX.forEach((wx, jIdx) => {
+    c.fillStyle = luzJanela;
+    c.fillRect(wx, y - 24*u, 16*u, 12*u);
+    /* Se houver morador dentro da casa, mostra o busto/rosto dele olhando pela janela iluminada! */
+    const moradorJanela = presentes[jIdx];
+    if(moradorJanela){
+      const cab = (CABELO[moradorJanela.id] && CABELO[moradorJanela.id].cor) || '#3a2f28';
+      const cam = CAMISA[moradorJanela.id] || '#38bdf8';
+      c.fillStyle = cam;
+      c.beginPath(); c.arc(wx + 8*u, y - 12.5*u, 4.5*u, Math.PI, Math.PI*2); c.fill();
+      c.fillStyle = '#f3c6a0';
+      c.beginPath(); c.arc(wx + 8*u, y - 16.5*u, 3.2*u, 0, Math.PI*2); c.fill();
+      c.fillStyle = cab;
+      c.beginPath(); c.arc(wx + 8*u, y - 17.5*u, 3.3*u, Math.PI*0.9, Math.PI*2.1); c.fill();
+    }
+    c.strokeStyle = '#3e2723'; c.lineWidth = 1.5*u;
+    c.strokeRect(wx, y - 24*u, 16*u, 12*u);
+    c.beginPath();
+    c.moveTo(wx + 8*u, y - 24*u); c.lineTo(wx + 8*u, y - 12*u);
+    c.moveTo(wx, y - 18*u); c.lineTo(wx + 16*u, y - 18*u);
+    c.stroke();
+  });
+
+  /* Telhado de telhas coloniais com beiral largo e cumeeira */
+  const gradRoof = c.createLinearGradient(x, y - wall - roof, x, y - wall);
+  gradRoof.addColorStop(0, cor.telhado);
+  gradRoof.addColorStop(1, '#6c2714');
+  c.fillStyle = gradRoof;
+  c.beginPath();
+  c.moveTo(x - W/2 - 8*u, y - wall + 2*u);
+  c.lineTo(x + W/2 + 8*u, y - wall + 2*u);
+  c.lineTo(x + W/2 - 12*u, y - wall - roof);
+  c.lineTo(x - W/2 + 12*u, y - wall - roof);
+  c.closePath(); c.fill();
+  c.strokeStyle = '#29170b'; c.lineWidth = 1.7*u; c.stroke();
+
+  c.strokeStyle = 'rgba(255,255,255,.16)'; c.lineWidth = 1.1*u;
+  for(let i = -3; i <= 3; i++){
+    c.beginPath();
+    c.moveTo(x + i*10*u, y - wall - roof + 2*u);
+    c.lineTo(x + i*13*u, y - wall + 1*u);
+    c.stroke();
+  }
+
+  /* Evolução visual do abrigo quando o morador escolhe melhorar_abrigo (abrigo >= 2) */
+  const moradoresCasa = vivos().filter(s => s.casa === cor.id);
+  const nivelAbrigo = moradoresCasa.reduce((max, s) => Math.max(max, Number(s.abrigo) || 1), 1);
+  if(nivelAbrigo >= 2){
+    c.fillStyle = '#475569';
+    c.strokeStyle = '#1e293b';
+    c.lineWidth = 1.2*u;
+    for(let p = -3; p <= 3; p++){
+      if(p === 0) continue;
+      roundRect(x + p*12*u - 3.5*u, y - 9*u, 7*u, 9*u, 1.5*u);
+      c.fill(); c.stroke();
+    }
+  }
+
+  /* Crachá discreto acima do telhado indicando quem está dentro e convidando ao clique */
+  if(temGente){
+    const nomes = presentes.map(p => p.nome + ' (' + (atividade(p).curta || 'em casa') + ')').join(', ');
+    const sufixoNv = nivelAbrigo >= 2 ? (' [Nv.' + nivelAbrigo + '] ') : ' ';
+    rotuloTexto(x, y - wall - roof - 7*u, '🏠' + sufixoNv + nomes + ' · clique p/ ver cômodos', u, 8.6);
+  } else if(nivelAbrigo >= 2){
+    rotuloTexto(x, y - wall - roof - 7*u, '🛡️ Abrigo Reforçado Nv.' + nivelAbrigo, u, 8.2);
+  }
+  c.restore();
+}
+function drawCasas(box, noite){
+  for(const h of CASAS){
+    drawCasaLote(ctx, box.x + box.w*h.cx, box.y + box.h*h.cy, box.y + box.h*h.lotCy, box.scale, h, noite);
+  }
 }
 
 /* ---------- interacao ---------- */
 function calcularHotspots(box){
   hotspots = Object.keys(nos()).map(id => {
     const a = ancoraScreen(id, box);
-    return { id, x:a.x, y:a.y, r:Math.max(16, a.r) };
+    const ehCasa = ['casa_joao','casa_icaro','casa_maria'].includes(id);
+    return { id, x:a.x, y:a.y, r:ehCasa ? Math.max(28, 48*box.scale) : Math.max(16, a.r) };
   });
 }
 function anelSelecao(box){
@@ -1541,12 +2769,11 @@ function drawScene(){
   currentBox = box;
 
   if(fundoPronto){
-    /* Ilha pintada: a arte de referencia vira o fundo, recortada em modo cover. */
     ctx.fillStyle = '#1478ad';
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(fundoPronto, box.x, box.y, box.w, box.h);
     if(tarde){
-      ctx.fillStyle = 'rgba(255,164,70,.10)';
+      ctx.fillStyle = 'rgba(255,164,70,.12)';
       ctx.fillRect(0, 0, w, h);
     }
   }else{
@@ -1557,7 +2784,8 @@ function drawScene(){
     drawEstruturas(box, now, noite);
   }
 
-  if(fundoPronto) drawCasas(box);
+  drawAmbienteVivo(box, w, h, now, noite, tarde);
+  if(fundoPronto) drawCasas(box, noite);
 
   if(noite){
     ctx.fillStyle = 'rgba(4,12,30,.42)';
@@ -1577,6 +2805,7 @@ function drawScene(){
   }
 
   if(stateData){
+    drawObjetosMundo(box, noite);
     const ativos = vivos();
     for(const s of ativos){
       const alvo = screenFromSer(s, box);
@@ -1585,11 +2814,20 @@ function drawScene(){
       if(!fundoPronto && casa && s.local !== s.casa) drawRoute(ctx, casa, pos, PALETTE[s.id] || '#ffffff', box.scale);
     }
     for(const s of ativos){
+      /* Se o personagem está DENTRO de uma casa (sem estar caminhando na trilha), ele aparece na janela (teto fechado) ou nos cômodos (teto aberto ao clicar), nunca gigante em cima do telhado! */
+      const dentroDeCasa = ['casa_joao','casa_icaro','casa_maria'].includes(s.local) && !s.deslocamento;
+      if(dentroDeCasa) continue;
       const pos = animatedActors[s.id] || screenFromSer(s, box);
-      if(Math.hypot(mouseX - pos.x, mouseY - (pos.y - 22*box.scale)) < 27*box.scale) hoveredSerId = s.id;
+      if(Math.hypot(mouseX - pos.x, mouseY - (pos.y - 18*box.scale)) < 22*box.scale) hoveredSerId = s.id;
       drawCharacter(pos.x, pos.y, s, noite, box.scale);
     }
+    /* Se alguma casa estiver aberta (clicada), desenha a planta interna sem teto por cima para nitidez total */
+    if(selectedLocal && ['casa_joao','casa_icaro','casa_maria'].includes(selectedLocal)){
+      const hc = CASAS.find(c => c.id === selectedLocal);
+      if(hc) drawCasaInterior(ctx, box.x + box.w*hc.cx, box.y + box.h*hc.lotCy, box.scale, hc, ativos.filter(s => s.local === hc.id));
+    }
     drawPredadores(box, noite, dt);
+    drawClimaMundo(w, h, now);
   }
 
   anelSelecao(box);

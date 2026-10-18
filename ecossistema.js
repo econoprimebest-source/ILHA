@@ -1,9 +1,9 @@
-﻿'use strict';
+'use strict';
 const cortex=require('./cortex');
 const {statusDe}=require('./seres');
 
 // Ecology runs once per world cycle, regardless of which being acts.
-const { eventos } = require('./calendario');
+const { eventos, mesDe } = require('./calendario');
 
 const LIMITES = { agua: 1000, lago: 800 };
 
@@ -16,6 +16,7 @@ function preparar(estado) {
   const mundo = estado.mundo;
   const eco = mundo.ecossistema;
   eco.ecologiaCompleta = true;
+  eco.sazonalidade = mesDe(mundo.tempo);
   eco.agua.fontes ||= {};
   eco.agua.fontes.nascente ||= { nivel: eco.agua.nascente, capacidade: eco.agua.limite, qualidade: .94, recarga: 0 };
   eco.agua.fontes.lago ||= { nivel: 800, capacidade: LIMITES.lago, qualidade: .88, recarga: 0 };
@@ -27,6 +28,18 @@ function preparar(estado) {
   }
   eco.vegetacao ||= { sementes: 0, bancoSementes: {} };
   eco.vegetacao.bancoSementes ||= {};
+  eco.horta ||= { plantados: 0, crescendo: 0, maduros: 0, capacidade: 12, vida: 0, vidaMax: 100, cultura: null, icone: null, cor: null, mesPlantio: null, plantadoPor: null };
+  if (!eco.horta.plantadoPor) {
+    eco.horta.plantados = 0;
+    eco.horta.crescendo = 0;
+    eco.horta.maduros = 0;
+    eco.horta.vida = 0;
+    eco.horta.vidaMax = 100;
+    eco.horta.cultura = null;
+    eco.horta.icone = null;
+    eco.horta.cor = null;
+  }
+  eco.fogueira ||= { acesa: true, lenha: 5, capacidade: 12 };
   eco.arvores ||= {};
   for (const [id, a] of Object.entries(eco.arvores)) {
     a.id ||= id; a.especie ||= id === 'c' ? 'madeireira' : 'frutifera';
@@ -129,17 +142,21 @@ function climaDoCiclo(mundo) {
 
 function atualizarMundo(estado, acaoHumana = null) {
   const m = estado.mundo, e = m.ecossistema, ev = eventos(m.tempo), clima = climaDoCiclo(m);
+  const mesInfo = mesDe(m.tempo);
+  e.sazonalidade = mesInfo;
   e.clima = clima; m.clima = clima.tipo;
   const chuva = clima.tipo === 'chuva_forte' ? 12 : clima.tipo === 'chuva' ? 6 : clima.tipo === 'chuva_fraca' ? 2 : 0;
   for (const [nome, f] of Object.entries(e.agua.fontes)) {
     const evap = (nome === 'lago' ? .8 : .12) * (clima.temperatura / 22) * (1 - clima.umidade);
-    const recarga = chuva * (nome === 'lago' ? .7 : nome === 'nascente' ? .2 : .1) + f.recarga;
+    const basal = nome === 'nascente' ? 0.65 : (nome === 'poco' ? 0.25 : 0);
+    const recarga = chuva * (nome === 'lago' ? .7 : nome === 'nascente' ? .2 : .1) + basal + f.recarga;
     f.nivel = Math.max(0, Math.min(f.capacidade, f.nivel + recarga - evap));
     f.recarga = 0;
   }
   e.agua.nascente = e.agua.fontes.nascente.nivel;
   e.agua.chuvaAcumulada += chuva;
 
+  // FRUTAS DO BOSQUE SEGUINDO O MÊS DO ANO:
   let pressaoColeta = acaoHumana === 'colher_frutas' ? .12 : 0;
   for (const a of Object.values(e.arvores)) {
     if (!a.viva || a.saude <= 0) {
@@ -150,8 +167,17 @@ function atualizarMundo(estado, acaoHumana = null) {
     const crescimento = (ev.regeneracaoVegetal ? a.crescimento : a.crescimento * .25) * (clima.umidade > .6 ? 1.3 : .7);
     a.saude = Math.max(0, Math.min(100, a.saude + crescimento - seca));
     a.idade += 1 / 120;
-    if (ev.frutificacao && a.especie === 'frutifera' && a.saude > 15) a.frutos = Math.min(a.capacidadeFrutos, a.frutos + Math.max(.03, a.saude / 100 * (clima.umidade > .5 ? .28 : .08)));
-    else a.frutos = Math.max(0, a.frutos - .025 - pressaoColeta);
+    if (a.especie === 'frutifera' && a.saude > 15) {
+      if (mesInfo.fatorFrutas <= 0) {
+        a.frutos = Math.max(0, a.frutos - 0.35 - pressaoColeta);
+      } else if (mesInfo.fatorFrutas >= 0.45 && (ev.frutificacao || a.frutos < 4)) {
+        a.frutos = Math.min(a.capacidadeFrutos, a.frutos + Math.max(.04, (a.saude / 100) * 0.28 * mesInfo.fatorFrutas));
+      } else {
+        a.frutos = Math.max(0, a.frutos - 0.06 - pressaoColeta);
+      }
+    } else {
+      a.frutos = Math.max(0, a.frutos - .025 - pressaoColeta);
+    }
     if (a.frutos >= a.capacidadeFrutos * .8) a.sementes = Math.min(20, a.sementes + .08);
     if (a.idade > 80 && a.saude < 30) a.saude = Math.max(0, a.saude - .15);
     if (a.saude === 0) a.viva = false;
@@ -166,17 +192,35 @@ function atualizarMundo(estado, acaoHumana = null) {
     }
   }
 
+  // FAUNA E PEIXES SEGUINDO O MÊS DO ANO E MIGRAÇÃO SAZONAL:
   let frutosDisponiveis=Object.values(e.arvores).reduce((n,a)=>n+(a.viva?a.frutos:0),0);
   for (const [id, p] of Object.entries(e.fauna)) {
     let alimento;
-    if(id==='peixes') alimento=Math.max(.1,e.agua.fontes.lago.nivel/e.agua.fontes.lago.capacidade);
-    else {
+    if(id==='peixes') {
+      alimento=Math.max(.1,e.agua.fontes.lago.nivel/e.agua.fontes.lago.capacidade);
+      if (!mesInfo.cardumeNoRio || mesInfo.fatorPeixes <= 0) {
+        p.populacao = 0;
+        p.migracao = 1;
+        p.local = 'rio';
+        continue;
+      }
+      if (p.populacao < 1) {
+        if (m.tempo.periodo === 'manha' && (mesInfo.diaDoMes % 2 === 1)) {
+          p.populacao = Math.min(p.capacidade, Math.max(4, Math.round(12 * mesInfo.fatorPeixes)));
+        } else {
+          p.populacao = 0;
+        }
+        p.local = 'rio';
+        continue;
+      }
+    } else {
       const demanda=p.populacao*(id==='aves'?.012:.018),consumo=Math.min(frutosDisponiveis,demanda);
       alimento=demanda>0?consumo/demanda:1;frutosDisponiveis-=consumo;
       let restante=consumo;for(const arvore of Object.values(e.arvores).filter(a=>a.viva).sort((a,b)=>b.frutos-a.frutos)){const q=Math.min(restante,arvore.frutos);arvore.frutos-=q;restante-=q;if(restante<=0)break;}
     }
+    const fatorSazonal = id === 'peixes' ? mesInfo.fatorPeixes : mesInfo.fAnimais;
     const secaImpacto = clima.umidade < .4 ? .012 : 0;
-    const reproducao = (ev.reproducaoPeixes || ev.frutificacao ? p.reproducao : p.reproducao * .2) * alimento;
+    const reproducao = (ev.reproducaoPeixes || ev.frutificacao ? p.reproducao : p.reproducao * .5) * alimento * fatorSazonal;
     const mortalidade = p.mortalidade + secaImpacto + Math.max(0, .55 - alimento) * .02;
     p.populacao = Math.max(0, Math.min(p.capacidade, p.populacao * (1 + reproducao - mortalidade)));
     p.idadeMedia = Math.max(0, (p.idadeMedia || 0) + .005 - (reproducao > .01 ? .002 : 0));
@@ -206,7 +250,58 @@ function atualizarMundo(estado, acaoHumana = null) {
   }
   e.peixes.rio = e.fauna.peixes;
   e.animais.aves = e.fauna.aves; e.animais.roedores = e.fauna.mamiferos;
-  return { chuva, clima, estacao: m.tempo.estacao };
+  if (e.madeira && (e.madeira.floresta || 0) < 12) {
+    e.madeira.floresta = Math.min(24, (e.madeira.floresta || 0) + 0.45);
+  }
+  // HORTA SAZONAL COM LIFE DE VIDA (SÓ TEM PLANTAS SE ELES PLANTARAM!):
+  if (e.horta) {
+    const totalPlantas = (e.horta.plantados || 0) + (e.horta.crescendo || 0) + (e.horta.maduros || 0);
+    if (e.horta.plantadoPor && totalPlantas > 0.1 && (e.horta.vida ?? 0) > 0) {
+      const taxaCresc = (clima.umidade > .45 ? 0.55 : 0.28) + (chuva > 0 ? 0.35 : 0);
+      if ((e.horta.plantados || 0) > 0) {
+        const germinou = Math.min(e.horta.plantados, taxaCresc);
+        e.horta.plantados = Math.max(0, e.horta.plantados - germinou);
+        e.horta.crescendo = Math.min(e.horta.capacidade || 12, (e.horta.crescendo || 0) + germinou);
+      } else if ((e.horta.crescendo || 0) > 0) {
+        const amadureceu = Math.min(e.horta.crescendo, taxaCresc * 0.85);
+        e.horta.crescendo = Math.max(0, e.horta.crescendo - amadureceu);
+        e.horta.maduros = Math.min(e.horta.capacidade || 12, (e.horta.maduros || 0) + amadureceu);
+      }
+      const desgasteCiclo = clima.tipo === 'seco' ? 2.4 : (chuva > 0 ? 0.9 : 1.5);
+      e.horta.vida = Math.max(0, (e.horta.vida ?? 100) - desgasteCiclo);
+      if (e.horta.vida <= 0) {
+        e.horta.plantados = 0;
+        e.horta.crescendo = 0;
+        e.horta.maduros = 0;
+        e.horta.cultura = null;
+        e.horta.icone = null;
+        e.horta.cor = null;
+        e.horta.plantadoPor = null;
+      }
+    } else {
+      e.horta.plantados = 0;
+      e.horta.crescendo = 0;
+      e.horta.maduros = 0;
+      e.horta.vida = 0;
+      e.horta.cultura = null;
+      e.horta.icone = null;
+      e.horta.cor = null;
+      e.horta.plantadoPor = null;
+    }
+  }
+  if (e.fogueira) {
+    const temTempestade = Array.isArray(m.acontecimentos) && m.acontecimentos.some(a => a && a.ativo !== false && a.tipo === 'tempestade');
+    const perdaChuva = (temTempestade || clima.tipo === 'chuva_forte') ? 1.8 : (clima.tipo === 'chuva' ? 0.9 : (clima.tipo === 'chuva_fraca' ? 0.45 : 0.25));
+    e.fogueira.lenha = Math.max(0, (e.fogueira.lenha ?? 4) - perdaChuva);
+    if ((temTempestade || clima.tipo === 'chuva_forte') && e.fogueira.lenha < 2.2) {
+      e.fogueira.acesa = false;
+    } else if (clima.tipo === 'chuva' && e.fogueira.lenha < 1.0) {
+      e.fogueira.acesa = false;
+    } else if (e.fogueira.lenha <= 0) {
+      e.fogueira.acesa = false;
+    }
+  }
+  return { chuva, clima, estacao: m.tempo.estacao, mes: mesInfo };
 }
 
 function atualizarVidaSocial(estado,ser,acao){

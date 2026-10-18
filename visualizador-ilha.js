@@ -60,9 +60,76 @@ function reiniciarMundo(){
     try{if(fs.existsSync(MARCADOR))fs.unlinkSync(MARCADOR)}catch{}
   }
 }
+function lerFilaInterv(){
+  const p=path.join(ROOT,'intervencoes-fila.json');
+  try{if(!fs.existsSync(p))return[];return JSON.parse(fs.readFileSync(p,'utf8'))||[]}catch{return[]}
+}
+function registrarIntervencao(op){
+  const acontecimentos=require('./acontecimentos');
+  const {gravar}=require('./persistencia-v2');
+  const p=path.join(ROOT,'intervencoes-fila.json');
+  const fila=lerFilaInterv();
+  fila.push(op);
+  fs.writeFileSync(p,JSON.stringify(fila),'utf8');
+  let ev=null;
+  if(fs.existsSync(STATE)&&!fs.existsSync(MARCADOR)){
+    try{
+      const bruto=JSON.parse(fs.readFileSync(STATE,'utf8'));
+      eco.preparar(bruto);
+      ev=acontecimentos.intervir(bruto,op);
+      gravar(STATE,bruto);
+      fs.writeFileSync(p,'[]','utf8');
+    }catch(e){}
+  }
+  return {ok:true,evento:ev||op};
+}
+function lerCortexProfundo(serId){
+  const dir=path.join(ROOT,'memorias',String(serId),'mecanismos');
+  const out={serId,disponivel:fs.existsSync(dir),selfModel:[],tracos:[],trilhas:[],proveniencia:[]};
+  if(!out.disponivel)return out;
+  try{
+    const sm=path.join(dir,'self-model.json');
+    if(fs.existsSync(sm)){
+      const d=JSON.parse(fs.readFileSync(sm,'utf8'));
+      out.selfModel=(d.observacoes||d.afirmacoes||[]).slice(-5);
+    }
+  }catch{}
+  try{
+    const tr=path.join(dir,'tracos-icaro.json');
+    if(fs.existsSync(tr)){
+      const d=JSON.parse(fs.readFileSync(tr,'utf8'));
+      out.tracos=Object.values(d.tracos||{}).slice(0,5);
+    }
+  }catch{}
+  try{
+    const pv=path.join(dir,'proveniencia.jsonl');
+    if(fs.existsSync(pv)){
+      out.proveniencia=fs.readFileSync(pv,'utf8').trim().split(/\r?\n/).slice(-6).map(x=>{try{return JSON.parse(x)}catch{return null}}).filter(Boolean);
+    }
+  }catch{}
+  return out;
+}
 http.createServer((req,res)=>{
   const u=new URL(req.url,'http://localhost');
   if(u.pathname==='/api/snapshot')return json(res,{estado:readState(),eventos:readEvents()});
+  if(u.pathname==='/api/cortex'){
+    const id=u.searchParams.get('ser')||'icaro';
+    return json(res,lerCortexProfundo(id));
+  }
+  if(u.pathname==='/api/intervir'&&req.method==='POST'){
+    let body='';
+    req.on('data',c=>{body+=c;if(body.length>8192)req.destroy()});
+    req.on('end',()=>{
+      try{
+        const op=JSON.parse(body||'{}');
+        return json(res,registrarIntervencao(op));
+      }catch(e){
+        res.writeHead(400,{'content-type':'application/json; charset=utf-8'});
+        return res.end(JSON.stringify({ok:false,erro:e.message}));
+      }
+    });
+    return;
+  }
   if(u.pathname==='/api/reiniciar'&&req.method==='POST'){
     try{return json(res,reiniciarMundo())}
     catch(e){res.writeHead(500,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:e.message}))}

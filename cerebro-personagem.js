@@ -27,6 +27,27 @@ function memoriaVividaDe(ser){
 	}catch(e){return null}
 }
 
+// F3/F4 — INFLUÊNCIA COGNITIVA no contexto: os mecanismos vendored do ICARO
+// (aura, self-model, seleção contextual, peso, crenças) enriquecem o CONTEXTO
+// que o LLM recebe — nunca decidem nada. Opt-in (`ILHA_COG=1`): fora dele
+// `contexto` permanece byte-idêntico ao anterior (compatibilidade com testes).
+// Require atrasado + try/catch: falha da camada nunca derruba a montagem.
+// `ILHA_COG_PESO=1` troca as memórias brutas pela seleção contextual
+// (top-k por relevância ao tema do ser) — mesma técnica do núcleo do ICARO.
+function aplicarCognicao(ser,contexto){
+	if(process.env.ILHA_COG!=='1')return;
+	try{
+		const cog=require('./cognicao');
+		if(!cog||typeof cog.influencia!=='function'||!cog.estaAtivo()||!cog.saudavel())return;
+		const c=cog.influencia(ser,contexto);
+		if(c)contexto.cognicao=c;
+		// ILHA_COG_PESO=1: a seleção contextual do núcleo (ids = os textos
+		// das memórias) substitui o recorte bruto — mesma alavanca do ICARO.
+		if(process.env.ILHA_COG_PESO==='1'&&c&&Array.isArray(c.memoriasSelecionadas)&&c.memoriasSelecionadas.length)
+			contexto.memorias=c.memoriasSelecionadas.slice(0,12);
+	}catch(e){/* contexto permanece o de sempre */}
+}
+
 // Contexto do personagem — fatos percebidos/conhecidos por UM ser neste ciclo.
 // Separação: WORLD TRUTH (estado.mundo) nunca entra inteira; só o que este ser
 // percebe/sabe. `acontecimentos` chega apenas como PISTAS da própria região;
@@ -37,7 +58,7 @@ function montarContexto(estado,ser,possiveis,situacao=null){
 	const pessoasPorPerto=Object.values(estado.seres||{})
 		.filter(o=>o&&o.id!==ser.id&&o.status!=='morto'&&o.local===ser.local)
 		.map(o=>({id:o.id,nome:o.nome||o.id}));
-	return {
+	const contexto={
 		tempo:estado.mundo.tempo,
 		clima:estado.mundo.clima,
 		climaDetalhado:estado.mundo.ecossistema.clima,
@@ -48,6 +69,7 @@ function montarContexto(estado,ser,possiveis,situacao=null){
 		deslocamento:ser.deslocamento?{destino:ser.deslocamento.destino,trecho:ser.deslocamento.i,trechos:ser.deslocamento.caminho.length-1,caminho:[...ser.deslocamento.caminho]}:null,
 		status:ser.status,
 		necessidades:ser.necessidades,
+		inventario:ser.inventario?{...ser.inventario}:{agua:0,alimento:0,madeira:0},
 		sensacoes:observacaoCorporal(ser),
 		percepcoes:perceber(estado,ser),
 		memorias:(ser.memoria||[]).slice(-12).map(m=>m.texto),
@@ -63,6 +85,8 @@ function montarContexto(estado,ser,possiveis,situacao=null){
 		memoriaVivida:memoriaVividaDe(ser),
 		acoesPossiveis:possiveis
 	};
+	aplicarCognicao(ser,contexto);
+	return contexto;
 }
 
 // Toda decisão devolvida por um cérebro passa por aqui — fonte não importa.
