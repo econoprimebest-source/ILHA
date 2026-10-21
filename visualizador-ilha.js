@@ -134,6 +134,28 @@ http.createServer((req,res)=>{
     try{return json(res,reiniciarMundo())}
     catch(e){res.writeHead(500,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:e.message}))}
   }
+  // FRAME DA VISÃO (opt-in `ILHA_VISAO=1` no mundo) — o visualizador manda o
+  // canvas como data URL e aqui gravamos `ultimo-frame.json`, único arquivo
+  // que `visao.js` lê. Só o frame é escrito; nada do estado é tocado.
+  if(u.pathname==='/api/frame'&&req.method==='POST'){
+    let body='';
+    req.on('data',c=>{body+=c;if(body.length>10*1024*1024){try{res.writeHead(413)}catch(e){}req.destroy()}});
+    req.on('end',()=>{
+      try{
+        const img=JSON.parse(body||'{}').image;
+        if(typeof img!=='string'||!img.startsWith('data:image/')){
+          res.writeHead(400,{'content-type':'application/json'});
+          return res.end(JSON.stringify({ok:false,erro:'image (data URL) ausente'}));
+        }
+        fs.writeFileSync(path.join(ROOT,'ultimo-frame.json'),JSON.stringify({image:img,quando:new Date().toISOString()}));
+        return json(res,{ok:true});
+      }catch(e){
+        res.writeHead(400,{'content-type':'application/json'});
+        return res.end(JSON.stringify({ok:false,erro:e.message}));
+      }
+    });
+    return;
+  }
   if(u.pathname==='/api/mapa')return json(res,{nos:espaco.nos,arestas:espaco.arestas});
   if(u.pathname==='/mapa-ilha-referencia.png'){
     try {

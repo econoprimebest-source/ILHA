@@ -5,7 +5,7 @@ function acoes(e,s){const x=e.mundo.ecossistema;const base=[['beber','Beber águ
 // ir é decisão do personagem; aqui só aparece o caminho possível.
 for(const no of espaco.locais()){if(no===s.local)continue;base.push(no===s.casa?['ir_casa','Voltar para casa',true]:['ir_'+no,'Caminhar até '+espaco.nome(no),true])}
 const temOutro = Object.values(e.seres||{}).some(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);
-base.push(['esperar','Aguardar',true],['conviver','Conversar com alguém',temOutro],['falar','Falar com alguém',temOutro],['brincar','Brincar/Relaxar',!temOutro],['confrontar','Confrontar alguém',temOutro]);
+base.push(['esperar','Aguardar',true],['procurar_alguem','Procurar alguém (espera no local)',true],['conviver','Conversar com alguém',temOutro],['falar','Falar com alguém',temOutro],['brincar','Brincar/Relaxar',!temOutro],['confrontar','Confrontar alguém',temOutro],['desafiar_luta','Desafiar alguém para uma luta (Arena)',temOutro && s.local === 'arena']);
 // VIDA DIÁRIA: banho só existe onde há água de banho; arrumar casa só na
 // própria moradia. Ambas são POSSIBILIDADES — o cérebro escolhe se quer.
 base.push(['banho','Tomar banho',['rio','cachoeira','mar'].includes(s.local)]);
@@ -51,7 +51,7 @@ if(id==='ir_casa'||id.startsWith('ir_')){const destino=id==='ir_casa'?s.casa:id.
 // AÇÃO LOCAL: o ser assumiu o controle — qualquer ação no meio do caminho
 // cancela o trajeto (o mundo não puxa ninguém contra a própria decisão).
 if(s.deslocamento){r.deslocamento={estado:'abortado',destino:s.deslocamento.destino};s.deslocamento=null}
-switch(id){case'beber':s.inventario.agua--;s.necessidades.agua=0;r.quantidade=1;break;case'comer':s.inventario.alimento--;s.necessidades.alimento=0;r.quantidade=1;break;case'descansar':case'esperar':break;case'observar':r.pistas=perceber(e,s);break;case'banho':s.necessidades.higiene=Math.min(100,(s.necessidades.higiene??0)+60);r.quantidade=1;break;case'arrumar_casa':s.ultimoArrumarDia=e.mundo.tempo.dia;s.necessidades.frustracao=Math.max(0,(s.necessidades.frustracao??0)-15);s.necessidades.satisfacao=Math.min(100,(s.necessidades.satisfacao??50)+10);s.necessidades.higiene=Math.min(100,(s.necessidades.higiene??50)+25);r.quantidade=1;break;case'coletar_agua':{const temLago=x.agua.fontes?.lago&&x.agua.fontes.lago.nivel>0;const disp=Math.max(x.agua.nascente||0,temLago?3:0);r.quantidade=Math.min(3,disp>0?disp:2,Math.max(1.5,s.capacidades.coleta*3));if(x.agua.nascente>0)x.agua.nascente=Math.max(0,x.agua.nascente-r.quantidade);else if(temLago)x.agua.fontes.lago.nivel=Math.max(0,x.agua.fontes.lago.nivel-r.quantidade);s.inventario.agua+=r.quantidade;s.necessidades.agua=Math.max(0,(s.necessidades.agua||0)-60);break}case'pescar':{const p=x.peixes.rio,t=e.mundo.tempo,ch=Math.min(.95,Math.max(.65,p.populacao/p.capacidade)*Math.max(.65,s.capacidades.pesca*1.8)*(['manha','tarde'].includes(t.periodo)?1:.8)*(t.estacao==='chuvas'?1.25:t.estacao==='seca'?.9:1)),z=((t.ciclo*9301+17)%997)/997;if(p.populacao>0){const baseQ=Math.min(p.populacao,Math.max(1.5,s.capacidades.pesca*3.2*(0.45+0.55*(p.populacao/p.capacidade))));r.quantidade=z<ch?baseQ:Math.min(p.populacao,0.8);p.populacao-=r.quantidade;p.pescadosHoje=(p.ultimoDiaPesca===t.dia?(p.pescadosHoje||0):0)+1;p.ultimoDiaPesca=t.dia;s.inventario.alimento+=r.quantidade;s.necessidades.alimento=Math.max(0,(s.necessidades.alimento||0)-60)}r.chance=ch;break}case'colher_frutas':{let rem=Math.max(1.8,s.capacidades.coleta*2.8);for(const t of Object.values(x.arvores).filter(t=>t.local==='bosque').sort((a,b)=>b.frutos-a.frutos)){const q=Math.min(rem,t.frutos);t.frutos-=q;rem-=q;r.quantidade+=q;if(rem<=0)break}s.inventario.alimento+=r.quantidade;if(r.quantidade>0)s.necessidades.alimento=Math.max(0,(s.necessidades.alimento||0)-55);break}case'coletar_madeira':r.quantidade=Math.min(2,x.madeira.floresta,s.capacidades.forca*2);x.madeira.floresta-=r.quantidade;s.inventario.madeira+=r.quantidade;break;case'caçar':{
+switch(id){case'beber':s.inventario.agua--;s.necessidades.agua=0;r.quantidade=1;break;case'comer':s.inventario.alimento--;s.necessidades.alimento=0;r.quantidade=1;break;case'descansar':case'esperar':break;case'observar':r.pistas=perceber(e,s);break;case'banho':s.necessidades.higiene=Math.min(100,(s.necessidades.higiene??0)+60);r.quantidade=1;break;case'arrumar_casa':s.ultimoArrumarDia=e.mundo.tempo.dia;s.necessidades.frustracao=Math.max(0,(s.necessidades.frustracao??0)-15);s.necessidades.satisfacao=Math.min(100,(s.necessidades.satisfacao??50)+10);s.necessidades.higiene=Math.min(100,(s.necessidades.higiene??50)+25);r.quantidade=1;break;case'coletar_agua':{const temLago=x.agua.fontes?.lago&&x.agua.fontes.lago.nivel>0;const disp=Math.max(x.agua.nascente||0,temLago?3:0);r.quantidade=Math.min(3,disp>0?disp:2,Math.max(1.5,s.capacidades.coleta*3));if(x.agua.nascente>0)x.agua.nascente=Math.max(0,x.agua.nascente-r.quantidade);else if(temLago)x.agua.fontes.lago.nivel=Math.max(0,x.agua.fontes.lago.nivel-r.quantidade);s.inventario.agua+=r.quantidade;s.necessidades.agua=Math.max(0,(s.necessidades.agua||0)-60);break}case'pescar':{ s.habilidades = s.habilidades || {}; s.habilidades.caca = (s.habilidades.caca || 10) + 0.5; const p=x.peixes.rio,t=e.mundo.tempo,ch=Math.min(.95,Math.max(.65,p.populacao/p.capacidade)*Math.max(.65,s.capacidades.pesca*1.8)*(['manha','tarde'].includes(t.periodo)?1:.8)*(t.estacao==='chuvas'?1.25:t.estacao==='seca'?.9:1)),z=((t.ciclo*9301+17)%997)/997;if(p.populacao>0){const baseQ=Math.min(p.populacao,Math.max(1.5,s.capacidades.pesca*3.2*(0.45+0.55*(p.populacao/p.capacidade))));r.quantidade=z<ch?baseQ:Math.min(p.populacao,0.8);p.populacao-=r.quantidade;p.pescadosHoje=(p.ultimoDiaPesca===t.dia?(p.pescadosHoje||0):0)+1;p.ultimoDiaPesca=t.dia;s.inventario.alimento+=r.quantidade;s.necessidades.alimento=Math.max(0,(s.necessidades.alimento||0)-60)}r.chance=ch;break}case'colher_frutas':{let rem=Math.max(1.8,s.capacidades.coleta*2.8);for(const t of Object.values(x.arvores).filter(t=>t.local==='bosque').sort((a,b)=>b.frutos-a.frutos)){const q=Math.min(rem,t.frutos);t.frutos-=q;rem-=q;r.quantidade+=q;if(rem<=0)break}s.inventario.alimento+=r.quantidade;if(r.quantidade>0)s.necessidades.alimento=Math.max(0,(s.necessidades.alimento||0)-55);break}case'coletar_madeira':r.quantidade=Math.min(2,x.madeira.floresta,s.capacidades.forca*2);x.madeira.floresta-=r.quantidade;s.inventario.madeira+=r.quantidade;break;case'caçar':{ s.habilidades = s.habilidades || {}; s.habilidades.caca = (s.habilidades.caca || 10) + 1; 
         const faunas = Object.values(x.fauna||{}).filter(f=>f.local===s.local&&f.populacao>0);
         if(!faunas.length){ r.chance=0; break; }
         const alvo = faunas[0];
@@ -165,6 +165,73 @@ case'explorar':{
         r.texto = 'Você encontrou um esconderijo e pegou ' + qtd + ' de ' + achado + '!';
     } else {
         r.texto = 'Você explorou a área, mas não encontrou nada de útil.';
+    }
+    break;
+}
+case'desafiar_luta':{
+    const outros = Object.values(e.seres||{}).filter(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);
+    r.com = outros.length ? outros[0].id : null;
+    if (r.com) {
+        const alvo = outros[0];
+        s.habilidades = s.habilidades || { luta: 10, caca: 10, medicina: 5 };
+        alvo.habilidades = alvo.habilidades || { luta: 10, caca: 10, medicina: 5 };
+        
+        const forcaS = s.habilidades.luta + (Math.random() * 20);
+        const forcaO = alvo.habilidades.luta + (Math.random() * 20);
+        
+        if (forcaS > forcaO) {
+            // Vencedor rouba itens
+            let roubou = 0;
+            if (alvo.inventario.alimento >= 2) { alvo.inventario.alimento -= 2; s.inventario.alimento = (s.inventario.alimento||0) + 2; roubou += 2; }
+            else if (alvo.inventario.agua >= 2) { alvo.inventario.agua -= 2; s.inventario.agua = (s.inventario.agua||0) + 2; roubou += 2; }
+            else if (alvo.inventario.alimento > 0) { alvo.inventario.alimento -= 1; s.inventario.alimento = (s.inventario.alimento||0) + 1; roubou += 1; }
+            
+            s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao||50) + 25);
+            alvo.necessidades.frustracao = Math.min(100, (alvo.necessidades.frustracao||0) + 35);
+            s.habilidades.luta += 2;
+            r.quantidade = 1;
+            r.texto = 'Você venceu a luta contra ' + alvo.nome + '! Ganhou respeito e roubou ' + roubou + ' itens.';
+        } else {
+            let perdeu = 0;
+            if (s.inventario.alimento >= 2) { s.inventario.alimento -= 2; alvo.inventario.alimento = (alvo.inventario.alimento||0) + 2; perdeu += 2; }
+            else if (s.inventario.agua >= 2) { s.inventario.agua -= 2; alvo.inventario.agua = (alvo.inventario.agua||0) + 2; perdeu += 2; }
+            
+            s.necessidades.frustracao = Math.min(100, (s.necessidades.frustracao||0) + 40);
+            s.necessidades.saude = Math.max(0, (s.necessidades.saude||100) - 10);
+            alvo.necessidades.satisfacao = Math.min(100, (alvo.necessidades.satisfacao||50) + 20);
+            alvo.habilidades.luta += 2;
+            r.texto = 'Você perdeu a luta para ' + alvo.nome + '! Perdeu ' + perdeu + ' itens e sua frustração aumentou.';
+        }
+    }
+    break;
+}
+case'explorar_caverna':{
+    const chance = Math.random();
+    if (chance > 0.7) {
+        s.inventario.ervas = (s.inventario.ervas || 0) + 3;
+        s.inventario.alimento = (s.inventario.alimento || 0) + 2;
+        r.texto = 'Você encontrou cristais brilhantes e ervas raras no fundo da caverna!';
+    } else if (chance > 0.4) {
+        s.necessidades.saude = Math.max(0, (s.necessidades.saude || 100) - 15);
+        r.texto = 'Você se perdeu na escuridão e se feriu nas pedras. A caverna é perigosa.';
+    } else {
+        r.texto = 'Você explorou a caverna, mas só encontrou eco e escuridão.';
+    }
+    break;
+}
+case'mergulhar':{
+    const peixes = Math.floor(Math.random() * 4) + 1;
+    s.inventario.alimento = (s.inventario.alimento || 0) + peixes;
+    s.necessidades.higiene = Math.min(100, (s.necessidades.higiene || 0) + 20);
+    r.texto = 'Você mergulhou no rio e pegou ' + peixes + ' peixes com as mãos!';
+    break;
+}
+case'navegar':{
+    if (Math.random() > 0.5) {
+        s.local = 'mar_aberto';
+        r.texto = 'Você navegou para o mar aberto. O horizonte se abre diante de você.';
+    } else {
+        r.texto = 'O mar está agitado. Você decide voltar para a costa.';
     }
     break;
 }

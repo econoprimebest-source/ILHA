@@ -1,4 +1,10 @@
 'use strict';
+// VISÃO (`ILHA_VISAO=1`) e PERCEPÇÃO SENSORIAL — insumos que enriquecem o
+// prompt. A visão é assíncrona (modelo VL do Ollama) e por isso é resolvida
+// em `decidir` e passada como `extras`; `montarPrompt` continua SÍNCRONA —
+// é contrato público (testes e chamadores diretos chamam `.includes` nela).
+const visao=require('./visao');
+const percepcaoSensorial=require('./percepcao-sensorial');
 // Cérebro dos personagens da Ilha — arquitetura: perceber → interpretar → decidir.
 // Recebe condições do mundo, corpo, memória, experiências e objetivos; INTERPRETA;
 // ESCOLHE uma ação entre as possíveis. Nenhuma necessidade vira ação por regra
@@ -41,7 +47,7 @@ function system(ser){
 		'- Não preveja resultados. Não fale por outros personagens.';
 }
 
-function montarPrompt(c,a,ser){
+function montarPrompt(c,a,ser,extras){
 	const partes=[];
 	const cx=c.cortex||{};
 	partes.push('[QUEM EU SOU]');
@@ -57,6 +63,15 @@ function montarPrompt(c,a,ser){
 	partes.push('[AGORA]');
 	const t=c.tempo||{};
 	partes.push('ciclo '+(t.ciclo!=null?t.ciclo:'—')+', dia '+(t.dia!=null?t.dia:'—')+', '+(t.periodo||'—')+', '+(t.estacao||'—')+' | clima: '+String(c.clima||'—')+' | local: '+c.local+' | estado: '+c.status);
+	if(ser){
+		try{
+			const sensorial=percepcaoSensorial.descreverMundo(c,ser);
+			if(sensorial)partes.push(sensorial);
+		}catch(e){console.error('Erro na percepcao sensorial:',e)}
+	}
+	// VISÃO — cena descrita pelo modelo VL; só entra quando `decidir` resolve
+	// (opt-in `ILHA_VISAO=1`). Sem `extras.visao` o prompt é o de sempre.
+	if(extras&&extras.visao)partes.push('[SUA VISAO] '+extras.visao);
 	partes.push('[O QUE EU PERCEBO]');
 	partes.push(c.percepcoes&&c.percepcoes.length?c.percepcoes.join('\n'):'(nada chamou minha atenção)');
 	partes.push('[MINHA MEMÓRIA]');
@@ -107,13 +122,21 @@ function temperaturaDe(c){
 
 async function decidir(c,a,ser){
 	const p=provedor(),modelo=modeloDe(p); // resolvido por chamada (runtime/testes)
+	// VISÃO (opt-in `ILHA_VISAO=1`) — lê o último frame (`ultimo-frame.json`),
+	// pergunta ao modelo VL e injeta a descrição no prompt. Assíncrono AQUI
+	// para que `montarPrompt` continue síncrona; sem a flag (ou sem frame)
+	// nenhuma chamada sai e o prompt é o de sempre.
+	let cena=null;
+	if(ser&&process.env.ILHA_VISAO==='1'){
+		try{cena=await visao.descreverCena(ser.nome||ser.id)}catch(e){cena=null}
+	}
 	// CAMPO `formato` — JSON-Schema do Ollama (structured output): o Ollama
 	// garante o `enum` de ações. A API DeepSeek NÃO aceita este campo: lá o
 	// suporte a JSON é `response_format:{type:'json_object'}`, que NÃO impõe
 	// schema nem enum — por isso o contrato (forma exata do objeto + lista de
 	// ações permitidas) vai EXPLÍCITO no prompt, abaixo, substituindo o schema.
 	const formato={type:'object',properties:{acao:{type:'string',enum:a.map(x=>x.id)},motivo:{type:'string'},fala:{type:'string'},objetivos:{type:'array',items:{type:'string'},maxItems:3}},required:['acao','motivo'],additionalProperties:false};
-	const messages=[{role:'system',content:system(ser)},{role:'user',content:montarPrompt(c,a,ser)}];
+	const messages=[{role:'system',content:system(ser)},{role:'user',content:montarPrompt(c,a,ser,{visao:cena})}];
 	let url,cabecalhos={'content-type':'application/json'},corpo;
 	if(p==='deepseek'){
 		const chave=process.env.DEEPSEEK_API_KEY;

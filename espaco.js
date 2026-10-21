@@ -8,6 +8,7 @@ const nos={
 	casa_maria:{x:.855,y:.568,nome:'Casa da Maria'},
 	acampamento:{x:.450,y:.505,nome:'Acampamento'},
 	fogueira:{x:.492,y:.476,nome:'Fogueira'},
+	arena:{x:.560,y:.390,nome:'Arena de Lutas'},
 	bosque:{x:.310,y:.310,nome:'Bosque'},
 	floresta:{x:.800,y:.290,nome:'Floresta'},
 	rio:{x:.695,y:.580,nome:'Rio'},
@@ -21,6 +22,7 @@ const aliases={pesca_mar:'mar',mar_pesca:'mar',praia:'mar'};
 const arestas=[
 	{a:'fogueira',b:'casa_icaro',wp:[[.42,.49],[.34,.55],[.27,.56]]},
 	{a:'fogueira',b:'acampamento',wp:[]},
+	{a:'arena',b:'acampamento',wp:[[.515,.445]]},
 	{a:'fogueira',b:'casa_joao',wp:[[.46,.42],[.45,.33],[.47,.27]]},
 	{a:'casa_joao',b:'bosque',wp:[[.40,.27],[.35,.29]]},
 	{a:'bosque',b:'floresta',wp:[[.42,.33],[.52,.34],[.62,.33],[.72,.31]]},

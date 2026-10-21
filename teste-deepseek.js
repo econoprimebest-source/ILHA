@@ -89,7 +89,7 @@ function respostaValida(){return'{"acao":"coletar_agua","motivo":"sediado depois
 		assert.equal(c.o.messages[0].role,'system');
 		assert.equal(c.o.messages[0].content,cerebro.system(ser),'system do próprio personagem');
 		const u=c.o.messages[1];
-		assert(u.content.includes('[QUEM EU SOU]')&&u.content.includes('[MEU CORPO (fatos)]')&&u.content.includes('[AGORA]')&&u.content.includes('[O QUE EU PERCEBO]')&&u.content.includes('[MINHA MEMÓRIA]'),'contexto da Ilha preservado');
+		assert(u.content.includes('[QUEM EU SOU]')&&u.content.includes('[MEU CORPO (fatos')&&u.content.includes('[AGORA]')&&u.content.includes('[O QUE EU PERCEBO]')&&u.content.includes('[MINHA MEMÓRIA]'),'contexto da Ilha preservado');
 		assert(u.content.includes('[AÇÕES POSSIVEIS]')&&u.content.includes('- observar: olhar ao redor'),'ações possíveis no prompt');
 		assert(u.content.includes('[CONTRATO JSON]'),'contrato explícito no prompt (o response_format não impõe schema)');
 		for(const p of possiveis)assert(u.content.includes(p.id),'ação '+p.id+' listada no contrato');

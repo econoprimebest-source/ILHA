@@ -45,7 +45,7 @@ function marcarTempo(estado,entrada){
 // PONTO DE INTEGRAÇÃO — acontecimento do mundo na região do ser.
 // Quando há evento ativo na região, quem está em trajeto É consultado; hoje
 // não há gerador com a flag desligada; a leitura é `mundo.acontecimentos`.
-function situacaoNoCaminho(estado,ser){
+function situacaoNoCaminho(estado, ser){
 	if(!Array.isArray(estado.mundo.acontecimentos))return null;
 	const ativos=estado.mundo.acontecimentos.filter(a=>a&&a.ativo!==false&&Array.isArray(a.locais)&&a.locais.includes(ser.local));
 	return ativos.length?ativos[0]:null;
@@ -102,18 +102,26 @@ async function rodada(estado,opcoes={}){
 	// decisão: quem sofreu pode escolher fugir ainda neste ciclo.
 	for(const cn of acontecimentos.aplicar(estado))marcarTempo(estado,cn);
 
+	// MUNDO ÚNICO DO CICLO (snapshot): todos os seres decidem olhando para o
+	// MESMO `mundo` — o que um ser percebe não muda porque outro ser, que
+	// decidiu antes dele neste ciclo, já consumiu estoque ou moveu evento.
+	// Só `mundo` é clonado: `seres`, `relacoes`, `memorias` e `historico`
+	// seguem sendo os objetos REAIS, porque o contrato (FASE B) exige
+	// referências vivas — ex.: `ctx.relacoes === e.relacoes[ser.id]`.
+	const snapshotMundo={...estado,mundo:JSON.parse(JSON.stringify(estado.mundo))};
+
 	// FASE 1 — percepção + decisão. Quem está a caminho segue a decisão já
 	// tomada (física da trajetória); sem situação nova ninguém é consultado.
 	const decisoes=[];
 	for(const ser of vivos){
 		if(ser.status==='morto')continue;
-		const situacao=situacaoNoCaminho(estado,ser);
+		const situacao=situacaoNoCaminho(snapshotMundo, ser);
 		if(ser.deslocamento&&!situacao){
-			decisoes.push({ser,decisao:{acao:'continuar',motivo:'segue caminho para '+ser.deslocamento.destino,origem:'fisica'},percepcao:perceber(estado,ser),fisica:true});
+			decisoes.push({ser,decisao:{acao:'continuar',motivo:'segue caminho para '+ser.deslocamento.destino,origem:'fisica'},percepcao:perceber(snapshotMundo, ser),fisica:true});
 			continue;
 		}
-		const possiveis=acoes(estado,ser);
-		const contexto=montarContexto(estado,ser,possiveis,situacao);
+		const possiveis=acoes(snapshotMundo,ser);
+		const contexto=montarContexto(snapshotMundo,ser,possiveis,situacao);
 		const decidir=cerebroDe(opcoes,ser);
 		// TRILHA CAUSAL (cognição): abre ANTES da decisão para registrar o que
 		// entrou no contexto; fecha depois com a consequência real do motor.

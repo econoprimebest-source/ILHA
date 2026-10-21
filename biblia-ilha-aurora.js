@@ -19,6 +19,7 @@ const biblia={
 			casa_maria:{nome:'Casa da Maria',tipo:'abrigo',descricao:'Casa da família de Maria, perto da fazenda; guarda panelas e sementes. O casal mora perto do bosque, então aqui ela aparece para guardar colheita e conversar.'},
 			acampamento:{nome:'Acampamento',tipo:'abrigo',descricao:'Área aberta coberta entre a fogueira e a casa do Ícaro; ponto de encontro comum.'},
 			fogueira:{nome:'Fogueira',tipo:'estrutura',descricao:'Fogueira construída por João e Maria; referência segura no escuro.'},
+			arena:{nome:'Arena de Lutas',tipo:'estrutura',descricao:'Círculo de terra batida perto do acampamento, com pilares de pedra; lugar onde os habitantes se desafiam para lutar.'},
 			bosque:{nome:'Bosque',tipo:'exploração',descricao:'Bosque de frutíferas e aves, entre a casa do João e a floresta.'},
 			floresta:{nome:'Floresta',tipo:'exploração',descricao:'Floresta densa com madeira caída, animais e regiões de risco.'},
 			rio:{nome:'Rio',tipo:'recurso',descricao:'Rio que corta a ilha; água, pesca e travessia pela trilha da fazenda.'},
@@ -27,7 +28,7 @@ const biblia={
 			mar:{nome:'Mar',tipo:'oceano',descricao:'Praia e oceano na borda sul; ondas, conchas e fundo rochoso perto do cais.'},
 			barco:{nome:'Cais do barco',tipo:'estrutura',descricao:'Cais de madeira com um barco amarrado; saída possível para o mar.'}
 		},
-		trilhas:'Conectadas como em espaco.js: fogueira articula o lado oeste (casas, bosque, mar, cais); fazenda articula o lado leste (rio, floresta, casa da Maria).'
+		trilhas:'Conectadas como em espaco.js: fogueira articula o lado oeste (casas, bosque, mar, cais); fazenda articula o lado leste (rio, floresta, casa da Maria); o acampamento dá acesso à Arena de Lutas.'
 	},
 	clima:{
 		normal:'Ar ameno; estações definem umidade e chuva (seca, transição, chuvas).',
@@ -58,7 +59,7 @@ const biblia={
 		{tipo:'terreno',regioes:['mar','cachoeira'],regra:'rochedos e ondas pressionam quem se aproxima do fim da trilha'}
 	],
 	estruturas:[
-		{estado:'existe',itens:['Casa do Ícaro','Casa do João (do casal João–Maria)','Casa da Maria','Fogueira','Cais do barco','Acampamento coberto','Banho no rio, na cachoeira e no mar','Arrumar a casa e o acampamento']},
+		{estado:'existe',itens:['Casa do Ícaro','Casa do João (do casal João–Maria)','Casa da Maria','Fogueira','Cais do barco','Acampamento coberto','Arena de Lutas (desafio de luta)','Banho no rio, na cachoeira e no mar','Arrumar a casa e o acampamento']},
 		{estado:'futuro',itens:['pesca no mar','plantação ativa na fazenda','navegação do barco','objetos na praia'],nota:'existem no mapa/visual, mas o motor ainda não oferece essas ações — marcado, não fingido'}
 	],
 	sociedade:{

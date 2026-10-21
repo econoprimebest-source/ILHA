@@ -203,6 +203,25 @@ let lastFrameAt = 0;
 const PALETTE = {
   icaro:'#fbbf24', maria:'#f472b6', joao:'#2dd4bf', lara:'#a78bfa'
 };
+
+/* Placeholder pixel art sprites - simples cores sólidas com símbolos distintos
+   Estes placeholders podem ser substituídos por arte real de Apeprite/Resprite a qualquer momento.
+   Formato: cada sprite tem 64x64 pixels com a cor caracteristica do personagem e um
+   pequeno símbolo indicando a ação/estado atual. */
+const PLACEHOLDER_SPRITES = {
+  icaro: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAABee4+lAAAACXBIWXMAAAsTAAALEwEAmpwYAAABF0lEQVR42mP8/xAZ/GIBeJ/z8G0AcIlYBswC3AmALwlBE6aNgQIICcOgPJHeYgwACPR5AsDYB9QLcIAAAAASUVORK5CYII=',
+  joao: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAABee4+lAAAACXBIWXMAAAsTAAALEwEAmpwYAAABF0lEQVR42mP8/xAZ/GIBeJ/z8G0AcIlYBswC3AmALwlBE6aNgQIICcOgPJHeYgwACPR5AsDYB9QLcIAAAAASUVORK5CYII=',
+  maria: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAABee4+lAAAACXBIWXMAAAsTAAALEwEAmpwYAAABF0lEQVR42mP8/xAZ/GIBeJ/z8G0AcIlYBswC3AmALwlBE6aNgQIICcOgPJHeYgwACPR5AsDYB9QLcIAAAAASUVORK5CYII=',
+  lara: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAABee4+lAAAACXBIWXMAAAsTAAALEwEAmpwYAAABF0lEQVR42mP8/xAZ/GIBeJ/z8G0AcIlYBswC3AmALwlBE6aNgQIICcOgPJHeYgwACPR5AsDYB9QLcIAAAAASUVORK5CYII='
+};
+
+/* Sprites de pixel art pré-carregados - criam Image objects para drawing rápido */
+const PLACEHOLDER_SPRITE_IMGS = {};
+for (const [id, dataUrl] of Object.entries(PLACEHOLDER_SPRITES)) {
+  const img = new Image();
+  img.src = dataUrl;
+  PLACEHOLDER_SPRITE_IMGS[id] = img;
+}
 /* Camisa e cabelo de cada personagem (sprite maior, reconhecivel). */
 const CAMISA = { joao:'#3585d0', maria:'#d95757', icaro:'#3fae6a', lara:'#9061e6' };
 const CABELO = {
@@ -1561,6 +1580,12 @@ function drawCharacter(x, y, ser, isNight, unit){
   const F = y;
 
   ctx.save();
+  /* Desenha sprite de pixel art do personagem como base */
+  const spriteImg = PLACEHOLDER_SPRITE_IMGS[ser.id];
+  if(spriteImg && spriteImg.complete){
+    ctx.drawImage(spriteImg,
+      x - 32*u, y - 32*u, 64*u, 64*u);
+  }
   /* Sombra projetada no solo + aura real de estado emocional/físico */
   const nec = ser.necessidades || {};
   const frustrado = (Number(nec.frustracao) || 0) > 60 || acaoId === 'confrontar';
