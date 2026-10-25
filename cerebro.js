@@ -41,6 +41,7 @@ function system(ser){
 		'- Escolha UMA ação entre as AÇÕES POSSIVEIS. Não invente ações.\n'+
 		'- Declare um motivo curto (uma frase), na sua voz, ligado ao seu corpo, à sua memória, aos seus objetivos e ao que você percebe agora.\n'+
 		'- Se escolher falar ou conviver com alguém presente, pode incluir opcionalmente o campo "fala" com o que diz na sua própria voz.\n'+
+		'- Evite repetir a mesma ação passiva (como observar ou descansar) por múltiplos ciclos seguidos; a vida na ilha requer exploração, movimento e iniciativa.\n'+
 		'- Você pode ignorar uma necessidade se fizer sentido para o que está vivendo; também pode agir por curiosidade, por outra pessoa, por risco ou por algo que quer.\n'+
 		'- Se o corpo estiver em risco real (sede ou fome altíssimas, saúde baixa, estado crítico), considerar cuidar disso faz parte de continuar vivendo na ilha — ainda assim, quem decide é você.\n'+
 		'- Opcionalmente: "objetivos" (até 3 frases curtas) do que você passou a querer agora; mantenha os que ainda importam.\n'+
@@ -93,6 +94,13 @@ function montarPrompt(c,a,ser,extras){
 	if(mem.length)partes.push(mem.map(x=>'- '+String(x)).join('\n'));
 	if(cx.trajetoriaRecente&&cx.trajetoriaRecente.length)partes.push('últimas ações: '+cx.trajetoriaRecente.slice(-5).map(x=>x.acao+(x.consequencia>0?' [+'+x.consequencia+']':'')+(x.motivo?' ('+String(x.motivo).slice(0,80)+')':'')).join('; '));
 	if(cx.diario&&cx.diario.length)partes.push('diário: '+cx.diario.slice(-3).join(' | '));
+	// ANTI-REPETIÇÃO PROATIVA: impede que personagens caiam em loops passivos
+	if(cx.diario&&cx.diario.length>=2){
+		const ultimas=cx.diario.slice(-3).map(d=>typeof d==='string'?d:(d.acao||'')).filter(Boolean);
+		if(ultimas.length>=2 && ultimas.every(x=>x===ultimas[0]) && ['observar','descansar','esperar'].includes(ultimas[0])){
+			partes.push('\n[ATENÇÃO - INICIATIVA PRÓPRIA]: Você já realizou "'+ultimas[0]+'" repetidamente nos últimos ciclos e já compreendeu o ambiente. É hora de agir! Escolha uma ação de MOVIMENTO ou AÇÃO CONCRETA (por exemplo caminhar até outro local usando "ir_<local>", explorar, coletar recursos ou conversar). NÃO repita "'+ultimas[0]+'" neste ciclo.');
+		}
+	}
 	if(c.experiencias&&c.experiencias.length)partes.push('experiências: '+c.experiencias.join('; '));
 	if(c.relacoes){
 		const rel=Object.entries(c.relacoes).filter(([k])=>!(ser&&k===ser.id));
@@ -127,7 +135,7 @@ function montarPrompt(c,a,ser,extras){
 // (mesma receita do ICARO: `moduladores.temperaturaLLM`); fora do escopo ou
 // inválida, o baseline .3 de sempre.
 function temperaturaDe(c){
-	const base=.3;
+	const base=.65;
 	try{
 		const t=c&&c.cognicao&&c.cognicao.aura&&Number(c.cognicao.aura.moduladores&&c.cognicao.aura.moduladores.temperaturaLLM);
 		return Number.isFinite(t)?Math.min(1.5,Math.max(0,t)):base;

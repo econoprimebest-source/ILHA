@@ -268,4 +268,4 @@ http.createServer((req,res)=>{
     } catch(e) { res.writeHead(500); return res.end('Erro ao carregar visualizador: '+e.message); }
   }
   res.writeHead(404);res.end('Not found');
-}).listen(PORT,'127.0.0.1',()=>console.log('Ilha Observatório: http://localhost:'+PORT));
+}).listen(PORT,'0.0.0.0',()=>console.log('Ilha Observatório: http://0.0.0.0:'+PORT));
