@@ -23,7 +23,7 @@
 
   // Posições dos locais no mapa isométrico (coordenadas normalizadas 0..1)
   const LOCAIS_MAPA = {
-    fogueira:     { x: 0.50, y: 0.52, nome: 'Fogueira Central' },
+    fogueira:     { x: 0.490, y: 0.485, nome: 'Fogueira Central' },
     acampamento:  { x: 0.46, y: 0.54, nome: 'Acampamento' },
     casa_icaro:   { x: 0.22, y: 0.48, nome: 'Cabana do Ícaro' },
     casa_joao:    { x: 0.46, y: 0.24, nome: 'Abrigo do João' },
@@ -118,6 +118,9 @@
       this.rootContainer.addChild(this.groundContainer);
 
       // 2. Fogueira Viva Central
+      this.dockContainer = new PIXI.Container();
+      this.rootContainer.addChild(this.dockContainer);
+
       this.campfireContainer = new PIXI.Container();
       this.rootContainer.addChild(this.campfireContainer);
 
@@ -635,6 +638,152 @@
       if (tooltip) tooltip.style.display = 'none';
     }
 
+    atualizarCaisVivo(tempo, estado) {
+      this.dockContainer.removeChildren();
+      const s = this.box.scale;
+      const pt = this.toScreen(LOCAIS_MAPA.barco.x, LOCAIS_MAPA.barco.y);
+
+      // Verifica se tem alguém pescando ou no cais
+      const pescador = (estado && estado.seres)
+        ? Object.values(estado.seres).find(ser => ser.status !== 'morto' && (ser.local === 'barco' || ser.local === 'mar'))
+        : null;
+      const pescandoAtivo = pescador && (pescador.acao || '').toLowerCase().includes('pesc');
+
+      // 1. Base do Deck do Cais em 2.5D de Madeira
+      const deckG = new PIXI.Graphics();
+      
+      // Estacas verticais fincadas na água
+      deckG.beginFill(0x2d1a0e);
+      deckG.drawRect(pt.x - 24 * s, pt.y - 12 * s, 6 * s, 34 * s);
+      deckG.drawRect(pt.x + 18 * s, pt.y - 12 * s, 6 * s, 34 * s);
+      deckG.endFill();
+
+      // Pranchas de madeira do cais (deck principal sobreposto com acabamento)
+      deckG.beginFill(0x6e3c15); // Madeira tratada
+      deckG.lineStyle(1.5 * s, 0x3d210b, 0.95);
+      deckG.drawRoundedRect(pt.x - 28 * s, pt.y - 18 * s, 56 * s, 28 * s, 3 * s);
+      deckG.endFill();
+
+      // Linhas das tábuas individuais do deck
+      deckG.lineStyle(1.2 * s, 0x451a03, 0.75);
+      for (let i = -22; i <= 22; i += 7) {
+        deckG.moveTo(pt.x + i * s, pt.y - 18 * s);
+        deckG.lineTo(pt.x + i * s, pt.y + 10 * s);
+      }
+
+      // Poste de amarração (Bollard) com corda enrolada
+      deckG.lineStyle(0);
+      deckG.beginFill(0x3d210b);
+      deckG.drawCircle(pt.x - 22 * s, pt.y - 8 * s, 4.5 * s);
+      deckG.beginFill(0xd97706); // Corda
+      deckG.drawCircle(pt.x - 22 * s, pt.y - 8 * s, 2.8 * s);
+
+      // Lamparina / Tocha do cais
+      deckG.lineStyle(2 * s, 0x1e293b);
+      deckG.moveTo(pt.x + 24 * s, pt.y - 14 * s);
+      deckG.lineTo(pt.x + 24 * s, pt.y - 28 * s);
+      deckG.lineStyle(0);
+      const oscLuz = Math.sin(tempo * 0.015) * 1.5 * s;
+      deckG.beginFill(0xf59e0b, 0.95);
+      deckG.drawCircle(pt.x + 24 * s, pt.y - 30 * s + oscLuz, 3.5 * s);
+      deckG.endFill();
+
+      // Varal com peixes secando
+      deckG.lineStyle(1.5 * s, 0x78350f);
+      deckG.moveTo(pt.x - 24 * s, pt.y - 24 * s);
+      deckG.lineTo(pt.x - 6 * s, pt.y - 24 * s);
+      deckG.lineStyle(0);
+      deckG.beginFill(0x94a3b8);
+      deckG.drawEllipse(pt.x - 20 * s, pt.y - 21 * s, 2.5 * s, 4 * s);
+      deckG.drawEllipse(pt.x - 15 * s, pt.y - 20 * s, 2.5 * s, 4 * s);
+      deckG.drawEllipse(pt.x - 10 * s, pt.y - 21 * s, 2.5 * s, 4 * s);
+      deckG.endFill();
+
+      this.dockContainer.addChild(deckG);
+
+      // 2. A Jangada / Barco Físico Vivo (Balança na água e navega!)
+      const barcoCont = new PIXI.Container();
+      
+      // Física de maré e balanço suave
+      const balanco = Math.sin(tempo * 0.004) * 3.5 * s;
+      const inclinacao = Math.sin(tempo * 0.003) * 0.05;
+
+      // Posição: quando pescando, a jangada navega mar adentro (+42px ao sul na água limpa)
+      const distMar = pescandoAtivo ? 42 * s : 16 * s;
+      barcoCont.x = pt.x + 4 * s;
+      barcoCont.y = pt.y + distMar + balanco;
+      barcoCont.rotation = inclinacao;
+
+      const bG = new PIXI.Graphics();
+      barcoCont.addChild(bG);
+
+      // Espuma e ondulação do mar ao redor do casco
+      const espuma = Math.sin(tempo * 0.006) * 2.5 * s;
+      bG.lineStyle(1.8 * s, 0xbae6fd, 0.65);
+      bG.drawEllipse(0, 0, 26 * s + espuma, 14 * s);
+
+      // Toras da Jangada amarradas com cordas
+      bG.lineStyle(0);
+      bG.beginFill(0x5c3210); // Toras escuras da base
+      bG.drawRoundedRect(-20 * s, -10 * s, 40 * s, 20 * s, 4 * s);
+
+      // 3 Toras longitudinais individuais
+      bG.beginFill(0x854d0e);
+      bG.drawRoundedRect(-19 * s, -9 * s, 38 * s, 5.5 * s, 2 * s);
+      bG.drawRoundedRect(-19 * s, -3 * s, 38 * s, 5.5 * s, 2 * s);
+      bG.drawRoundedRect(-19 * s, 3.5 * s, 38 * s, 5.5 * s, 2 * s);
+
+      // Cordas de amarração das toras
+      bG.lineStyle(1.5 * s, 0xd97706, 0.9);
+      bG.moveTo(-11 * s, -9 * s); bG.lineTo(-11 * s, 9 * s);
+      bG.moveTo(11 * s, -9 * s);  bG.lineTo(11 * s, 9 * s);
+
+      // Mastro de madeira com vela de lona
+      bG.lineStyle(2.2 * s, 0x271406);
+      bG.moveTo(0, 0); bG.lineTo(0, -24 * s);
+      bG.lineStyle(0);
+      bG.beginFill(0xf1f5f9, 0.95); // Vela de tecido rústico
+      bG.drawPolygon([
+        0, -24 * s,
+        15 * s + Math.sin(tempo * 0.005) * 2 * s, -15 * s,
+        0, -6 * s
+      ]);
+      bG.endFill();
+
+      // Se estiver pescando ativo: Linha de pesca na água + peixinhos saltando
+      if (pescandoAtivo) {
+        bG.lineStyle(1.2 * s, 0xffffff, 0.85);
+        bG.moveTo(15 * s, -10 * s);
+        bG.lineTo(28 * s, 12 * s); // Linha lançada ao mar
+        // Boia vermelha e branca na água
+        bG.lineStyle(0);
+        bG.beginFill(0xef4444);
+        bG.drawCircle(28 * s, 12 * s, 2.5 * s);
+        bG.beginFill(0xffffff);
+        bG.drawCircle(28 * s, 14 * s, 1.8 * s);
+
+        // Peixinho saltando da água periodicamente
+        const salto = (tempo * 0.003) % 4;
+        if (salto < 1) {
+          const salY = -Math.sin(salto * Math.PI) * 16 * s;
+          bG.beginFill(0x38bdf8);
+          bG.drawEllipse(34 * s, 10 * s + salY, 4.5 * s, 2.5 * s);
+          // Gotas de água espirrando
+          bG.beginFill(0xffffff, 0.8);
+          bG.drawCircle(32 * s, 12 * s, 1.2 * s);
+          bG.drawCircle(36 * s, 13 * s, 1.2 * s);
+        }
+        bG.endFill();
+      } else {
+        // Se ancorado: corda amarrando o barco ao poste do cais
+        bG.lineStyle(1.5 * s, 0xd97706, 0.85);
+        bG.moveTo(-18 * s, 0);
+        bG.lineTo(-24 * s, -distMar + 8 * s);
+      }
+
+      this.dockContainer.addChild(barcoCont);
+    }
+
     tick() {
       if (!this.carregado) return;
       const tempo = performance.now();
@@ -652,6 +801,7 @@
         });
       }
 
+      this.atualizarCaisVivo(tempo, estado);
       this.atualizarFogueira(tempo);
       this.atualizarIluminacao(estado, tempo);
       this.atualizarHotspots();
