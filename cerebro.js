@@ -134,8 +134,26 @@ function temperaturaDe(c){
 	}catch(e){return base}
 }
 
+// FALLBACK LOCAL: se o provedor remoto (Groq/DeepSeek) estiver indisponivel (rede, timeout,
+// HTTP 429/5xx), repete a MESMA decisao no Ollama local (ILHA_FALLBACK_MODEL, padrao qwen3:8b).
+// Desligue com ILHA_SEM_FALLBACK=1. Se o fallback tambem falhar, propaga o erro ORIGINAL
+// (falha continua sendo falha honesta). Erros de conteudo (JSON/acao invalida) NAO acionam fallback.
 async function decidir(c,a,ser,extras={}){
-	const p=provedor(),modelo=modeloDe(p); // resolvido por chamada (runtime/testes)
+	try{return await decidirNoProvedor(c,a,ser,extras)}
+	catch(e){
+		const msg=String(e&&e.message||e);
+		const infra=/LLM indispon|DeepSeek HTTP (429|5\d\d)|timeout/i.test(msg);
+		if(!infra||extras&&extras.__fallback||provedor()==='ollama'||process.env.ILHA_SEM_FALLBACK==='1')throw e;
+		try{
+			const r=await decidirNoProvedor(c,a,ser,{...extras,__fallback:true});
+			console.warn('[FALLBACK-OLLAMA] provedor remoto indisponivel ('+msg.slice(0,120)+'); decisao feita localmente com '+(process.env.ILHA_FALLBACK_MODEL||'qwen3:8b'));
+			return r;
+		}catch(e2){throw e}
+	}
+}
+async function decidirNoProvedor(c,a,ser,extras={}){
+	const fb=!!(extras&&extras.__fallback);
+	const p=fb?'ollama':provedor(),modelo=fb?(process.env.ILHA_FALLBACK_MODEL||'qwen3:8b'):modeloDe(p); // resolvido por chamada (runtime/testes)
 	// VISÃO (opt-in `ILHA_VISAO=1`) — lê o último frame (`ultimo-frame.json`),
 	// pergunta ao modelo VL e injeta a descrição no prompt. Assíncrono AQUI
 	// para que `montarPrompt` continue síncrona; sem a flag (ou sem frame)
@@ -191,7 +209,7 @@ async function decidir(c,a,ser,extras={}){
 			try{const j=await r.json();if(j&&j.error&&j.error.message)d=': '+String(j.error.message).slice(0,200)}catch(e){}
 			throw Error('DeepSeek HTTP '+r.status+d);
 		}
-		throw Error('Ollama HTTP '+r.status);
+		throw Error((p==='groq'?'LLM indisponível: Groq HTTP ':'Ollama HTTP ')+r.status);
 	}
 	const d=await r.json();
 	if((p==='deepseek'||p==='groq')&&d.usage){console.log('[API-USO] '+JSON.stringify({model:modelo,provedor:p,prompt_tokens:d.usage.prompt_tokens,completion_tokens:d.usage.completion_tokens,total_tokens:d.usage.total_tokens}));}

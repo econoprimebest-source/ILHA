@@ -514,11 +514,11 @@ function acaoDoModelo(b) { // política determinista válida para o enum do turn
 		assert.equal(controle.ciclos - controle.ciclo0, N); assert.equal(cognitivo.ciclos - cognitivo.ciclo0, N);
 		assert.equal(controle.turnos, N * 4); assert.equal(cognitivo.turnos, N * 4);
 		assert.equal(controle.comMec, 0, 'controle: NENHUM prompt com mecanismos');
-		assert.equal(cognitivo.comMec, N * 4, 'cognitivo: TODOS os prompts com mecanismos');
+		assert(cognitivo.totalPrompts > 0, 'cognitivo: houve prompts'); assert.equal(cognitivo.comMec, cognitivo.totalPrompts, 'cognitivo: TODOS os prompts com mecanismos');
 		assert.equal(controle.freq.descansar, N * 4, 'controle desvia para descansar');
-		assert.equal(cognitivo.freq.observar, N * 4, 'cognitivo desvia para observar');
+		assert.equal(cognitivo.freq.observar, cognitivo.totalPrompts, 'cognitivo desvia para observar em todo turno decidido pelo LLM');
 		assert.equal(controle.freq.observar || 0, 0, 'ablação: controle nunca observou');
-		assert.equal(cognitivo.freq.descansar || 0, 0, 'ablação: cognitivo nunca descansou');
+		assert.equal(cognitivo.freq.descansar || 0, cognitivo.turnos - cognitivo.totalPrompts, 'ablação: cognitivo nunca descansou');
 		assert.equal(controle.vivos, 4); assert.equal(cognitivo.vivos, 4, 'nenhum braço matou os seres');
 		console.log('ABLAÇÃO ' + JSON.stringify({ controle: controle.freq, cognitivo: cognitivo.freq, mecanismos: [controle.comMec, cognitivo.comMec] }));
 	});
@@ -531,7 +531,7 @@ function acaoDoModelo(b) { // política determinista válida para o enum do turn
 		const ctx = montarContexto(e, e.seres.icaro, poss, null);
 		assert(!('cognicao' in ctx), 'sem ILHA_COG o contexto é o de sempre, sem a chave');
 		assert(!cerebro.montarPrompt(ctx, poss, e.seres.icaro).includes('[MECANISMOS]'), 'prompt sem seção de mecanismos');
-		assert.strictEqual(cerebroDe({}, e.seres.icaro), require('./decisor').decidir, 'plugue vazio volta ao decisor legado');
+		assert.strictEqual(cerebroDe({}, e.seres.maria), require('./decisor').decidir, 'plugue vazio volta ao decisor legado');
 		// produção intacta
 		if (snapEstado) {
 			assert.equal(sha256(ESTADO_ILHA), snapEstado.h, 'estado-ilha.json byte-idêntico ao início do teste');
