@@ -112,6 +112,9 @@ function lerCortexProfundo(serId){
 http.createServer((req,res)=>{
   const u=new URL(req.url,'http://localhost');
   if(u.pathname==='/api/snapshot')return json(res,{estado:readState(),eventos:readEvents()});
+  if(u.pathname==='/api/feed'){const fm=require('./feed-microuniverso');const est=readState();return json(res,{resumo:fm.resumo(est),itens:fm.montarFeed(est,readEvents(),Number(u.searchParams.get('n'))||40),missoes:{ativas:(est.missoes&&est.missoes.ativas)||[],catalogo:require('./missoes').CATALOGO}})}
+  if(u.pathname==='/api/missao'&&req.method==='POST'){let body='';req.on('data',c=>{body+=c;if(body.length>4096)req.destroy()});req.on('end',()=>{try{const o=JSON.parse(body||'{}');if(!readState().seres[o.serId])throw Error('personagem desconhecido');require('./missoes').enfileirar(o.serId,o.tipoId);return json(res,{ok:true,enfileirada:true})}catch(e){res.writeHead(400,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:e.message}))}});return}
+  if(u.pathname==='/feed'||u.pathname==='/feed-microuniverso.html'){res.writeHead(200,{'content-type':'text/html; charset=utf-8'});return res.end(fs.readFileSync(path.join(ROOT,'feed-microuniverso.html')))}
   if(u.pathname==='/api/cortex'){
     const id=u.searchParams.get('ser')||'icaro';
     return json(res,lerCortexProfundo(id));

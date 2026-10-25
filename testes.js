@@ -13,4 +13,4 @@ t('percepção revela pistas locais sem expor população numérica',()=>{let e=
 t('status biológico contempla crítico e morto',()=>{let e=novo(),s=e.seres.icaro;s.necessidades.agua=70;require('./seres').atualizar(s,e.mundo,'esperar');assert.equal(s.status,'critico');s.necessidades.agua=100;require('./seres').atualizar(s,e.mundo,'esperar');assert.equal(s.status,'morto')});
 t('JSON completo e JSONL permitem retomar após reiniciar',()=>{let d=fs.mkdtempSync(path.join(os.tmpdir(),'ilha-v2-')),f=path.join(d,'estado.json'),l=path.join(d,'logs','ilha.jsonl'),e=novo();gravar(f,e);anexar(l,{tempo:e.mundo.tempo,decisao:{acao:'observar'},consequenciaReal:{quantidade:0}});let rec=carregar(f),linha=JSON.parse(fs.readFileSync(l,'utf8'));assert.equal(rec.mundo.tempo.ciclos,e.mundo.tempo.ciclos);assert.equal(linha.decisao.acao,'observar');fs.rmSync(d,{recursive:true,force:true})});
 console.log('RESULTADO '+total+' testes OK');
-require('./testes-v2');
+require('./testes-v2');require('./testes-missoes');require('./testes-feed');
