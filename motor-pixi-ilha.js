@@ -1,13 +1,14 @@
 /**
- * motor-pixi-ilha.js — Motor 2.5D Isométrico Puro "Evertrail Tribe" para a Ilha Aurora
+ * motor-pixi-ilha.js — Motor 2.5D Isométrico Profissional "Evertrail Tribe" para a Ilha Aurora
  * 
- * Implementação 100% Isométrica em PixiJS:
- * 1. Chão construído exclusivamente com tiles isométricos Kenney (grama, terra batida, areia, oceano).
- *    Fundo 2D antigo completamente desligado.
- * 2. Construções texturizadas com madeira e palha (Kenney Medieval), com escala reduzida em ~50%.
- * 3. Personagens estilizados aumentados em ~30% (proporção humana harmoniosa com a vila).
- * 4. Z-Index / Y-Sorting real: Caverna, floresta, casas e personagens organizados pela base do solo.
- * 5. Fogueira animada, ciclo de iluminação Dia/Noite com halo quente e clima de tempestade leve em 30 FPS.
+ * - Base visual em alta definição sobre o novo mapa isométrico (mapa-ilha-evertrail.png)
+ * - NENHUM cubo cinza ou sobreposição de blocos sem textura
+ * - NENHUMA grade de tiles quebrada ou desalinhada
+ * - Fogueira animada no centro com chamas e partículas de brasas
+ * - Ciclo de iluminação dia/noite cinematográfico com luz volumétrica quente na fogueira
+ * - Chuva atmosférica leve a 30 FPS econômico (otimizado para Z-Fold)
+ * - Habitantes estilizados, legíveis e proporcionais à vila, com sombras, auras CORTEX e balões de fala
+ * - Hotspots interativos para abrir o painel da casa ou inspecionar o CORTEX
  */
 (function() {
   'use strict';
@@ -17,52 +18,26 @@
     return;
   }
 
-  PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+  PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR;
   PIXI.Ticker.shared.maxFPS = 30; // 30 FPS cravados para economia de bateria no Z-Fold
 
-  // Texturas Oficiais do Pacote Kenney Isométrico
-  const TILES = {
-    grama: '/assets/isometric/landscape/PNG/landscapeTiles_000.png',
-    grama_flor: '/assets/isometric/landscape/PNG/landscapeTiles_001.png',
-    terra: '/assets/isometric/landscape/PNG/landscapeTiles_019.png',
-    agua: '/assets/isometric/landscape/PNG/landscapeTiles_027.png',
-    
-    // Árvores isométricas Kenney
-    arvore_bosque: '/assets/isometric/landscape/PNG/landscapeTiles_005.png',
-    arvore_pinho: '/assets/isometric/landscape/PNG/landscapeTiles_008.png',
-    arvore_floresta: '/assets/isometric/landscape/PNG/landscapeTiles_036.png',
-    arvore_alta: '/assets/isometric/landscape/PNG/landscapeTiles_098.png',
-    
-    // Rochas / Caverna
-    rocha_grande: '/assets/isometric/landscape/PNG/landscapeTiles_012.png',
-    rocha_caverna: '/assets/isometric/landscape/PNG/landscapeTiles_017.png',
-
-    // Construções Medievais Texturizadas (Madeira e Palha)
-    casa_icaro: '/assets/isometric/medieval/PNG/Retina/Structure/medievalStructure_17.png', // Cabana de madeira com teto de palha
-    casa_joao: '/assets/isometric/medieval/PNG/Retina/Structure/medievalStructure_18.png',  // Cabana de toras com chaminé
-    casa_maria: '/assets/isometric/medieval/PNG/Retina/Structure/medievalStructure_20.png', // Casa de madeira com base de pedra
-    cais: '/assets/isometric/medieval/PNG/Retina/Structure/medievalStructure_21.png',       // Cais de tábuas de madeira
-    fazenda: '/assets/isometric/medieval/PNG/Retina/Environment/medievalEnvironment_16.png',// Canteiro de horta arado com cercas
-    fogueira_base: '/assets/isometric/medieval/PNG/Retina/Environment/medievalEnvironment_15.png' // Fogueira com toras de lenha
-  };
-
-  // Coordenadas na Grade Isométrica (coluna, linha) de 0 a 18
-  const GRADE_LOCAIS = {
-    fogueira:     { c: 9,  r: 9,  nome: 'Fogueira Central' },
-    acampamento:  { c: 8,  r: 10, nome: 'Acampamento' },
-    casa_icaro:   { c: 4,  r: 9,  nome: 'Cabana do Ícaro' },
-    casa_joao:    { c: 9,  r: 4,  nome: 'Abrigo do João' },
-    casa_maria:   { c: 13, r: 10, nome: 'Cabana da Maria' },
-    fazenda:      { c: 14, r: 9,  nome: 'Horta da Fazenda' },
-    barco:        { c: 9,  r: 15, nome: 'Cais da Jangada' },
-    mar:          { c: 6,  r: 14, nome: 'Praia / Mar' },
-    arena:        { c: 11, r: 6,  nome: 'Arena de Lutas' },
-    caverna:      { c: 14, r: 4,  nome: 'Caverna Sombria' },
-    bosque:       { c: 6,  r: 5,  nome: 'Bosque de Frutas' },
-    floresta:     { c: 12, r: 7,  nome: 'Floresta Fechada' },
-    rio:          { c: 11, r: 9,  nome: 'Riacho de Água Doce' },
-    cachoeira:    { c: 11, r: 3,  nome: 'Cachoeira das Rochas' },
-    ilha_vizinha: { c: 2,  r: 15, nome: 'Ilha Vizinha' }
+  // Posições dos locais no mapa isométrico (coordenadas normalizadas 0..1)
+  const LOCAIS_MAPA = {
+    fogueira:     { x: 0.50, y: 0.52, nome: 'Fogueira Central' },
+    acampamento:  { x: 0.46, y: 0.54, nome: 'Acampamento' },
+    casa_icaro:   { x: 0.22, y: 0.48, nome: 'Cabana do Ícaro' },
+    casa_joao:    { x: 0.46, y: 0.24, nome: 'Abrigo do João' },
+    casa_maria:   { x: 0.80, y: 0.58, nome: 'Cabana da Maria' },
+    fazenda:      { x: 0.88, y: 0.56, nome: 'Horta da Fazenda' },
+    barco:        { x: 0.48, y: 0.84, nome: 'Cais da Jangada' },
+    mar:          { x: 0.35, y: 0.88, nome: 'Praia / Mar' },
+    arena:        { x: 0.56, y: 0.38, nome: 'Arena de Lutas' },
+    caverna:      { x: 0.88, y: 0.22, nome: 'Caverna Sombria' },
+    bosque:       { x: 0.32, y: 0.32, nome: 'Bosque de Frutas' },
+    floresta:     { x: 0.76, y: 0.32, nome: 'Floresta Fechada' },
+    rio:          { x: 0.64, y: 0.54, nome: 'Riacho de Água Doce' },
+    cachoeira:    { x: 0.65, y: 0.14, nome: 'Cachoeira das Rochas' },
+    ilha_vizinha: { x: 0.08, y: 0.82, nome: 'Ilha Vizinha' }
   };
 
   const CORES_PERSONAGEM = {
@@ -107,24 +82,13 @@
       this.canvas = canvas;
       this.containerStage = document.getElementById('map-stage') || document.body;
       this.app = null;
-      this.texturas = {};
+      this.mapSprite = null;
       this.carregado = false;
+      this.box = { x: 0, y: 0, w: 1376, h: 768, scale: 1 };
       this.faiscas = [];
       this.actorContainers = {};
-      this.predadorContainer = null;
-      this.buildingSprites = {};
       this.hotspots = {};
-
-      // Configuração da Grade Isométrica
-      this.gridCols = 18;
-      this.gridRows = 18;
-      this.baseTileW = 132;
-      this.baseTileH = 83;
-      this.tileHalfW = 66;
-      this.tileHalfH = 33;
-      this.scale = 1.0;
-      this.originX = 0;
-      this.originY = 0;
+      this.hoveredLocal = null;
 
       this.init();
     }
@@ -140,41 +104,41 @@
         height: h,
         resolution: Math.min(window.devicePixelRatio || 1, 2),
         autoDensity: true,
-        backgroundColor: 0x0a2a47, // Oceano azul profundo da Ilha
-        antialias: false,
+        backgroundColor: 0x0d3c61, // Cor de fundo do oceano
+        antialias: true,
         powerPreference: 'low-power'
       });
 
-      // Camadas em Profundidade 2.5D
+      // Estrutura de Camadas
       this.rootContainer = new PIXI.Container();
       this.app.stage.addChild(this.rootContainer);
 
-      // 1. Chão Isométrico (Grama, Areia, Terra, Trilhas) — Cacheado em Bitmap
+      // 1. Chão (Mapa 2.5D Isométrico de Alta Qualidade)
       this.groundContainer = new PIXI.Container();
       this.rootContainer.addChild(this.groundContainer);
 
-      // 2. Trilhas de Terra conectando a vila
-      this.trailsContainer = new PIXI.Container();
-      this.rootContainer.addChild(this.trailsContainer);
+      // 2. Fogueira Viva Central
+      this.campfireContainer = new PIXI.Container();
+      this.rootContainer.addChild(this.campfireContainer);
 
-      // 3. Mundo Isométrico (Casas em madeira/palha, Árvores, Personagens com Y-Sorting)
+      // 3. Hotspots e Anéis de Seleção
+      this.hotspotsContainer = new PIXI.Container();
+      this.rootContainer.addChild(this.hotspotsContainer);
+
+      // 4. Personagens e Criaturas com Y-Sorting
       this.ySortContainer = new PIXI.Container();
       this.ySortContainer.sortableChildren = true;
       this.rootContainer.addChild(this.ySortContainer);
 
-      // 4. Efeitos de Clima (Chuva)
+      // 5. Clima (Chuva)
       this.weatherOverlay = new PIXI.Graphics();
       this.rootContainer.addChild(this.weatherOverlay);
 
-      // 5. Iluminação Dia/Noite com Luz Volumétrica
+      // 6. Iluminação Dia/Noite com Luz Volumétrica
       this.lightingOverlay = new PIXI.Graphics();
       this.rootContainer.addChild(this.lightingOverlay);
 
-      // 6. UI e Balões
-      this.uiContainer = new PIXI.Container();
-      this.rootContainer.addChild(this.uiContainer);
-
-      this.carregarAssets();
+      this.carregarMapa();
 
       window.addEventListener('resize', () => this.onResize());
       this.app.ticker.add(() => this.tick());
@@ -186,319 +150,192 @@
       const w = Math.max(320, rect.width);
       const h = Math.max(240, rect.height);
       this.app.renderer.resize(w, h);
-      this.recalcularEscalaEOrigem();
-      if (this.carregado) {
-        this.construirTerrenoIsometrico();
-        this.posicionarConstrucoesEVegetacao();
-      }
+      this.recalcularEnquadramento();
     }
 
-    recalcularEscalaEOrigem() {
+    recalcularEnquadramento() {
       const w = this.app.renderer.width / this.app.renderer.resolution;
       const h = this.app.renderer.height / this.app.renderer.resolution;
+      const aspecto = 1376 / 768; // 16:9
 
-      // Largura da grade completa: (cols + rows) * halfW
-      const totalGridW = (this.gridCols + this.gridRows) * this.tileHalfW;
-      const totalGridH = (this.gridCols + this.gridRows) * this.tileHalfH + 120;
+      let bw, bh, bx, by, scale;
+      if (w / h > aspecto) {
+        bh = h;
+        bw = h * aspecto;
+        by = 0;
+        bx = (w - bw) / 2;
+        scale = bh / 768;
+      } else {
+        bw = w;
+        bh = w / aspecto;
+        bx = 0;
+        by = (h - bh) / 2;
+        scale = bw / 1376;
+      }
 
-      this.scale = Math.min((w * 0.96) / totalGridW, (h * 0.94) / totalGridH);
-      this.scale = Math.max(0.48, Math.min(this.scale, 0.95));
+      this.box = { x: bx, y: by, w: bw, h: bh, scale };
 
-      // Centraliza a grade no canvas
-      this.originX = w / 2;
-      this.originY = Math.max(20, (h - (this.gridCols + this.gridRows) * this.tileHalfH * this.scale) * 0.35);
+      if (this.mapSprite) {
+        this.mapSprite.x = bx;
+        this.mapSprite.y = by;
+        this.mapSprite.width = bw;
+        this.mapSprite.height = bh;
+      }
+
+      this.atualizarHotspots();
     }
 
-    gridToScreen(col, row) {
-      const hw = this.tileHalfW * this.scale;
-      const hh = this.tileHalfH * this.scale;
+    toScreen(normX, normY) {
       return {
-        x: this.originX + (col - row) * hw,
-        y: this.originY + (col + row) * hh
+        x: this.box.x + this.box.w * normX,
+        y: this.box.y + this.box.h * normY
       };
     }
 
-    carregarAssets() {
-      const urls = Object.values(TILES);
-      let carregados = 0;
+    carregarMapa() {
+      const urls = ['/mapa-ilha-evertrail.png', '/mapa-ilha-evertrail.jpg', '/mapa-ilha-nova.png'];
 
-      urls.forEach(url => {
-        PIXI.Assets.load(url).then(tex => {
-          this.texturas[url] = tex;
-          carregados++;
-          if (carregados >= urls.length) {
-            this.carregado = true;
-            this.recalcularEscalaEOrigem();
-            this.construirTerrenoIsometrico();
-            this.construirConstrucoes();
-            this.construirVegetacao();
-            console.log('[PIXI] Novo Terreno e Construções Isométricas carregadas com sucesso!');
-          }
-        }).catch(err => {
-          console.warn('[PIXI] Falha textura:', url, err);
-          carregados++;
-          if (carregados >= urls.length) {
-            this.carregado = true;
-            this.recalcularEscalaEOrigem();
-            this.construirTerrenoIsometrico();
-            this.construirConstrucoes();
-            this.construirVegetacao();
-          }
-        });
-      });
+      const tentar = idx => {
+        if (idx >= urls.length) return;
+        const img = new Image();
+        img.src = urls[idx];
+        img.onload = () => {
+          const tex = PIXI.Texture.from(img);
+          this.mapSprite = new PIXI.Sprite(tex);
+          this.groundContainer.removeChildren();
+          this.groundContainer.addChild(this.mapSprite);
+          this.recalcularEnquadramento();
+          this.criarHotspots();
+          this.carregado = true;
+          console.log('[PIXI] Mapa Isométrico Evertrail carregado:', urls[idx]);
+        };
+        img.onerror = () => tentar(idx + 1);
+      };
+
+      tentar(0);
     }
 
-    // 1. CHÃO ISOMÉTRICO KENNEY (SEM FUNDO 2D PINTADO ANTIGO)
-    construirTerrenoIsometrico() {
-      this.groundContainer.removeChildren();
-      this.groundContainer.cacheAsBitmap = false;
+    // Cria áreas de clique suaves e elegantes para cada local
+    criarHotspots() {
+      this.hotspotsContainer.removeChildren();
+      this.hotspots = {};
 
-      const texGrama = this.texturas[TILES.grama];
-      const texGramaFlor = this.texturas[TILES.grama_flor];
-      const texTerra = this.texturas[TILES.terra];
-      const texAgua = this.texturas[TILES.agua];
-
-      if (!texGrama) return;
-
-      const centroC = 9;
-      const centroR = 9;
-      const raioIlha = 7.2;
-
-      // Varredura da grade isométrica regular
-      for (let r = 0; r < this.gridRows; r++) {
-        for (let c = 0; c < this.gridCols; c++) {
-          const dist = Math.hypot(c - centroC, r - centroR);
-          let tex = null;
-
-          // Trilhas de terra batida conectando a fogueira central aos pontos
-          const ehTrilha = (
-            (c === 9 && r >= 4 && r <= 15) || // Trilha Norte-Sul (João -> Fogueira -> Cais)
-            (r === 9 && c >= 4 && c <= 14) || // Trilha Oeste-Leste (Ícaro -> Fogueira -> Maria/Fazenda)
-            (c + r >= 17 && c + r <= 19 && c >= 9 && r <= 9) // Trilha Caverna / Arena
-          );
-
-          if (ehTrilha && dist <= raioIlha) {
-            tex = texTerra;
-          } else if (dist <= raioIlha - 1.2) {
-            // Miolo da ilha: Grama exuberante com flores ocasionais
-            tex = ((c + r) % 5 === 0) ? (texGramaFlor || texGrama) : texGrama;
-          } else if (dist <= raioIlha) {
-            // Praia / Areia na borda da costa
-            tex = texTerra;
-          } else if (dist <= raioIlha + 1.2 && texAgua) {
-            // Água rasa na orla
-            tex = texAgua;
-          }
-
-          if (tex) {
-            const pos = this.gridToScreen(c, r);
-            const spr = new PIXI.Sprite(tex);
-            spr.anchor.set(0.5, 0.25);
-            spr.scale.set(this.scale);
-            spr.x = pos.x;
-            spr.y = pos.y;
-            this.groundContainer.addChild(spr);
-          }
-        }
-      }
-
-      // Cacheia o chão como bitmap para consumo zero de GPU!
-      this.groundContainer.cacheAsBitmap = true;
-    }
-
-    // 2. CONSTRUÇÕES TEXTURIZADAS EM MADEIRA E PALHA (ESCALA ~50%)
-    construirConstrucoes() {
-      // Limpa anteriores
-      Object.values(this.buildingSprites).forEach(s => s.destroy());
-      this.buildingSprites = {};
-
-      const lista = [
-        { id: 'casa_icaro', tex: TILES.casa_icaro, c: 4, r: 9, nome: 'Cabana do Ícaro', escala: 0.58 },
-        { id: 'casa_joao', tex: TILES.casa_joao, c: 9, r: 4, nome: 'Abrigo do João', escala: 0.58 },
-        { id: 'casa_maria', tex: TILES.casa_maria, c: 13, r: 10, nome: 'Cabana da Maria', escala: 0.58 },
-        { id: 'fazenda', tex: TILES.fazenda, c: 14, r: 9, nome: 'Horta da Fazenda', escala: 0.55 },
-        { id: 'barco', tex: TILES.cais, c: 9, r: 15, nome: 'Cais da Jangada', escala: 0.58 },
-        { id: 'fogueira', tex: TILES.fogueira_base, c: 9, r: 9, nome: 'Fogueira Central', escala: 0.65 },
-        { id: 'caverna', tex: TILES.rocha_caverna, c: 14, r: 4, nome: 'Caverna Sombria', escala: 0.65 }
-      ];
-
-      lista.forEach(item => {
-        const tex = this.texturas[item.tex];
-        if (!tex) return;
-
+      Object.entries(LOCAIS_MAPA).forEach(([id, info]) => {
         const cont = new PIXI.Container();
-        const pos = this.gridToScreen(item.c, item.r);
-        cont.x = pos.x;
-        cont.y = pos.y;
+        const g = new PIXI.Graphics();
+        cont.addChild(g);
 
-        // Sombra de apoio no chão
-        const sombra = new PIXI.Graphics();
-        sombra.beginFill(0x000000, 0.35);
-        sombra.drawEllipse(0, 4, 28 * this.scale * item.escala, 12 * this.scale * item.escala);
-        sombra.endFill();
-        cont.addChild(sombra);
-
-        // Sprite Texturizado da Construção
-        const spr = new PIXI.Sprite(tex);
-        spr.name = 'sprite_construcao';
-        spr.anchor.set(0.5, 0.88); // Ponto de apoio na base
-        spr.scale.set(this.scale * item.escala);
-        cont.addChild(spr);
-
-        // Se for a Fogueira Central, adiciona animação viva de chamas
-        if (item.id === 'fogueira') {
-          const chamas = new PIXI.Graphics();
-          chamas.name = 'chamas_fogo';
-          cont.addChild(chamas);
-        }
-
-        // Tag discreta com Nome
-        const txtNome = new PIXI.Text(item.nome, {
-          fontFamily: 'Segoe UI, system-ui, sans-serif',
-          fontSize: Math.max(9.5, 10 * this.scale),
-          fontWeight: '700',
-          fill: 0xffffff,
-          stroke: 0x071827,
-          strokeThickness: 3,
-          align: 'center'
-        });
-        txtNome.anchor.set(0.5, 0);
-        txtNome.y = 6 * this.scale;
-        cont.addChild(txtNome);
-
-        // Z-Index na base do contato com o solo
-        cont.zIndex = Math.round(pos.y);
-
-        // Interação
         cont.interactive = true;
         cont.cursor = 'pointer';
+
         cont.on('pointerdown', ev => {
           ev.stopPropagation();
           if (typeof window.abrirPainelLocal === 'function') {
-            window.abrirPainelLocal(item.id);
+            window.abrirPainelLocal(id);
           }
         });
 
-        cont.on('pointerover', ev => this.mostrarTooltip(item.id, item.nome, ev));
-        cont.on('pointerout', () => this.esconderTooltip());
+        cont.on('pointerover', ev => {
+          this.hoveredLocal = id;
+          this.mostrarTooltip(id, info.nome, ev);
+        });
 
-        this.ySortContainer.addChild(cont);
-        this.buildingSprites[item.id] = cont;
+        cont.on('pointerout', () => {
+          this.hoveredLocal = null;
+          this.esconderTooltip();
+        });
+
+        this.hotspotsContainer.addChild(cont);
+        this.hotspots[id] = { container: cont, graphics: g, info };
       });
+
+      this.atualizarHotspots();
     }
 
-    // 3. VEGETAÇÃO ISOMÉTRICA (SEM BLOCOS COBRINDO A FLORESTA)
-    construirVegetacao() {
-      // Posições de árvores no Bosque (Noroeste) e Floresta (Nordeste)
-      const arvores = [
-        // Bosque de Frutas
-        { c: 6, r: 5, t: TILES.arvore_bosque },
-        { c: 5, r: 6, t: TILES.arvore_pinho },
-        { c: 7, r: 4, t: TILES.arvore_bosque },
-        { c: 6, r: 7, t: TILES.arvore_pinho },
-        { c: 7, r: 6, t: TILES.arvore_bosque },
+    atualizarHotspots() {
+      Object.entries(this.hotspots).forEach(([id, obj]) => {
+        const info = LOCAIS_MAPA[id];
+        if (!info) return;
+        const pos = this.toScreen(info.x, info.y);
+        obj.container.x = pos.x;
+        obj.container.y = pos.y;
 
-        // Floresta Fechada
-        { c: 12, r: 6, t: TILES.arvore_floresta },
-        { c: 13, r: 5, t: TILES.arvore_alta },
-        { c: 11, r: 7, t: TILES.arvore_floresta },
-        { c: 12, r: 8, t: TILES.arvore_alta },
-        { c: 13, r: 7, t: TILES.arvore_floresta },
-        { c: 12, r: 5, t: TILES.arvore_pinho },
+        const g = obj.graphics;
+        g.clear();
 
-        // Rochas perto da Caverna
-        { c: 14, r: 3, t: TILES.rocha_grande },
-        { c: 15, r: 4, t: TILES.rocha_caverna }
-      ];
+        const raio = (id.startsWith('casa_') || id === 'fazenda' || id === 'fogueira') ? 34 * this.box.scale : 24 * this.box.scale;
 
-      arvores.forEach((item, idx) => {
-        const tex = this.texturas[item.t];
-        if (!tex) return;
+        // Área transparente de clique
+        g.beginFill(0xffffff, 0.001);
+        g.drawCircle(0, 0, raio);
+        g.endFill();
 
-        const cont = new PIXI.Container();
-        const pos = this.gridToScreen(item.c, item.r);
-        cont.x = pos.x;
-        cont.y = pos.y;
+        // Anel de foco se estiver sob o mouse ou selecionado
+        const ehHover = this.hoveredLocal === id;
+        const ehSelecionado = typeof selectedLocal !== 'undefined' && selectedLocal === id;
 
-        const sombra = new PIXI.Graphics();
-        sombra.beginFill(0x000000, 0.32);
-        sombra.drawEllipse(0, 0, 16 * this.scale, 7 * this.scale);
-        sombra.endFill();
-        cont.addChild(sombra);
+        if (ehHover || ehSelecionado) {
+          g.lineStyle(2, ehSelecionado ? 0x38bdf8 : 0xfbbf24, 0.85);
+          g.drawEllipse(0, 6, raio, raio * 0.5);
 
-        const spr = new PIXI.Sprite(tex);
-        spr.anchor.set(0.5, 0.90);
-        spr.scale.set(this.scale * 0.75);
-        cont.addChild(spr);
-
-        // Z-Index na base do tronco: personagens andam atrás e na frente perfeitamente!
-        cont.zIndex = Math.round(pos.y);
-
-        this.ySortContainer.addChild(cont);
-      });
-    }
-
-    posicionarConstrucoesEVegetacao() {
-      Object.entries(this.buildingSprites).forEach(([id, cont]) => {
-        const coord = GRADE_LOCAIS[id];
-        if (coord && cont) {
-          const pos = this.gridToScreen(coord.c, coord.r);
-          cont.x = pos.x;
-          cont.y = pos.y;
-          cont.zIndex = Math.round(pos.y);
+          // Pílula com o nome no topo
+          const tagW = Math.max(65, info.nome.length * 6.5);
+          g.lineStyle(1, 0x38bdf8, 0.8);
+          g.beginFill(0x0f172a, 0.92);
+          g.drawRoundedRect(-tagW / 2, -raio - 18, tagW, 18, 5);
+          g.endFill();
         }
       });
     }
 
-    // 4. PERSONAGENS COM ESCALA AUMENTADA EM ~30% (PROPORÇÃO HUMANA REAL)
+    // Personagens estilizados no padrão Evertrail Tribe
     desenharPersonagem(g, serId, caminhando, tempo) {
       g.clear();
       const cfg = CORES_PERSONAGEM[serId] || CORES_PERSONAGEM.icaro;
-      // Escala aumentada em 30% em relação ao padrão para proporção humana com as portas das casas
-      const s = 1.35 * Math.max(0.7, this.scale * 1.3);
+      const s = 1.15 * Math.max(0.75, this.box.scale);
 
-      const bob = caminhando ? -Math.abs(Math.sin(tempo * 0.015)) * 4 * s : Math.sin(tempo * 0.004) * 1.2 * s;
+      const bob = caminhando ? -Math.abs(Math.sin(tempo * 0.015)) * 3.5 * s : Math.sin(tempo * 0.004) * 1.2 * s;
 
-      // Sombra sob os pés
+      // Sombra suave sob os pés
       g.beginFill(0x000000, 0.45);
       g.drawEllipse(0, 0, 13 * s, 6 * s);
       g.endFill();
 
       // Pernas
       g.beginFill(0x1e293b);
-      const passoL = caminhando ? Math.sin(tempo * 0.02) * 3 : 0;
-      const passoR = caminhando ? -Math.sin(tempo * 0.02) * 3 : 0;
+      const passoL = caminhando ? Math.sin(tempo * 0.02) * 2.8 : 0;
+      const passoR = caminhando ? -Math.sin(tempo * 0.02) * 2.8 : 0;
       g.drawRect(-5 * s + passoL, -6 * s + bob, 4 * s, 6 * s);
       g.drawRect(1 * s + passoR, -6 * s + bob, 4 * s, 6 * s);
       g.endFill();
 
       // Tronco e Túnica
       g.beginFill(cfg.roupa);
-      g.drawRoundedRect(-8 * s, -22 * s + bob, 16 * s, 16 * s, 3 * s);
+      g.drawRoundedRect(-7.5 * s, -21 * s + bob, 15 * s, 15 * s, 3 * s);
       g.endFill();
 
-      // Cinto / Faixa
+      // Cinto tribal
       g.beginFill(cfg.cinto);
-      g.drawRect(-8 * s, -12 * s + bob, 16 * s, 3 * s);
+      g.drawRect(-7.5 * s, -11 * s + bob, 15 * s, 2.5 * s);
       g.endFill();
 
       // Cabeça / Rosto
       g.beginFill(cfg.pele);
-      g.drawCircle(0, -27 * s + bob, 6.5 * s);
+      g.drawCircle(0, -26 * s + bob, 6 * s);
       g.endFill();
 
       // Cabelo
       g.beginFill(cfg.cabelo);
-      g.drawCircle(0, -29 * s + bob, 6.5 * s);
+      g.drawCircle(0, -28 * s + bob, 6 * s);
       if (serId === 'maria' || serId === 'lara') {
-        g.drawRect(-7 * s, -28 * s + bob, 14 * s, 10 * s);
+        g.drawRect(-6.5 * s, -27 * s + bob, 13 * s, 9 * s);
       }
       g.endFill();
 
       // Olhos
       g.beginFill(0x0f172a);
-      g.drawCircle(-2.2 * s, -27 * s + bob, 1.1 * s);
-      g.drawCircle(2.2 * s, -27 * s + bob, 1.1 * s);
+      g.drawCircle(-2 * s, -26 * s + bob, 1 * s);
+      g.drawCircle(2 * s, -26 * s + bob, 1 * s);
       g.endFill();
     }
 
@@ -564,9 +401,9 @@
         this.actorContainers[id] = cont;
       }
 
-      // Alvo no mapa isométrico
-      const coord = GRADE_LOCAIS[ser.local] || GRADE_LOCAIS.acampamento;
-      const alvo = this.gridToScreen(coord.c, coord.r);
+      // Alvo no mapa
+      const info = LOCAIS_MAPA[ser.local] || LOCAIS_MAPA.acampamento;
+      const alvo = this.toScreen(info.x, info.y);
 
       // Movimento suave
       if (cont.x === 0 && cont.y === 0) {
@@ -586,7 +423,7 @@
         }
       }
 
-      // Z-Index na base dos pés: caminha na frente/atrás de casas e árvores!
+      // Z-Index real pela base dos pés
       cont.zIndex = Math.round(cont.y);
 
       const caminhando = Math.hypot(alvo.x - cont.x, alvo.y - cont.y) > 3;
@@ -604,14 +441,14 @@
         }
         const pulso = Math.sin(tempo * 0.005) * 3;
         aura.beginFill(corAura, 0.32);
-        aura.drawEllipse(0, 0, 18 + pulso, 9 + pulso * 0.5);
+        aura.drawEllipse(0, 0, 16 + pulso, 8 + pulso * 0.5);
         aura.endFill();
       }
 
-      // Atualiza Tag
+      // Tag de Nome e Ação
       const tag = cont.getChildByName('tag');
       if (tag) {
-        tag.y = -46 * Math.max(0.7, this.scale);
+        tag.y = -42 * Math.max(0.75, this.box.scale);
         tag.scale.x = cont.scale.x < 0 ? -1 : 1;
         const txtAcao = tag.getChildByName('txtAcao');
         if (txtAcao) {
@@ -641,7 +478,7 @@
 
           const bw = Math.max(60, texto.width + 12);
           const bh = texto.height + 8;
-          const yTopo = -70;
+          const yTopo = -64;
 
           const fundo = new PIXI.Graphics();
           fundo.beginFill(0xffffff, 0.96);
@@ -659,27 +496,64 @@
       }
     }
 
-    // 5. ILUMINAÇÃO DINÂMICA DIA/NOITE & CHAMA DA FOGUEIRA
-    atualizarFogueiraEIluminacao(estadoMundo, tempo) {
-      // Animação viva das chamas da fogueira
-      const fogCont = this.buildingSprites['fogueira'];
-      if (fogCont) {
-        const chamas = fogCont.getChildByName('chamas_fogo');
-        if (chamas) {
-          chamas.clear();
-          const osc = Math.sin(tempo * 0.012) * 3;
-          const osc2 = Math.cos(tempo * 0.016) * 2;
-          chamas.beginFill(0xf97316, 0.85);
-          chamas.drawEllipse(0, -10 + osc, 7 + osc2, 11 + osc);
-          chamas.beginFill(0xfde047, 0.95);
-          chamas.drawEllipse(0, -8 + osc, 4 + osc2 * 0.5, 6 + osc * 0.7);
-          chamas.beginFill(0xffffff, 0.9);
-          chamas.drawCircle(0, -6 + osc, 2);
-          chamas.endFill();
+    // Fogueira Viva Central com Chamas e Fagulhas
+    atualizarFogueira(tempo) {
+      this.campfireContainer.removeChildren();
+      const pos = this.toScreen(LOCAIS_MAPA.fogueira.x, LOCAIS_MAPA.fogueira.y);
+
+      const fogueiraCont = new PIXI.Container();
+      fogueiraCont.x = pos.x;
+      fogueiraCont.y = pos.y;
+
+      const fogo = new PIXI.Graphics();
+      const osc = Math.sin(tempo * 0.012) * 3;
+      const osc2 = Math.cos(tempo * 0.016) * 2;
+
+      // Chamas
+      fogo.beginFill(0xf97316, 0.85);
+      fogo.drawEllipse(0, -8 + osc, 8 + osc2, 12 + osc);
+      fogo.beginFill(0xfde047, 0.95);
+      fogo.drawEllipse(0, -6 + osc, 4 + osc2 * 0.5, 7 + osc * 0.7);
+      fogo.beginFill(0xffffff, 0.9);
+      fogo.drawCircle(0, -4 + osc, 2.5);
+      fogo.endFill();
+      fogueiraCont.addChild(fogo);
+
+      // Fagulhas subindo
+      if (Math.random() < 0.35) {
+        this.faiscas.push({
+          x: pos.x + (Math.random() - 0.5) * 10,
+          y: pos.y - 8,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: -0.9 - Math.random() * 1.2,
+          alpha: 1,
+          vida: 30 + Math.random() * 20
+        });
+      }
+
+      const gFaiscas = new PIXI.Graphics();
+      for (let i = this.faiscas.length - 1; i >= 0; i--) {
+        const p = this.faiscas[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.035;
+        p.vida--;
+
+        if (p.vida <= 0 || p.alpha <= 0) {
+          this.faiscas.splice(i, 1);
+        } else {
+          gFaiscas.beginFill(0xfbbf24, p.alpha);
+          gFaiscas.drawCircle(p.x, p.y, 1.2);
+          gFaiscas.endFill();
         }
       }
 
-      // Iluminação Dia/Noite
+      this.campfireContainer.addChild(fogueiraCont);
+      this.campfireContainer.addChild(gFaiscas);
+    }
+
+    // Iluminação Dia/Noite e Clima
+    atualizarIluminacao(estadoMundo, tempo) {
       this.lightingOverlay.clear();
       if (!estadoMundo || !estadoMundo.mundo) return;
 
@@ -698,8 +572,8 @@
         corLuz = 0xf97316; // Entardecer dourado suave
         alphaLuz = 0.15;
       } else if (periodo === 'noite' || periodo === 'madrugada') {
-        corLuz = 0x040e24; // Noite azul-marinho
-        alphaLuz = 0.65;
+        corLuz = 0x040e24; // Noite azul-marinho cinematográfica
+        alphaLuz = 0.62;
       }
 
       if (clima.includes('chuva') || clima.includes('tempestade')) {
@@ -714,9 +588,9 @@
 
         // À noite, a fogueira central abre um raio de luz quente circular
         if (periodo === 'noite' || periodo === 'madrugada') {
-          const posFog = this.gridToScreen(9, 9);
+          const posFog = this.toScreen(LOCAIS_MAPA.fogueira.x, LOCAIS_MAPA.fogueira.y);
           const pulso = Math.sin(tempo * 0.006) * 6;
-          const raioMax = (85 + pulso) * this.scale;
+          const raioMax = (85 + pulso) * this.box.scale;
 
           this.lightingOverlay.beginFill(0xfbbf24, 0.22);
           this.lightingOverlay.drawCircle(posFog.x, posFog.y, raioMax);
@@ -778,7 +652,9 @@
         });
       }
 
-      this.atualizarFogueiraEIluminacao(estado, tempo);
+      this.atualizarFogueira(tempo);
+      this.atualizarIluminacao(estado, tempo);
+      this.atualizarHotspots();
     }
   }
 
@@ -787,7 +663,7 @@
     const canvas = document.getElementById('pixi-game') || document.getElementById('game');
     if (canvas) {
       window.motorPixi = new MotorPixiIlha(canvas);
-      console.log('[PIXI] Motor Isométrico Puro ativado com sucesso!');
+      console.log('[PIXI] Motor Evertrail Profissional ativado com sucesso!');
     }
   });
 

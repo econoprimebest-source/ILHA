@@ -212,6 +212,14 @@ http.createServer((req,res)=>{
     return;
   }
   if(u.pathname==='/api/mapa')return json(res,{nos:espaco.nos,arestas:espaco.arestas});
+  if(u.pathname==='/mapa-ilha-evertrail.png' || u.pathname==='/mapa-ilha-evertrail.jpg'){
+    try {
+      const p = fs.existsSync(path.join(ROOT,'mapa-ilha-evertrail.png')) ? path.join(ROOT,'mapa-ilha-evertrail.png') : path.join(ROOT,'mapa-ilha-evertrail.jpg');
+      const image=fs.readFileSync(p);
+      res.writeHead(200,{'content-type':'image/jpeg','cache-control':'no-store'});
+      return res.end(image);
+    } catch(e) { res.writeHead(404); return res.end('Imagem do mapa evertrail nao encontrada'); }
+  }
   if(u.pathname==='/mapa-ilha-referencia.png'){
     try {
       const image=fs.readFileSync(path.join(ROOT,'mapa-ilha-referencia.png'));
