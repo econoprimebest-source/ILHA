@@ -39,6 +39,67 @@ function preparar(estado) {
     eco.horta.icone = null;
     eco.horta.cor = null;
   }
+  eco.curral ||= {
+    construido: true,
+    nivel: 1,
+    capacidade: 6,
+    animais: [
+      { id: 'cabra-1', nome: 'Mocinha (Cabra)', tipo: 'cabra', alimento: 85, saude: 95 },
+      { id: 'galinha-1', nome: 'Pintadinha', tipo: 'galinha', alimento: 90, saude: 90 },
+      { id: 'galinha-2', nome: 'Carijó', tipo: 'galinha', alimento: 80, saude: 90 }
+    ],
+    leite: 2,
+    ovos: 4,
+    racao: 8
+  };
+  eco.predador ||= {
+    id: 'pantera',
+    nome: 'Pantera das Sombras',
+    especie: 'predador',
+    status: 'vivo',
+    local: 'caverna',
+    fome: 40,
+    alerta: 30,
+    saude: 100,
+    forca: 85,
+    ultimoAtaque: null,
+    rastro: 'Pegadas recentes avistadas perto da Caverna'
+  };
+  eco.tubarao ||= {
+    id: 'tubarao',
+    nome: 'Tubarão-dos-Recifes',
+    especie: 'tubarao',
+    status: 'vivo',
+    local: 'mar',
+    alerta: 35,
+    profundidade: 'recifes'
+  };
+  eco.projetos ||= [
+    {
+      id: 'oficina_ferramentas',
+      nome: 'Bancada de Trabalho & Ferramentas',
+      local: 'acampamento',
+      progresso: 60,
+      total: 100,
+      materiaisNecessarios: { madeira: 4, pedra: 2 },
+      materiaisDepositados: { madeira: 3, pedra: 1 },
+      concluido: false,
+      icone: '🔨',
+      descricao: 'Bancada para forjar machados, picaretas e varas de pescar'
+    },
+    {
+      id: 'varal_peixes',
+      nome: 'Varal de Defumação de Peixes',
+      local: 'barco',
+      progresso: 40,
+      total: 100,
+      materiaisNecessarios: { madeira: 3, pedra: 1 },
+      materiaisDepositados: { madeira: 2, pedra: 0 },
+      concluido: false,
+      icone: '🐟',
+      descricao: 'Estrado para secar peixes salgados para o inverno'
+    }
+  ];
   eco.fogueira ||= { acesa: true, lenha: 5, capacidade: 12 };
   eco.arvores ||= {};
   for (const [id, a] of Object.entries(eco.arvores)) {
@@ -77,7 +138,14 @@ function preparar(estado) {
     ser.necessidades.pertencimento ??= 30;
     ser.necessidades.frustracao ??= 0;
     ser.necessidades.satisfacao ??= 50;
-    ser.inventario ||= { agua: 2, alimento: 2, madeira: 0 };
+    ser.inventario ||= { agua: 2, alimento: 2, madeira: 1 };
+    ser.inventario.pedra ??= 2;
+    ser.ferramentas ||= {
+      machado: ser.id === 'icaro' ? 1 : 0,
+      vara: ser.id === 'joao' ? 1 : 0,
+      enxada: ser.id === 'maria' ? 1 : 0,
+      tocha: 1
+    };
     ser.capacidades ||= { coleta: .5, pesca: .25, forca: .4, resistencia: .5 };
     ser.experiencia ||= [];
     ser.memoria ||= [];
@@ -301,6 +369,51 @@ function atualizarMundo(estado, acaoHumana = null) {
       e.fogueira.acesa = false;
     }
   }
+
+  // CURRAL DE ANIMAIS: produção sazonal e consumo de alimento
+  if (e.curral && e.curral.construido) {
+    e.curral.racao = Math.max(0, (e.curral.racao || 0) - 0.25);
+    for (const an of (e.curral.animais || [])) {
+      if (e.curral.racao > 0) {
+        an.alimento = Math.min(100, (an.alimento || 80) + 1.5);
+        an.saude = Math.min(100, (an.saude || 90) + 0.5);
+      } else {
+        an.alimento = Math.max(0, (an.alimento || 80) - 2.5);
+        if (an.alimento < 30) an.saude = Math.max(10, (an.saude || 90) - 1.5);
+      }
+    }
+    // Produção a cada 4 ciclos se alimentados
+    if (m.tempo.ciclo % 4 === 0 && (e.curral.racao || 0) > 0) {
+      e.curral.leite = Math.min(8, (e.curral.leite || 0) + 1);
+      e.curral.ovos = Math.min(12, (e.curral.ovos || 0) + 2);
+    }
+  }
+
+  // PREDADOR (A Pantera das Sombras):
+  if (e.predador && e.predador.status === 'vivo') {
+    e.predador.fome = Math.min(100, (e.predador.fome || 40) + 1.2);
+    const periodo = m.tempo.periodo;
+    if (periodo === 'manha') {
+      e.predador.local = 'caverna';
+      e.predador.alerta = 25;
+      e.predador.rastro = 'A fera está recolhida na Caverna Sombria.';
+    } else if (periodo === 'tarde') {
+      e.predador.local = 'floresta';
+      e.predador.alerta = 50;
+      e.predador.rastro = 'Galhos quebrados e pegadas na Floresta Fechada.';
+    } else if (periodo === 'noite') {
+      // À noite, ronda perto do bosque ou margem do rio. Evita fogueira se acesa!
+      const rotas = (e.fogueira && e.fogueira.acesa) ? ['floresta', 'bosque', 'rio'] : ['floresta', 'bosque', 'rio', 'acampamento'];
+      e.predador.local = rotas[m.tempo.ciclo % rotas.length];
+      e.predador.alerta = 80;
+      e.predador.rastro = 'Olhos amarelos avistados espreitando na escuridão!';
+    } else if (periodo === 'madrugada') {
+      e.predador.local = (m.tempo.ciclo % 2 === 0) ? 'caverna' : 'floresta';
+      e.predador.alerta = 40;
+      e.predador.rastro = 'Pegadas frescas de garras voltando em direção à Caverna.';
+    }
+  }
+
   return { chuva, clima, estacao: m.tempo.estacao, mes: mesInfo };
 }
 

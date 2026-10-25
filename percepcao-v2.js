@@ -4,6 +4,47 @@
 function observacaoCorporal(s){const n=s.necessidades,r=[];if(n.agua>65)r.push('sede intensa');else if(n.agua>35)r.push('sede');else if(n.agua<15)r.push('hidratado (sem sede)');if(n.alimento>65)r.push('fome intensa');else if(n.alimento>35)r.push('fome');else if(n.alimento<15)r.push('estômago cheio e saciado (sem fome)');if(n.sono>65)r.push('muito sono');else if(n.sono>35)r.push('sono');if(n.energia<25)r.push('pouca energia');return r}
 
 function perceber(estado,ser){const eco=estado.mundo.ecossistema,p=[],cl=eco.clima,mes=require('./calendario').mesDe(estado.mundo.tempo),temCardume=Array.isArray(estado.mundo.acontecimentos)&&estado.mundo.acontecimentos.some(ev=>ev&&ev.ativo!==false&&ev.tipo==='cardume'&&Array.isArray(ev.locais)&&ev.locais.includes('rio')),limDia=temCardume?8:Math.max(1,Math.round(2*(mes.fatorPeixes||1))),esg=eco.peixes.rio.ultimoDiaPesca===estado.mundo.tempo.dia&&(eco.peixes.rio.pescadosHoje||0)>=limDia,temPeixeRio=eco.peixes.rio.populacao>0&&(mes.cardumeNoRio||temCardume)&&!esg;if(ser.local==='acampamento'&&eco.agua.nascente>0)p.push('Água corrente audível junto ao rio.');if(ser.local==='rio'){p.push('O rio está visível.');if(temPeixeRio)p.push(eco.peixes.rio.populacao<5?'Poucos peixes visíveis.':'Peixes visíveis na superfície.');else p.push('Não há peixes no rio neste período; cardume ausente na correnteza.')}if(ser.local==='bosque'){if(Object.values(eco.arvores).some(a=>a.local==='bosque'&&a.frutos>=.5&&a.viva!==false))p.push('Árvores frutíferas com frutos visíveis ('+mes.frutas+').');else p.push('As árvores do bosque estão sem frutos maduros neste mês ('+mes.nome+').')}if(ser.local==='floresta'&&eco.madeira.floresta>0)p.push('Madeira caída visível.');if(estado.mundo.clima.includes('chuva'))p.push('Chuva visível e audível.');if(cl){p.push(`O ar está ${cl.temperatura<15?'frio':cl.temperatura>30?'quente':'ameno'} e ${cl.umidade<.4?'seco':cl.umidade>.75?'úmido':'moderado'}.`);if(cl.vento>.7)p.push('Ventos fortes atravessam a ilha.')};const fontes=eco.agua.fontes;if(fontes){for(const[nome,f]of Object.entries(fontes)){if(f.nivel<=0)continue;const nivel=f.nivel/f.capacidade;p.push(`${nome==='lago'?'O lago':nome==='nascente'?'A nascente':'Uma poça'} está ${nivel<.2?'quase seca':nivel>.75?'cheia':'com água'}.`);if(f.qualidade<.5)p.push(`A água de ${nome} parece turva.`)}}for(const a of Object.values(eco.arvores||[])){if(a.local!==ser.local||!a.viva)continue;if(a.saude<20)p.push('Uma árvore está debilitada.')}for(const[id,b]of Object.entries(eco.fauna||{})){if(b.local!==ser.local)continue;if(b.populacao>0&&(id!=='peixes'||temPeixeRio))p.push(id==='peixes'?'Peixes se movem na água.':id==='aves'?'Aves cruzam o bosque.':'Pequenos mamíferos deixam rastros.');else p.push(id==='peixes'?'Não há peixes visíveis.':'Não há animais visíveis por perto.')}for(const outro of Object.values(estado.seres||{})){if(outro.id===ser.id||outro.status==='morto')continue;if(outro.local===ser.local)p.push(`${outro.nome} está por perto.`)}
+    // --- SITUAÇÃO ESPACIAL E GEOGRÁFICA DO PERSONAGEM NA ILHA ---
+    const DESCRICAO_LOCAIS = {
+      fogueira: 'Estou no centro da ilha, junto à fogueira de pedras. Sinto o calor das brasas e o cheiro de lenha. Consigo avistar todas as trilhas da ilha daqui.',
+      acampamento: 'Estou no acampamento central, perto das toras de descanso sob o céu aberto.',
+      casa_icaro: 'Estou na cabana rústica do Ícaro, cercada pela mata e brisa suave a oeste.',
+      casa_lara: 'Estou na cabana da Lara, tranquila e protegida entre os pinheiros a oeste.',
+      casa_joao: 'Estou no abrigo do João, próximo ao bosque de árvores frutíferas ao norte.',
+      casa_maria: 'Estou na cabana da Maria, sentindo o aroma de terra fértil e as plantações da horta a leste.',
+      fazenda: 'Estou nos canteiros da fazenda a leste. Vejo a terra arada e o curral logo ao lado.',
+      curral: 'Estou no curral dos animais a leste. As cabras balem suavemente e as galinhas ciscam o chão.',
+      rio: 'Estou na margem de terra e pedras do rio de água doce, perto da ponte de madeira. A água fresca corre límpida para o mar.',
+      cachoeira: 'Estou sob a cachoeira ao norte; a água despenca das rochas com névoa fresca e barulho revigorante.',
+      bosque: 'Estou no bosque de árvores ao noroeste. O vento sopra suavemente por entre os galhos frutíferos.',
+      floresta: 'Estou na floresta densa a leste. Sombras longas cobrem o chão de folhas secas.',
+      caverna: 'Estou na boca da Caverna Sombria ao nordeste. O ar é gélido e ecos misteriosos ressoam na escuridão rochosa.',
+      arena: 'Estou na Arena de Lutas no platô elevado a nordeste. O círculo de toras batidas e tochas marcam a área de treino.',
+      barco: 'Estou no cais de madeira ao sul da ilha. A jangada balança suavemente nas ondas e gaivotas sobrevoam o mar aberto.',
+      mar: 'Estou na praia de areia dourada ao sul. O oceano azul turquesa se estende até onde a vista alcança.'
+    };
+    if (DESCRICAO_LOCAIS[ser.local]) {
+      p.push(DESCRICAO_LOCAIS[ser.local]);
+    }
+
+    // --- PERCEPÇÃO DO PREDADOR (A PANTERA DAS SOMBRAS) ---
+    if (eco.predador && eco.predador.status === 'vivo') {
+      if (eco.predador.local === ser.local) {
+        p.push('⚠️ ALERTA DE PERIGO IMEDIATO: Olhos amarelos reluzem nas sombras e escuto uma respiração felina pesada! A Pantera das Sombras está no mesmo local!');
+      } else {
+        const distPerigosa = ['floresta', 'bosque', 'caverna'].includes(ser.local) && ['floresta', 'bosque', 'caverna'].includes(eco.predador.local);
+        if (distPerigosa) {
+          p.push('Sinto um calafrio na espinha; pegadas frescas e arranhões em árvores indicam que a fera da caverna ronda por estas matas.');
+        }
+      }
+    }
+
+    // --- CURRAL E ANIMAIS ---
+    if (['curral', 'fazenda'].includes(ser.local) && eco.curral) {
+      const cur = eco.curral;
+      p.push(`O curral abriga ${cur.animais?.length || 3} animais (ovos disponíveis: ${cur.ovos || 0}, leite fresco: ${cur.leite || 0}, ração: ${Math.round(cur.racao || 0)}).`);
+    }
+
     // --- ACONTECIMENTOS DO MUNDO / INTERVENÇÕES FÍSICAS NO LOCAL ---
     if(Array.isArray(estado.mundo.acontecimentos)){
       for(const ac of estado.mundo.acontecimentos){

@@ -40,6 +40,52 @@ if(s.local==='fazenda'){
   if(totalHorta<(h.capacidade||12))a.push({id:'plantar',descricao:'Plantar '+mesAtual.cultura+' (plantação do mês de '+mesAtual.nome+') na horta'});
   if(h.plantadoPor&&(h.maduros||0)>=0.5&&(h.vida||0)>0)a.push({id:'colher_horta',descricao:'Colher '+(h.cultura||mesAtual.cultura)+' maduros na horta'});
 }
+// CURRAL / ANIMAIS: cuidar, alimentar e coletar recursos
+if(['curral','fazenda'].includes(s.local)&&x.curral){
+  a.push({id:'cuidar_animais',descricao:'Cuidar das cabras e galinhas no curral (coletar leite fresco e ovos)'});
+}
+// CORTE DE ÁRVORES E RECURSOS:
+if(['floresta','bosque'].includes(s.local)){
+  a.push({id:'cortar_arvore',descricao:'Usar ferramenta e cortar madeira de uma árvore alta para a vila'});
+}
+// COLETA DE PEDRAS:
+if(['rio','cachoeira','caverna'].includes(s.local)){
+  a.push({id:'coletar_pedra',descricao:'Coletar pedras resistentes e sílex na margem/rochas para forja e construções'});
+}
+// FABRICAÇÃO DE FERRAMENTAS (BANCADA RÚSTICA):
+if(['acampamento','fogueira'].includes(s.local)||s.local.startsWith('casa_')){
+  const temRecursos=(s.inventario.madeira||0)>=1&&(s.inventario.pedra||0)>=1;
+  if(temRecursos)a.push({id:'fabricar_ferramenta',descricao:'Forjar ferramenta rústica (machado, vara de pescar ou lança)'});
+}
+// CONSTRUÇÃO E OBRAS DA VILA (NÃO É DO DIA PARA A NOITE):
+if(Array.isArray(x.projetos)){
+  const projLocal=x.projetos.find(p=>p&&!p.concluido&&p.local===s.local);
+  if(projLocal){
+    a.push({id:'trabalhar_construcao',descricao:`Trabalhar na obra: ${projLocal.nome} (${projLocal.progresso}% concluído)`});
+  }
+}
+// MERGULHO NO MAR (COM RISCO DE TUBARÃO):
+if(s.local==='mar'){
+  a.push({id:'mergulhar_mar',descricao:'Mergulhar nos recifes do sul para pegar crustáceos e ostras (cuidado com tubarões!)'});
+}
+// TROCA / COOPERAÇÃO COM VIZINHO:
+if(temOutro){
+  a.push({id:'trocar_recursos',descricao:'Compartilhar mantimentos e ferramentas com o companheiro'});
+  a.push({id:'planejar_vila',descricao:'Planejar juntos as próximas melhorias e defesas da vila'});
+}
+// MINERAÇÃO NA CAVERNA: extrair ferro e quartzo
+if(s.local==='caverna'){
+  a.push({id:'minerar_caverna',descricao:'Minerar minério de ferro e cristais nas paredes da caverna'});
+}
+// ENFRENTAR OU AFUGENTAR PREDADOR SE ELE ESTIVER NO LOCAL:
+if(x.predador&&x.predador.status==='vivo'&&x.predador.local===s.local){
+  a.push({id:'afugentar_fera',descricao:'Brandir tochas/arma e afugentar a Pantera das Sombras'});
+  a.push({id:'desafiar_luta',descricao:'Enfrentar a fera em combate corpo a corpo'});
+}
+// CONVIVÊNCIA AO REDOR DA FOGUEIRA NO ENTARDECER / NOITE:
+if(['tarde','noite'].includes(e.mundo.tempo.periodo)&&s.local==='fogueira'&&temOutro){
+  a.push({id:'compartilhar_historias',descricao:'Contar histórias e partilhar memórias ao redor do calor da fogueira'});
+}
 // FOGUEIRA: acender ou alimentar o fogo para aquecer e afastar predadores
 if((s.local==='fogueira'||s.local==='acampamento')&&x.fogueira){
   if(!x.fogueira.acesa||(x.fogueira.lenha||0)<8){
@@ -228,6 +274,161 @@ case'explorar_caverna':{
     } else {
         r.texto = 'Você explorou a caverna, mas só encontrou eco e escuridão.';
     }
+    break;
+}
+case'cuidar_animais':{
+    const cur = x.curral || { leite: 1, ovos: 2, racao: 4 };
+    const leiteColhido = Math.min(2, cur.leite || 0);
+    const ovosColhidos = Math.min(3, cur.ovos || 0);
+    cur.leite = Math.max(0, (cur.leite || 0) - leiteColhido);
+    cur.ovos = Math.max(0, (cur.ovos || 0) - ovosColhidos);
+    const totalAlimento = Math.max(1, leiteColhido + ovosColhidos);
+    s.inventario.alimento = (s.inventario.alimento || 0) + totalAlimento;
+    s.necessidades.alimento = Math.max(0, (s.necessidades.alimento || 0) - 35);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 15);
+    r.quantidade = totalAlimento;
+    r.texto = 'Cuidou dos animais no curral e colheu ' + ovosColhidos + ' ovos e ' + leiteColhido + ' leite fresco!';
+    break;
+}
+case'pescar_cais':{
+    const sorte = Math.random();
+    if (sorte > 0.3) {
+        const qtd = Math.floor(Math.random() * 3) + 1;
+        s.inventario.alimento = (s.inventario.alimento || 0) + qtd;
+        s.necessidades.alimento = Math.max(0, (s.necessidades.alimento || 0) - 45);
+        s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 12);
+        r.quantidade = qtd;
+        r.texto = 'Lançou a linha no cais do barco e fisgou ' + qtd + ' peixe(s) do mar!';
+    } else {
+        r.quantidade = 0;
+        r.texto = 'As ondas bateram fortes no cais; a isca foi levada pela maré.';
+    }
+    break;
+}
+case'minerar_caverna':{
+    const sorte = Math.random();
+    if (sorte > 0.35) {
+        s.inventario.minerio = (s.inventario.minerio || 0) + 2;
+        s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 14);
+        r.quantidade = 2;
+        r.texto = 'Extraiu minério de ferro e quartzo brilhante das fendas rochosas da caverna!';
+    } else {
+        r.texto = 'As pedras eram duras demais; extraiu apenas lascas de pedra.';
+    }
+    break;
+}
+case'afugentar_fera':{
+    if (x.predador) {
+        x.predador.local = 'caverna';
+        x.predador.alerta = 15;
+        s.necessidades.medo = Math.max(0, (s.necessidades.medo || 0) - 35);
+        s.necessidades.seguranca = Math.min(100, (s.necessidades.seguranca || 50) + 20);
+        r.quantidade = 1;
+        r.texto = 'Brandiu fogo e gritou forte! A Pantera das Sombras recuou para a Caverna.';
+    }
+    break;
+}
+case'compartilhar_historias':{
+    s.necessidades.solidao = Math.max(0, (s.necessidades.solidao || 0) - 25);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 18);
+    s.necessidades.confianca = Math.min(100, (s.necessidades.confianca || 50) + 15);
+    r.quantidade = 1;
+    r.texto = 'Conversou e compartilhou memórias ao calor da fogueira com os companheiros da ilha.';
+    break;
+}
+case'cortar_arvore':{
+    s.habilidades = s.habilidades || {};
+    s.habilidades.forca = (s.habilidades.forca || 10) + 0.5;
+    const qtdMadeira = Math.floor(Math.random() * 2) + 2;
+    s.inventario.madeira = (s.inventario.madeira || 0) + qtdMadeira;
+    s.necessidades.energia = Math.max(0, (s.necessidades.energia || 50) - 8);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 10);
+    r.quantidade = qtdMadeira;
+    r.texto = `Derrubou e desbastou uma tora com o machado, obtendo ${qtdMadeira} vigas de madeira!`;
+    break;
+}
+case'coletar_pedra':{
+    const qtdPedra = Math.floor(Math.random() * 2) + 2;
+    s.inventario.pedra = (s.inventario.pedra || 0) + qtdPedra;
+    s.necessidades.energia = Math.max(0, (s.necessidades.energia || 50) - 5);
+    r.quantidade = qtdPedra;
+    r.texto = `Encontrou e talhou ${qtdPedra} pedras resistentes nas margens para obras e ferramentas.`;
+    break;
+}
+case'fabricar_ferramenta':{
+    s.ferramentas = s.ferramentas || {};
+    s.inventario.madeira = Math.max(0, (s.inventario.madeira || 1) - 1);
+    s.inventario.pedra = Math.max(0, (s.inventario.pedra || 1) - 1);
+    // Cria a ferramenta que estiver faltando
+    let tipo = 'machado';
+    if (!s.ferramentas.machado) { s.ferramentas.machado = 1; tipo = 'machado de pedra'; }
+    else if (!s.ferramentas.vara) { s.ferramentas.vara = 1; tipo = 'vara de pesca de bambu'; }
+    else if (!s.ferramentas.lanca) { s.ferramentas.lanca = 1; tipo = 'lança de caça afiada'; }
+    else { s.ferramentas.picareta = 1; tipo = 'picareta de mineração'; }
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 20);
+    r.quantidade = 1;
+    r.texto = `Trabalhou na bancada e forjou uma nova ferramenta: ${tipo}!`;
+    break;
+}
+case'trabalhar_construcao':{
+    const proj = (x.projetos || []).find(p => p && !p.concluido && p.local === s.local);
+    if (proj) {
+      const avanco = Math.floor(Math.random() * 15) + 15;
+      proj.progresso = Math.min(100, (proj.progresso || 0) + avanco);
+      s.necessidades.energia = Math.max(0, (s.necessidades.energia || 50) - 10);
+      s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 15);
+      if (proj.progresso >= 100) {
+        proj.concluido = true;
+        r.texto = `🎉 Grande marco! A construção de ${proj.nome} foi FINALIZADA pela comunidade!`;
+      } else {
+        r.texto = `Trabalhou na estrutura de ${proj.nome} (Progresso da obra: ${proj.progresso}%).`;
+      }
+      r.quantidade = avanco;
+    }
+    break;
+}
+case'mergulhar_mar':{
+    const perigoTubarao = Math.random() < 0.22;
+    if (perigoTubarao && x.tubarao) {
+      s.necessidades.medo = Math.min(100, (s.necessidades.medo || 0) + 40);
+      s.necessidades.seguranca = Math.max(0, (s.necessidades.seguranca || 50) - 25);
+      r.quantidade = 0;
+      r.texto = '⚠️ Um Tubarão-dos-Recifes cortou as águas próximas! Você nadou com todas as forças de volta à praia!';
+    } else {
+      const qtdFrutosMar = Math.floor(Math.random() * 3) + 2;
+      s.inventario.alimento = (s.inventario.alimento || 0) + qtdFrutosMar;
+      s.necessidades.alimento = Math.max(0, (s.necessidades.alimento || 0) - 40);
+      s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 15);
+      r.quantidade = qtdFrutosMar;
+      r.texto = `Mergulhou nos recifes cristalinos e colheu ${qtdFrutosMar} ostras e caranguejos nos corais!`;
+    }
+    break;
+}
+case'trocar_recursos':{
+    const outros = Object.values(e.seres || {}).filter(o => o.id !== s.id && o.status !== 'morto' && o.local === s.local);
+    if (outros.length) {
+      const vizinho = outros[0];
+      if ((s.inventario.alimento || 0) >= 1) {
+        s.inventario.alimento -= 1;
+        vizinho.inventario.alimento = (vizinho.inventario.alimento || 0) + 1;
+        vizinho.necessidades.satisfacao = Math.min(100, (vizinho.necessidades.satisfacao || 50) + 15);
+      }
+      e.relacoes[s.id][vizinho.id] = Math.min(100, (e.relacoes[s.id][vizinho.id] || 50) + 10);
+      e.relacoes[vizinho.id][s.id] = Math.min(100, (e.relacoes[vizinho.id][s.id] || 50) + 10);
+      s.necessidades.solidao = Math.max(0, (s.necessidades.solidao || 0) - 20);
+      s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 15);
+      r.quantidade = 1;
+      r.texto = `Compartilhou provisões com ${vizinho.nome}, fortalecendo os laços da vila.`;
+    }
+    break;
+}
+case'planejar_vila':{
+    const outros = Object.values(e.seres || {}).filter(o => o.id !== s.id && o.status !== 'morto' && o.local === s.local);
+    const parceiro = outros[0]?.nome || 'a comunidade';
+    s.necessidades.confianca = Math.min(100, (s.necessidades.confianca || 50) + 12);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 12);
+    r.quantidade = 1;
+    r.texto = `Conversou com ${parceiro} sobre o futuro da ilha, organizando tarefas e planos para o próximo dia.`;
     break;
 }
 case'mergulhar':{

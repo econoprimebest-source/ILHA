@@ -3,22 +3,24 @@
 // Quem decide para onde ir é o personagem; aqui só existem nós, caminhos e
 // distâncias. Coordenadas relativas (0..1) compatíveis com o mapa de referência.
 const nos={
-	casa_icaro:{x:.213,y:.493,nome:'Casa do Ícaro'},
-	casa_joao:{x:.477,y:.197,nome:'Casa do João'},
-	casa_maria:{x:.855,y:.568,nome:'Casa da Maria'},
-	acampamento:{x:.450,y:.505,nome:'Acampamento'},
-	fogueira:{x:.492,y:.476,nome:'Fogueira'},
-	arena:{x:.560,y:.390,nome:'Arena de Lutas'},
-	bosque:{x:.310,y:.310,nome:'Bosque'},
-	floresta:{x:.800,y:.290,nome:'Floresta'},
-	rio:{x:.695,y:.580,nome:'Rio'},
-	cachoeira:{x:.655,y:.090,nome:'Cachoeira'},
-	fazenda:{x:.948,y:.561,nome:'Fazenda'},
-	mar:{x:.360,y:.910,nome:'Mar'},
-	barco:{x:.487,y:.860,nome:'Cais do barco'},
+	casa_icaro:{x:.220,y:.480,nome:'Cabana do Ícaro'},
+	casa_lara:{x:.240,y:.410,nome:'Cabana da Lara'},
+	casa_joao:{x:.460,y:.240,nome:'Abrigo do João'},
+	casa_maria:{x:.820,y:.580,nome:'Cabana da Maria'},
+	acampamento:{x:.460,y:.540,nome:'Acampamento'},
+	fogueira:{x:.500,y:.520,nome:'Fogueira Central'},
+	arena:{x:.660,y:.360,nome:'Arena de Lutas'},
+	bosque:{x:.320,y:.320,nome:'Bosque de Frutas'},
+	floresta:{x:.760,y:.320,nome:'Floresta Fechada'},
+	rio:{x:.585,y:.580,nome:'Margem do Rio'},
+	cachoeira:{x:.650,y:.140,nome:'Cachoeira'},
+	fazenda:{x:.880,y:.560,nome:'Horta da Fazenda'},
+	curral:{x:.890,y:.670,nome:'Curral de Animais'},
+	mar:{x:.350,y:.880,nome:'Praia do Sul'},
+	barco:{x:.480,y:.840,nome:'Cais do Barco'},
 	// Caverna (boca da arte, canto NE) e Ilha Vizinha (ilhote da palmeira, SO).
-	caverna:{x:.925,y:.175,nome:'Caverna'},
-	ilha_vizinha:{x:.075,y:.815,nome:'Ilha Vizinha'}
+	caverna:{x:.880,y:.220,nome:'Caverna Sombria'},
+	ilha_vizinha:{x:.080,y:.820,nome:'Ilha Vizinha'}
 };
 const aliases={pesca_mar:'mar',mar_pesca:'mar',praia:'mar'};
 // Trilhas com waypoints sobre os caminhos pintados do mapa.
@@ -31,7 +33,12 @@ const arestas=[
 	{a:'bosque',b:'floresta',wp:[[.42,.33],[.52,.34],[.62,.33],[.72,.31]]},
 	{a:'floresta',b:'cachoeira',wp:[[.73,.20],[.69,.13]]},
 	{a:'floresta',b:'fazenda',wp:[[.86,.38],[.90,.47],[.935,.53]]},
-	{a:'fazenda',b:'casa_maria',wp:[[.92,.55]]},
+	{a:'fazenda',b:'casa_maria',wp:[[.85,.57]]},
+	{a:'fazenda',b:'curral',wp:[[.885,.62]]},
+	{a:'curral',b:'casa_maria',wp:[[.86,.63]]},
+	{a:'curral',b:'rio',wp:[[.78,.64],[.68,.62]]},
+	{a:'casa_icaro',b:'casa_lara',wp:[[.23,.44]]},
+	{a:'casa_lara',b:'bosque',wp:[[.28,.36]]},
 	{a:'fazenda',b:'rio',wp:[[.90,.66],[.80,.70],[.73,.66],[.70,.62]]},
 	{a:'fogueira',b:'fazenda',wp:[[.56,.47],[.63,.51],[.665,.548],[.76,.62],[.86,.66],[.93,.61]]},
 	{a:'fogueira',b:'bosque',wp:[[.44,.43],[.37,.37]]},

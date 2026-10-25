@@ -82,6 +82,27 @@
   .diary div { font-size:13px; color:#c9d7e5; padding:2px 0; line-height:1.5; }
   .diary .dc { color:#7dd3fc; font-weight:700; }
   .pill-list span { display:inline-block; margin:3px 5px 0 0; padding:3px 10px; border-radius:99px; background:#ffffff12; font-size:13px; border-left:3px solid #64748b; }
+  
+  /* CÂMERA & BARRA DE CONTROLE */
+  #camera-toolbar { position:absolute; left:16px; bottom:16px; z-index:11; display:flex; align-items:center; gap:6px; background:rgba(8,24,39,.92); backdrop-filter:blur(10px); padding:7px 12px; border-radius:12px; border:1px solid #334155; box-shadow:0 8px 24px #0009; }
+  .cam-label { font-size:11px; font-weight:800; color:#94a3b8; letter-spacing:.05em; margin-right:3px; }
+  .cam-btn { padding:5px 9px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#f8fafc; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s ease; }
+  .cam-btn:hover { background:#1e293b; border-color:#38bdf8; }
+  .cam-sep { width:1px; height:18px; background:#334155; margin:0 4px; }
+  .cam-pill { padding:5px 10px; border-radius:99px; border:1px solid #334155; background:#0f172a; color:#e2e8f0; font-size:11.5px; font-weight:700; cursor:pointer; transition:all .15s ease; white-space:nowrap; }
+  .cam-pill:hover { background:#0284c7; border-color:#38bdf8; color:#fff; }
+  .cam-pill.fera:hover { background:#991b1b; border-color:#ef4444; }
+  .cam-pill.mar:hover { background:#0369a1; border-color:#38bdf8; }
+  .cam-pill.fogueira:hover { background:#c2410c; border-color:#f97316; }
+
+  /* LIVE MARQUEE / TICKER */
+  #live-marquee { position:absolute; right:16px; bottom:16px; z-index:10; max-width:440px; background:rgba(8,24,39,.94); backdrop-filter:blur(10px); border:1px solid #0284c7; border-radius:12px; padding:8px 14px; display:flex; align-items:center; gap:8px; font-size:12px; color:#e2e8f0; box-shadow:0 8px 26px #0009; }
+  .marquee-live { flex:none; font-weight:800; font-size:11px; color:#facc15; padding:2px 6px; border-radius:4px; background:#854d0e; }
+
+  /* MODAL CAVERNA E PREDADOR */
+  #cave-modal, #predador-modal { position:absolute; right:16px; top:68px; z-index:16; width:min(440px,calc(100% - 32px)); max-height:calc(100% - 96px); overflow:auto; background:rgba(8,24,39,.97); backdrop-filter:blur(14px); border:1px solid #a855f7; border-radius:16px; padding:15px 16px; box-shadow:0 20px 48px #000c; }
+  #predador-modal { border-color:#ef4444; }
+  #cave-modal[hidden], #predador-modal[hidden] { display:none; }
   @media (max-width:850px) {
     body { overflow:auto; }
     #layout { height:auto; min-height:100dvh; grid-template-columns:1fr; grid-template-rows:minmax(55vh,65dvh) auto; }
@@ -163,6 +184,58 @@
     </div>
     <canvas id="game" style="display:none;"></canvas>
     <canvas id="pixi-game"></canvas>
+
+    <!-- BARRA DE CAMERA LIVRE & FOCO -->
+    <div id="camera-toolbar">
+      <span class="cam-label">FILMADORA:</span>
+      <button type="button" class="cam-btn" onclick="if(window.motorPixi)window.motorPixi.zoomIn()" title="Aproximar Visao (Zoom In)">+</button>
+      <button type="button" class="cam-btn" onclick="if(window.motorPixi)window.motorPixi.zoomOut()" title="Afastar Visao (Zoom Out)">-</button>
+      <button type="button" class="cam-btn" onclick="if(window.motorPixi)window.motorPixi.resetCamera()" title="Visao Geral 100%">100%</button>
+      <div class="cam-sep"></div>
+      <button type="button" class="cam-pill" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('icaro')">Icaro</button>
+      <button type="button" class="cam-pill" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('joao')">Joao</button>
+      <button type="button" class="cam-pill" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('maria')">Maria</button>
+      <button type="button" class="cam-pill" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('lara')">Lara</button>
+      <button type="button" class="cam-pill fera" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('pantera')">Pantera</button>
+      <button type="button" class="cam-pill mar" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('tubarao')">Tubarao</button>
+      <button type="button" class="cam-pill fogueira" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('fogueira')">Fogueira</button>
+    </div>
+
+    <!-- MARQUEE / TICKER NARRATIVO AO VIVO -->
+    <div id="live-marquee">
+      <span class="marquee-live">AO VIVO</span>
+      <span id="marquee-text">Acompanhando os sobreviventes e o ciclo natural na Ilha Aurora...</span>
+    </div>
+
+    <!-- MODAL DA CAVERNA SOMBRIA -->
+    <div id="cave-modal" hidden>
+      <div class="hp-head">
+        <div>
+          <div class="hp-title" style="color:#a855f7;">Caverna Sombria - Subterraneo</div>
+          <div class="hp-sub">Estalactites gotejando, veios de minerio e o covil da Pantera das Sombras.</div>
+        </div>
+        <button id="cave-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
+      </div>
+      <canvas id="cave-canvas" width="400" height="200" style="width:100%;height:auto;border-radius:10px;background:#05070f;margin-top:10px;box-shadow:inset 0 2px 14px #000;"></canvas>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+        <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('minerar_caverna')">Minerar Ferro & Quartzo</button>
+        <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('explorar_caverna')">Explorar com Tocha</button>
+        <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('afugentar_fera')">Afugentar Fera</button>
+      </div>
+      <div id="cave-log" style="margin-top:8px;font-size:12px;color:#cbd5e1;"></div>
+    </div>
+
+    <!-- MODAL DO PREDADOR (PANTERA DAS SOMBRAS) -->
+    <div id="predador-modal" hidden>
+      <div class="hp-head">
+        <div>
+          <div class="hp-title" style="color:#ef4444;">Pantera das Sombras - Fera Selvagem</div>
+          <div class="hp-sub" id="pred-sub">Rondando matas e encostas. Teme tochas e fogueiras acesas.</div>
+        </div>
+        <button id="pred-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
+      </div>
+      <div id="pred-body" style="margin-top:10px;font-size:13px;line-height:1.5;"></div>
+    </div>
     <div id="map-hint">Clique numa casa ou lugar da ilha para ver quem está lá, o que cada um está fazendo e o diário de bordo.</div>
     <div id="house-panel" hidden>
       <div class="hp-head">
@@ -172,6 +245,7 @@
         </div>
         <button id="hp-close" aria-label="Fechar painel">&times;</button>
       </div>
+      <canvas id="interior-canvas" width="400" height="220" style="width:100%;height:auto;border-radius:10px;background:#18120c;box-shadow:inset 0 2px 14px #000;margin-top:10px;"></canvas>
       <div id="hp-body"></div>
     </div>
   </section>
@@ -746,6 +820,254 @@ function cartaoOcupante(s){
     + '<div class="diary"><h4>Diário de bordo</h4>' + diarioHTML + '</div>'
     + '</div>';
 }
+
+// DESENHO ARQUITETONICO DO CORTE SEM TETO (CASA SEM TETO)
+function desenharCorteSemTeto(casaId) {
+  const cv = document.getElementById('interior-canvas');
+  if (!cv) return;
+  const c = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  c.clearRect(0, 0, W, H);
+
+  // Piso de tabuas corridas
+  c.fillStyle = '#b48250';
+  c.fillRect(0, 0, W, H);
+  c.strokeStyle = 'rgba(74,44,22,0.3)';
+  c.lineWidth = 1;
+  for (let y = 14; y < H; y += 14) {
+    c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+  }
+
+  // Divisoes de comodos
+  const mx = W * 0.52, my = H * 0.54;
+  // Paredes internas
+  c.strokeStyle = '#3d200e';
+  c.lineWidth = 4;
+  c.strokeRect(2, 2, W - 4, H - 4);
+  c.beginPath();
+  c.moveTo(mx, 2); c.lineTo(mx, my - 20); // Parede entre quarto e cozinha com porta
+  c.moveTo(2, my); c.lineTo(W * 0.35, my);
+  c.moveTo(W * 0.52, my); c.lineTo(W - 2, my); // Parede entre cozinha e sala
+  c.stroke();
+
+  // 1. QUARTO (Cama de madeira, travesseiros, cobertor)
+  c.fillStyle = '#4a2c16';
+  c.fillRect(15, 15, 85, 60);
+  c.fillStyle = '#f8fafc';
+  c.fillRect(18, 18, 79, 54);
+  c.fillStyle = casaId === 'casa_joao' ? '#0284c7' : (casaId === 'casa_icaro' ? '#15803d' : '#9333ea');
+  c.fillRect(18, 36, 79, 36); // Cobertor
+  c.fillStyle = '#e2e8f0';
+  c.fillRect(24, 22, 30, 12); c.fillRect(60, 22, 30, 12); // Travesseiros
+
+  // 2. COZINHA (Fogao a lenha com brasas, pia, panelas)
+  c.fillStyle = '#334155';
+  c.fillRect(mx + 15, 12, 80, 25);
+  c.fillStyle = '#f97316';
+  c.beginPath(); c.arc(mx + 30, 24, 5, 0, Math.PI * 2); c.arc(mx + 50, 24, 5, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#fef08a';
+  c.beginPath(); c.arc(mx + 30, 24, 2.5, 0, Math.PI * 2); c.arc(mx + 50, 24, 2.5, 0, Math.PI * 2); c.fill();
+  // Mesa de madeira da cozinha
+  c.fillStyle = '#6b4322';
+  c.fillRect(mx + 20, 50, 65, 30);
+
+  // 3. SALA DE ESTAR (Tapete tribal, poltronas)
+  c.fillStyle = '#991b1b';
+  c.fillRect(25, my + 18, 100, 45);
+  c.strokeStyle = '#fef08a'; c.lineWidth = 1;
+  c.strokeRect(28, my + 21, 94, 39);
+
+  // 4. BANHEIRO / TINA DE AGUA
+  c.fillStyle = '#78350f';
+  c.beginPath(); c.ellipse(W - 45, my + 45, 24, 18, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#38bdf8';
+  c.beginPath(); c.ellipse(W - 45, my + 45, 20, 14, 0, 0, Math.PI * 2); c.fill();
+
+  // Rotulos dos comodos
+  c.font = 'bold 10px Segoe UI, sans-serif';
+  c.fillStyle = '#26180f';
+  c.fillText('QUARTO', 15, 92);
+  c.fillText('COZINHA', mx + 15, 92);
+  c.fillText('SALA DE ESTAR', 25, H - 15);
+  c.fillText('BANHO', W - 65, H - 15);
+
+  // Desenhar ocupantes dentro dos comodos com base no que estao fazendo!
+  const presentes = seres().filter(s => s.local === casaId);
+  presentes.forEach((s, idx) => {
+    const ac = (s.acao || '').toLowerCase();
+    let px = 60, py = 50; // Quarto padrao
+    let emote = '💤';
+
+    if (ac.includes('com') || ac.includes('beb')) {
+      px = mx + 50; py = 65; emote = '🍲'; // Cozinha comendo
+    } else if (ac.includes('banho')) {
+      px = W - 45; py = my + 45; emote = '🫧'; // Banheiro tomando banho
+    } else if (ac.includes('arrum') || ac.includes('conviv') || ac.includes('fal') || ac.includes('historia')) {
+      px = 75; py = my + 38; emote = '💬'; // Sala conversando
+    } else {
+      // Dormindo na cama
+      px = 45 + idx * 30; py = 45; emote = '💤';
+    }
+
+    // Boneco do personagem no comodo
+    c.fillStyle = PALETTE[s.id] || '#15803d';
+    c.beginPath(); c.arc(px, py, 9, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fde0cf';
+    c.beginPath(); c.arc(px, py - 3, 5, 0, Math.PI * 2); c.fill();
+    // Emote / Acao
+    c.font = '12px Segoe UI';
+    c.fillText(emote, px + 8, py - 8);
+  });
+}
+
+// DESENHO SUBTERRANEO DA CAVERNA SOMBRIA
+function desenharInteriorCaverna() {
+  const cv = document.getElementById('cave-canvas');
+  if (!cv) return;
+  const c = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  c.clearRect(0, 0, W, H);
+
+  // Fundo escuro rochoso
+  c.fillStyle = '#090d16';
+  c.fillRect(0, 0, W, H);
+
+  // Estalactites no teto
+  c.fillStyle = '#1e293b';
+  for (let x = 10; x < W; x += 30) {
+    const h = 25 + Math.sin(x * 123) * 15;
+    c.beginPath();
+    c.moveTo(x - 12, 0);
+    c.lineTo(x + 12, 0);
+    c.lineTo(x, h);
+    c.fill();
+  }
+
+  // Estalagmites no chao
+  for (let x = 25; x < W; x += 40) {
+    const h = 20 + Math.cos(x * 456) * 12;
+    c.beginPath();
+    c.moveTo(x - 10, H);
+    c.lineTo(x + 10, H);
+    c.lineTo(x, H - h);
+    c.fill();
+  }
+
+  // Cristais brilhantes de quartzo e ametista
+  const cristais = [[80, 70, '#38bdf8'], [140, 110, '#c084fc'], [240, 80, '#38bdf8'], [320, 120, '#e879f9']];
+  cristais.forEach(([cx, cy, cor]) => {
+    c.fillStyle = cor;
+    c.beginPath();
+    c.moveTo(cx, cy - 10);
+    c.lineTo(cx + 6, cy);
+    c.lineTo(cx, cy + 10);
+    c.lineTo(cx - 6, cy);
+    c.fill();
+    // Brilho suave
+    c.fillStyle = cor + '33';
+    c.beginPath(); c.arc(cx, cy, 18, 0, Math.PI * 2); c.fill();
+  });
+
+  // Veio de minerio de ferro
+  c.fillStyle = '#d97706';
+  c.fillRect(W - 70, 70, 45, 20);
+  c.font = 'bold 9px Segoe UI';
+  c.fillStyle = '#fef08a';
+  c.fillText('VEIO DE FERRO', W - 68, 65);
+
+  // Covil da Pantera das Sombras (Olhos amarelos brilhando no fundo)
+  c.fillStyle = '#000000';
+  c.beginPath(); c.ellipse(W - 60, H - 35, 35, 20, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#facc15';
+  c.beginPath(); c.arc(W - 70, H - 38, 2.5, 0, Math.PI * 2); c.arc(W - 55, H - 38, 2.5, 0, Math.PI * 2); c.fill();
+  c.font = '9px Segoe UI'; c.fillStyle = '#f87171';
+  c.fillText('Covil da Fera', W - 78, H - 15);
+
+  // Se houver algum sobrevivente explorando a caverna, desenha-o com tocha
+  const presentes = seres().filter(s => s.local === 'caverna');
+  presentes.forEach((s, idx) => {
+    const px = 90 + idx * 45, py = H - 35;
+    // Luz quente da tocha
+    c.fillStyle = 'rgba(251,191,36,0.22)';
+    c.beginPath(); c.arc(px, py, 45, 0, Math.PI * 2); c.fill();
+    // Personagem
+    c.fillStyle = PALETTE[s.id] || '#15803d';
+    c.beginPath(); c.arc(px, py, 12, 0, Math.PI * 2); c.fill();
+    // Tocha acesa
+    c.fillStyle = '#f97316';
+    c.beginPath(); c.arc(px + 10, py - 14, 5, 0, Math.PI * 2); c.fill();
+    c.font = 'bold 10px Segoe UI'; c.fillStyle = '#fff';
+    c.fillText(s.nome, px - 12, py + 22);
+  });
+}
+
+function abrirModalCaverna() {
+  const m = document.getElementById('cave-modal');
+  if (!m) return;
+  m.hidden = false;
+  desenharInteriorCaverna();
+}
+
+function abrirModalPredadorUI() {
+  const m = document.getElementById('predador-modal');
+  if (!m) return;
+  m.hidden = false;
+  const b = document.getElementById('pred-body');
+  const eco = (stateData && stateData.mundo && stateData.mundo.ecossistema) || {};
+  const pred = eco.predador || { status: 'vivo', local: 'caverna', fome: 40, alerta: 30 };
+  
+  if (b) {
+    b.innerHTML = '<div style="margin-bottom:8px;color:#f87171;font-weight:bold;">Status: ' + pred.status.toUpperCase() + '</div>'
+      + '<div style="margin-bottom:6px;color:#cbd5e1;">Localização Atual: <strong style="color:#fde047;">' + nomeLocal(pred.local) + '</strong></div>'
+      + '<div style="margin-bottom:6px;color:#cbd5e1;">Nível de Fome: ' + Math.round(pred.fome || 40) + '%</div>'
+      + '<div style="margin-bottom:6px;color:#cbd5e1;">Alerta / Espreita: ' + Math.round(pred.alerta || 30) + '%</div>'
+      + '<div style="margin-top:10px;padding:8px;border-radius:8px;background:#18181b;color:#fca5a5;font-size:12px;border-left:3px solid #ef4444;">'
+      +   (pred.rastro || 'Pegadas frescas de felino avistadas no norte da ilha.')
+      + '</div>'
+      + '<div style="display:flex;gap:6px;margin-top:12px;">'
+      +   '<button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('afugentar_fera')">Brandir Tochas</button>'
+      +   '<button type="button" class="dir-btn" style="flex:1;" onclick="window.motorPixi&&window.motorPixi.focarAlvo('pantera')">Seguir Fera</button>'
+      + '</div>';
+  }
+}
+
+function enviarIntervencaoCaverna(acaoId) {
+  const log = document.getElementById('cave-log');
+  if (log) log.textContent = 'Enviando acao para a ilha...';
+  fetch('/api/intervir', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ tipo: 'caverna', acao: acaoId, local: 'caverna' })
+  }).then(r => r.json()).then(res => {
+    if (log) log.textContent = 'Acao registrada! O mundo atualizara no proximo ciclo.';
+    setTimeout(() => { if (log) log.textContent = ''; }, 3000);
+  }).catch(err => {
+    if (log) log.textContent = 'Aviso: ' + err.message;
+  });
+}
+
+// Integracao Global com o Motor Pixi
+window.abrirPainelLocal = function(id) {
+  if (id === 'caverna') {
+    abrirModalCaverna();
+    return;
+  }
+  selectedLocal = (selectedLocal === id) ? null : id;
+  renderPainelLocal();
+  if (selectedLocal && ['casa_joao', 'casa_icaro', 'casa_maria', 'casa_lara'].includes(selectedLocal)) {
+    desenharCorteSemTeto(selectedLocal);
+  }
+};
+window.abrirModalPredador = abrirModalPredadorUI;
+
+// Listeners dos botoes de fechar
+document.addEventListener('DOMContentLoaded', () => {
+  const cClose = document.getElementById('cave-close');
+  if (cClose) cClose.onclick = () => { document.getElementById('cave-modal').hidden = true; };
+  const pClose = document.getElementById('pred-close');
+  if (pClose) pClose.onclick = () => { document.getElementById('predador-modal').hidden = true; };
+});
+
 function renderPainelLocal(){
   const panel = document.getElementById('house-panel');
   const hint = document.getElementById('map-hint');
