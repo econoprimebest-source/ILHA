@@ -138,6 +138,10 @@
           <option value="fazenda">Fazenda</option>
           <option value="casa_icaro">Casa do Ícaro e Lara</option>
           <option value="casa_joao">Casa do João e Maria</option>
+          <option value="casa_maria">Casa da Maria</option>
+          <option value="arena">Arena de Lutas</option>
+          <option value="caverna">Caverna</option>
+          <option value="ilha_vizinha">Ilha Vizinha</option>
         </select>
       </div>
       <div class="dir-field">
@@ -290,17 +294,23 @@ const NOS_FALLBACK = {
   casa_maria:{x:.855,y:.568,nome:'Casa da Maria'},
   acampamento:{x:.450,y:.505,nome:'Acampamento'},
   fogueira:{x:.492,y:.476,nome:'Fogueira'},
+  arena:{x:.560,y:.390,nome:'Arena de Lutas'},
   bosque:{x:.310,y:.310,nome:'Bosque'},
   floresta:{x:.800,y:.290,nome:'Floresta'},
   rio:{x:.695,y:.580,nome:'Rio'},
   cachoeira:{x:.655,y:.090,nome:'Cachoeira'},
   fazenda:{x:.948,y:.561,nome:'Fazenda'},
   mar:{x:.360,y:.910,nome:'Mar'},
-  barco:{x:.487,y:.860,nome:'Cais do barco'}
+  barco:{x:.487,y:.860,nome:'Cais do barco'},
+  caverna:{x:.925,y:.175,nome:'Caverna'},
+  ilha_vizinha:{x:.075,y:.815,nome:'Ilha Vizinha'}
 };
+/* Espelho de espaco.js (26 arestas): o servidor manda o grafo real; isto só
+   vira caso a API de mapa falhe. Água (`agua:true`) = trajeto de barco. */
 const ARESTAS_FALLBACK = [
   {a:'fogueira',b:'casa_icaro',wp:[[.42,.49],[.34,.55],[.27,.56]]},
   {a:'fogueira',b:'acampamento',wp:[]},
+  {a:'arena',b:'acampamento',wp:[[.515,.445]]},
   {a:'fogueira',b:'casa_joao',wp:[[.46,.42],[.45,.33],[.47,.27]]},
   {a:'casa_joao',b:'bosque',wp:[[.40,.27],[.35,.29]]},
   {a:'bosque',b:'floresta',wp:[[.42,.33],[.52,.34],[.62,.33],[.72,.31]]},
@@ -308,7 +318,7 @@ const ARESTAS_FALLBACK = [
   {a:'floresta',b:'fazenda',wp:[[.86,.38],[.90,.47],[.935,.53]]},
   {a:'fazenda',b:'casa_maria',wp:[[.92,.55]]},
   {a:'fazenda',b:'rio',wp:[[.90,.66],[.80,.70],[.73,.66],[.70,.62]]},
-  {a:'fazenda',b:'fogueira',wp:[[.56,.47],[.63,.51],[.665,.548],[.76,.62],[.86,.66],[.93,.61]]},
+  {a:'fogueira',b:'fazenda',wp:[[.56,.47],[.63,.51],[.665,.548],[.76,.62],[.86,.66],[.93,.61]]},
   {a:'fogueira',b:'bosque',wp:[[.44,.43],[.37,.37]]},
   {a:'fogueira',b:'mar',wp:[[.455,.55],[.43,.65],[.40,.76],[.38,.86]]},
   {a:'fogueira',b:'barco',wp:[[.49,.56],[.487,.66],[.487,.77]]},
@@ -316,7 +326,14 @@ const ARESTAS_FALLBACK = [
   {a:'casa_icaro',b:'mar',wp:[[.24,.58],[.28,.70],[.32,.82]]},
   {a:'barco',b:'rio',wp:[[.53,.79],[.59,.71],[.645,.64]]},
   {a:'casa_maria',b:'rio',wp:[[.82,.66],[.76,.64],[.72,.61]]},
-  {a:'rio',b:'cachoeira',wp:[[.71,.48],[.69,.38],[.675,.27],[.66,.17]]}
+  {a:'rio',b:'cachoeira',wp:[[.71,.48],[.69,.38],[.675,.27],[.66,.17]]},
+  {a:'casa_icaro',b:'bosque',wp:[[.23,.40],[.26,.35]]},
+  {a:'bosque',b:'acampamento',wp:[[.36,.36],[.40,.42]]},
+  {a:'arena',b:'fogueira',wp:[[.49,.42]]},
+  {a:'acampamento',b:'barco',wp:[[.46,.62],[.46,.75]]},
+  {a:'floresta',b:'caverna',wp:[[.856,.241],[.895,.203]]},
+  {a:'barco',b:'ilha_vizinha',wp:[[.44,.965],[.34,.985],[.24,.975],[.14,.945]],agua:true},
+  {a:'mar',b:'ilha_vizinha',wp:[[.30,.968],[.21,.962],[.13,.925]],agua:true}
 ];
 
 /* Acoes do motor traduzidas para leitura humana. */
@@ -327,15 +344,16 @@ const ACOES = {
   coletar_madeira:'coletando madeira', cacar:'caçando', 'caçar':'caçando', melhorar_abrigo:'melhorando o abrigo',
   plantar:'plantando na horta', colher_horta:'colhendo na horta', acender_fogueira:'alimentando o fogo',
   continuar:'caminhando', moradia:'em casa', dormir:'dormindo', inspecionar:'inspecionando',
-  explorar:'explorando', abrir_suprimento:'abrindo caixa de suprimentos', investigar_artefato:'investigando artefato misterioso'
+  explorar:'explorando', explorar_caverna:'explorando a caverna', mergulhar:'mergulhando',
+  navegar:'navegando de barco', abrir_suprimento:'abrindo caixa de suprimentos', investigar_artefato:'investigando artefato misterioso'
 };
 const CURTAS = {
   comer:'comer', beber:'beber', banho:'banho', arrumar_casa:'arrumar casa', descansar:'descansar',
   dormir:'dormir', esperar:'esperar', observar:'observar', conviver:'conversar', falar:'conversar',
   pescar:'pescar', colher_frutas:'colher', coletar_agua:'água', coletar_madeira:'madeira',
   cacar:'caçar', 'caçar':'caçar', melhorar_abrigo:'construir', plantar:'plantar', colher_horta:'colher horta',
-  acender_fogueira:'acender fogo', continuar:'caminho', moradia:'em casa',
-  abrir_suprimento:'suprimento', investigar_artefato:'artefato'
+  acender_fogueira:'acender fogo', continuar:'caminho', moradia:'em casa', explorar_caverna:'caverna',
+  mergulhar:'mergulho', navegar:'barco', abrir_suprimento:'suprimento', investigar_artefato:'artefato'
 };
 
 /* Contorno da ilha: curvas bezier em coordenadas 0..1 do retangulo do mundo. */
@@ -414,6 +432,8 @@ const ROT_DX = {
   fazenda:-6, cachoeira:0, fogueira:0, acampamento:-26
 };
 function nos(){ return (mapa && mapa.nos) || NOS_FALLBACK; }
+function listaArestas(){ return (mapa && mapa.arestas) || ARESTAS_FALLBACK; }
+function arestaEntre(a, b){ return listaArestas().find(e => (e.a===a && e.b===b) || (e.a===b && e.b===a)) || null; }
 function arestas(){ return (mapa && mapa.arestas) || ARESTAS_FALLBACK; }
 function nomeLocal(id){
   if(!id) return '';
@@ -1012,6 +1032,58 @@ function drawOcean(box, w, h, now, noite, tarde){
     ctx.globalAlpha = 1;
   }
 }
+/* ---------- ondas quebrando na praia (sul/sudoeste) ---------- */
+function drawPraiaOndas(box, w, h, now, noite){
+  // Shoreline (água|terra) ao longo da costa sul/sudoeste, em coordenadas normalizadas.
+  // Derivado do pixel-art mapa-ilha-nova.png: pontos onde a areia encontra o mar.
+  const SHORE = [
+    [.075,.440],[.100,.460],[.130,.480],[.160,.500],
+    [.200,.530],[.250,.560],[.300,.580],[.350,.600],
+    [.400,.620],[.450,.640],[.500,.650],[.550,.655]
+  ];
+  const u = box.scale;
+  const isNight = noite;
+  // Uma única onda viajando de oeste a leste ao longo da costa sul.
+  const phase = ((now/600) % 1 + 0.2) % 1;
+  const amp = 0.08 * u;
+  
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = isNight ? 'rgba(186,230,253,.4)' : 'rgba(240,249,255,.7)';
+  ctx.lineWidth = 1.5*u;
+  
+  ctx.beginPath();
+  for(let i = 0; i < SHORE.length; i++){
+    const [sx, sy] = SHORE[i];
+    const px = box.x + box.w * sx;
+    const py = box.y + box.h * sy;
+    const localPhase = (i / (SHORE.length-1)) * Math.PI * 2 + phase;
+    const yoffset = amp * Math.sin(localPhase);
+    const x = px;
+    const y = py + yoffset;
+    if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.restore();
+  
+  // Espuma de quebra quando a onda está próxima do pico (phase > 0.85).
+  if(phase > 0.85){
+    ctx.fillStyle = isNight ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.9)';
+    for(let f = 0; f < 4; f++){
+      const idx = Math.floor(f * SHORE.length/4);
+      const [sx, sy] = SHORE[idx];
+      const px = box.x + box.w * sx;
+      const py = box.y + box.h * sy;
+      const size = (1 - (phase-0.85)*5) * 2 * u;
+      if(size > 0){
+        ctx.beginPath();
+        ctx.arc(px, py, Math.max(0.5, size), 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+  }
+}
+/* ---------- fim ondas ---------- */
 function drawIlha(box, noite, tarde, agora){
   const s = box.scale;
   ctx.save();
@@ -1503,9 +1575,13 @@ function drawRotulos(box, noite){
 
 /* ---------- rotas e personagens ---------- */
 const CHAR_DY = { acampamento: 18, fogueira: 22 }; /* em frente a fogueira pintada, nao em cima dela */
+/* Pé no chão de verdade: o nó "rio" cai no meio da calha pintada — quem está
+   ali (pescador, banho, mergulho) fica na margem oeste, na beira da água. */
+const CHAR_OFF = { rio:{ dx:-0.030, dy:0.015 } };
 function screenFromSer(s, box){
   const n = nos()[s.local] || { x:.5, y:.5 };
-  const base = { x: box.x + box.w*n.x, y: box.y + box.h*n.y };
+  const off = CHAR_OFF[s.local] || { dx:0, dy:0 };
+  const base = { x: box.x + box.w*(n.x + off.dx), y: box.y + box.h*(n.y + off.dy) };
   const grupo = vivos().filter(o => o.local === s.local).sort((a,b) => a.id.localeCompare(b.id));
   const i = grupo.findIndex(o => o.id === s.id);
   const k = grupo.length || 1;
@@ -1569,6 +1645,13 @@ function drawCharacter(x, y, ser, isNight, unit){
   const dormindo = acaoId === 'dormir' || (isNight && (acaoId === 'descansar' || acaoId === 'esperar'));
   const pescando = acaoId === 'pescar';
   const cacando = acaoId === 'cacar' || acaoId === 'caçar';
+  /* Barco: ação navegar OU deslocamento cujo trecho é de água (`agua:true` no
+     mapa) — quem vai pra Ilha Vizinha remarra, não caminha em cima do mar. */
+  const deslSer = ser.deslocamento;
+  const rotaAgua = !!(deslSer && Array.isArray(deslSer.caminho) && deslSer.caminho.length > 1 &&
+    deslSer.caminho.slice(0, -1).some((no, i) => { const e = arestaEntre(no, deslSer.caminho[i+1]); return !!(e && e.agua); }));
+  const navegando = acaoId === 'navegar' || (caminhando && (acaoId === 'ir_ilha_vizinha' || rotaAgua));
+  const explorando = acaoId === 'explorar' || acaoId === 'explorar_caverna';
   const colhendo = acaoId === 'colher_frutas' || acaoId === 'coletar_madeira' || acaoId === 'coletar_agua' || acaoId === 'plantar' || acaoId === 'colher_horta' || acaoId === 'acender_fogueira';
   const naTempestade = acontecimentosAtivos('tempestade').length > 0 && !(ser.casa && ser.local === ser.casa);
 
@@ -1582,7 +1665,7 @@ function drawCharacter(x, y, ser, isNight, unit){
   ctx.save();
   /* Desenha sprite de pixel art do personagem como base */
   const spriteImg = PLACEHOLDER_SPRITE_IMGS[ser.id];
-  if(spriteImg && spriteImg.complete){
+  if(spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0){
     ctx.drawImage(spriteImg,
       x - 32*u, y - 32*u, 64*u, 64*u);
   }
@@ -1689,8 +1772,8 @@ function drawCharacter(x, y, ser, isNight, unit){
 
   /* Braços articulados */
   const swing = caminhando ? -passo * 0.55 : Math.sin(now/280 + seed)*1.5*u;
-  const maoDirY = (pescando || cacando || colhendo) ? (F - 24*u + Math.sin(now/160)*2.5*u) : (F - 16*u - swing);
-  const maoDirX = (pescando || cacando) ? (x + 15*u) : (x + 11.5*u);
+  const maoDirY = (pescando || cacando || colhendo || explorando) ? (F - 24*u + Math.sin(now/160)*2.5*u) : (F - 16*u - swing);
+  const maoDirX = (pescando || cacando || explorando) ? (x + 15*u) : (x + 11.5*u);
 
   ctx.strokeStyle = camisa;
   ctx.lineWidth = 4.6*u;
@@ -1710,7 +1793,8 @@ function drawCharacter(x, y, ser, isNight, unit){
   ctx.fillStyle = pele;
   ctx.beginPath(); ctx.arc(maoDirX, maoDirY, 2.5*u, 0, Math.PI*2); ctx.fill();
 
-  /* Ferramentas conforme a ação */
+  /* Ferramentas na mão CONFORME A AÇÃO — vara só pesca, arma só caça,
+     ferramenta de roça só na roça, machado só na madeira, tocha só explorando. */
   if(pescando){
     ctx.strokeStyle = '#92400e';
     ctx.lineWidth = 2*u;
@@ -1727,20 +1811,89 @@ function drawCharacter(x, y, ser, isNight, unit){
     ctx.fillStyle = '#e2e8f0';
     ctx.beginPath(); ctx.moveTo(maoDirX + 14*u, maoDirY - 18*u); ctx.lineTo(maoDirX + 18*u, maoDirY - 23*u); ctx.lineTo(maoDirX + 12*u, maoDirY - 21*u); ctx.closePath(); ctx.fill();
   } else if(acaoId === 'plantar'){
+    /* Enxada cavando o canteiro */
     ctx.strokeStyle = '#78350f';
     ctx.lineWidth = 2.2*u;
     ctx.beginPath(); ctx.moveTo(maoDirX - 3*u, maoDirY - 10*u); ctx.lineTo(maoDirX + 9*u, maoDirY + 12*u); ctx.stroke();
     ctx.fillStyle = '#94a3b8';
     ctx.fillRect(maoDirX + 6*u, maoDirY + 10*u, 6*u, 3*u);
-  } else if(acaoId === 'acender_fogueira' || acaoId === 'coletar_madeira'){
+  } else if(acaoId === 'colher_horta'){
+    /* Foice curva de quem roça a horta */
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2.2*u;
+    ctx.beginPath(); ctx.moveTo(maoDirX - 4*u, maoDirY + 7*u); ctx.lineTo(maoDirX + 6*u, maoDirY - 7*u); ctx.stroke();
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 2.4*u;
+    ctx.beginPath(); ctx.arc(maoDirX + 7*u, maoDirY - 8*u, 6.5*u, Math.PI*0.15, Math.PI*0.95); ctx.stroke();
+  } else if(acaoId === 'coletar_madeira'){
+    /* Machado de lenhador (cabo + cabeça de aço) */
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2.2*u;
+    ctx.beginPath(); ctx.moveTo(maoDirX - 5*u, maoDirY + 8*u); ctx.lineTo(maoDirX + 7*u, maoDirY - 9*u); ctx.stroke();
+    ctx.fillStyle = '#94a3b8';
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1*u;
+    ctx.beginPath();
+    ctx.moveTo(maoDirX + 5*u, maoDirY - 11*u);
+    ctx.lineTo(maoDirX + 12*u, maoDirY - 13*u);
+    ctx.lineTo(maoDirX + 13*u, maoDirY - 7*u);
+    ctx.lineTo(maoDirX + 6*u, maoDirY - 5*u);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else if(acaoId === 'acender_fogueira'){
     ctx.fillStyle = '#5c3a1e';
     roundRect(maoDirX - 3*u, maoDirY - 3*u, 11*u, 4.5*u, 1.5*u); ctx.fill();
+  } else if(explorando){
+    /* Tocha acesa — chama que treme na mão de quem explora a caverna/mata */
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2.2*u;
+    ctx.beginPath(); ctx.moveTo(maoDirX - 3*u, maoDirY + 8*u); ctx.lineTo(maoDirX + 6*u, maoDirY - 10*u); ctx.stroke();
+    const fxT = maoDirX + 6*u, fyT = maoDirY - 13*u;
+    const fT = 1 + Math.sin(now/90 + seed)*0.18;
+    const gT = ctx.createRadialGradient(fxT, fyT, 0.5*u, fxT, fyT, 10*u*fT);
+    gT.addColorStop(0, 'rgba(255,214,110,.95)');
+    gT.addColorStop(0.5, 'rgba(255,140,40,.55)');
+    gT.addColorStop(1, 'rgba(255,90,20,0)');
+    ctx.fillStyle = gT;
+    ctx.beginPath(); ctx.arc(fxT, fyT, 10*u*fT, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fde68a';
+    ctx.beginPath(); ctx.ellipse(fxT, fyT - 1.2*u, 2.2*u, 3.6*u*fT, 0, 0, Math.PI*2); ctx.fill();
+  } else if(acaoId === 'mergulhar'){
+    /* Bolhas e aro de espuma ao redor — mergulho sem ferramenta nenhuma */
+    ctx.strokeStyle = 'rgba(186,230,253,.9)';
+    ctx.lineWidth = 1.6*u;
+    ctx.setLineDash([4*u, 5*u]);
+    ctx.lineDashOffset = -(now/60)*u;
+    ctx.beginPath(); ctx.ellipse(x, F + 1*u, 16*u, 6*u, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(207,242,253,.85)';
+    for(let bi = 0; bi < 3; bi++){
+      const bp = ((now/700) + bi*0.33) % 1;
+      ctx.beginPath(); ctx.arc(x + (bi-1)*6*u, F - bp*16*u, Math.max(0.6, (2 - bp*1.6))*u, 0, Math.PI*2); ctx.fill();
+    }
   } else if(acaoId === 'beber' || acaoId === 'coletar_agua'){
     ctx.fillStyle = '#0284c7';
     roundRect(maoDirX - 2*u, maoDirY - 4*u, 5.5*u, 7*u, 1.5*u); ctx.fill();
-  } else if(acaoId === 'comer' || acaoId === 'colher_frutas' || acaoId === 'colher_horta'){
+  } else if(acaoId === 'comer' || acaoId === 'colher_frutas'){
     ctx.fillStyle = '#dc2626';
     ctx.beginPath(); ctx.arc(maoDirX + 1*u, maoDirY - 2*u, 3.2*u, 0, Math.PI*2); ctx.fill();
+  }
+  if(navegando){
+    /* Barco nos pés — quem cruza aresta `agua` embarca, nunca caminha no mar */
+    ctx.fillStyle = '#8b5a2b';
+    ctx.beginPath();
+    ctx.moveTo(x - 15*u, F + 2*u);
+    ctx.lineTo(x + 15*u, F + 2*u);
+    ctx.lineTo(x + 10*u, F + 9*u);
+    ctx.lineTo(x - 10*u, F + 9*u);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#5c3a1e'; ctx.lineWidth = 1.2*u; ctx.stroke();
+    /* Remo inclinado acompanhando o balanço */
+    ctx.strokeStyle = '#6b4423';
+    ctx.lineWidth = 1.6*u;
+    ctx.beginPath();
+    ctx.moveTo(x - 6*u, F - 6*u);
+    ctx.lineTo(x - 17*u + Math.sin(now/260)*4*u, F + 7*u);
+    ctx.stroke();
   }
 
   /* Pescoço e Cabeça */
@@ -2755,6 +2908,38 @@ canvas.addEventListener('click', e => {
   const rect = canvas.getBoundingClientRect();
   mouseX = e.clientX - rect.left;
   mouseY = e.clientY - rect.top;
+  // 1) Testar se clicou em um personagem vivo
+  let personagemClicado = null;
+  const seres = vivos();
+  for (const s of seres) {
+    const pos = screenFromSer(s, box);
+    const dx = mouseX - pos.x;
+    const dy = mouseY - pos.y;
+    const radius = 25 * box.scale;
+    if (dx*dx + dy*dy <= radius*radius) {
+      personagemClicado = s;
+      break;
+    }
+  }
+  // Se clicou em personagem, prompt de mensagem e POST /api/falar
+  if (personagemClicado) {
+    const msg = prompt(`Digite o que você diz a ${personagemClicado.nome}:`);
+    if (msg && msg.trim()) {
+      fetch('/api/falar', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: personagemClicado.id, texto: msg.trim() })
+      }).then(r => r.json()).then(data => {
+        if (data.ok) {
+          alert('Mensagem entregue! O ' + personagemClicado.nome + ' respondeu.');
+        } else {
+          alert('Mensagem guardada, mas o cérebro não respondeu agora: ' + (data.erro||'erro desconhecido'));
+        }
+      }).catch(e => alert('Erro ao enviar: ' + e.message));
+    }
+    return;
+  }
+  // 2) Fallthrough: teste de hotspots locais (casas, arestas, etc.)
   let alvo = null;
   for(const hs of hotspots){
     if(Math.hypot(mouseX - hs.x, mouseY - hs.y) <= hs.r){
@@ -2803,6 +2988,7 @@ function drawScene(){
     }
   }else{
     drawOcean(box, w, h, now, noite, tarde);
+    drawPraiaOndas(box, w, h, now, noite);
     drawIlha(box, noite, tarde, now);
     drawVegetacao(box, noite);
     drawTrilhas(box, noite);
@@ -2879,6 +3065,23 @@ resize();
 fetchMap().then(fetchState);
 setInterval(fetchState, 2000);
 drawScene();
+</script>
+<script>
+/* Captura do frame para a VISÃO (ILHA_VISAO=1 no processo da simulação).
+   Opt-in explícito: só envia o canvas quando a página é aberta com ?visao=1;
+   sem esse parâmetro nada sai daqui e nenhum arquivo é gravado. */
+(function(){
+  if(new URLSearchParams(location.search).get('visao') !== '1') return;
+  setInterval(function(){
+    try{
+      fetch('/api/frame', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({ image: canvas.toDataURL('image/png') })
+      }).catch(function(){});
+    }catch(e){}
+  }, 5000);
+})();
 </script>
 </body>
 </html>

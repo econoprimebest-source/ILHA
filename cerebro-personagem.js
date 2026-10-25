@@ -115,7 +115,17 @@ function cerebroDe(opcoes,ser){
 		if(typeof c==='function')return c;
 		if(c&&typeof c.decidir==='function')return c.decidir.bind(c);
 	}
-	return (opcoes&&opcoes.decisor)||require('./decisor').decidir;
+	if(opcoes&&opcoes.decisor)return opcoes.decisor;
+	// Ícaro e Elara/Lara: conectam ao cérebro real do Z-Fold por padrão
+	if(ser&&(ser.id==='icaro'||ser.id==='lara'||ser.id==='elara')){
+		try{
+			const {criarAdaptador}=require('./adaptador-cerebro-zfold');
+			const porta=ser.id==='icaro'?8793:8794;
+			const adapt=criarAdaptador({id:ser.id,porta});
+			return adapt.decidir.bind(adapt);
+		}catch(eZ){}
+	}
+	return require('./decisor').decidir;
 }
 
 // FASE D — INSTÂNCIA de CharacterBrain: uma por personagem, com estado interno

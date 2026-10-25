@@ -5,6 +5,7 @@
 // é contrato público (testes e chamadores diretos chamam `.includes` nela).
 const visao=require('./visao');
 const percepcaoSensorial=require('./percepcao-sensorial');
+const espaco=require('./espaco');
 // Cérebro dos personagens da Ilha — arquitetura: perceber → interpretar → decidir.
 // Recebe condições do mundo, corpo, memória, experiências e objetivos; INTERPRETA;
 // ESCOLHE uma ação entre as possíveis. Nenhuma necessidade vira ação por regra
@@ -22,13 +23,12 @@ const orig=require('./decisor-original');
 // MESMOS nos dois provedores: trocar de provedor não muda o contrato
 // cognitivo nem a política de fallback (falha continua sendo falha honesta).
 function provedor(){
-	const p=String(process.env.ILHA_LLM_PROVIDER||'ollama').toLowerCase();
-	if(p!=='ollama'&&p!=='deepseek')throw Error('ILHA_LLM_PROVIDER desconhecido: "'+p+'" (use "ollama" ou "deepseek")');
+	const p=String(process.env.ILHA_LLM_PROVIDER||process.env.ILHA_PROVEDOR||'groq').toLowerCase();
+	if(p!=='ollama'&&p!=='deepseek'&&p!=='groq')throw Error('ILHA_LLM_PROVIDER desconhecido: "'+p+'" (use "groq", "ollama" ou "deepseek")');
 	return p;
 }
 function modeloDe(p){
-	// DeepSeek: `DEEPSEEK_MODEL`, padrão `deepseek-chat`. Ollama: `ILHA_MODELO`,
-	// padrão `qwen3:8b` — como sempre foi.
+	if(p==='groq')return process.env.GROQ_MODEL||'qwen/qwen3.8-27b';
 	return p==='deepseek'?(process.env.DEEPSEEK_MODEL||'deepseek-chat'):(process.env.ILHA_MODELO||'qwen3:8b');
 }
 const PROVEDOR=provedor();
@@ -63,6 +63,20 @@ function montarPrompt(c,a,ser,extras){
 	partes.push('[AGORA]');
 	const t=c.tempo||{};
 	partes.push('ciclo '+(t.ciclo!=null?t.ciclo:'—')+', dia '+(t.dia!=null?t.dia:'—')+', '+(t.periodo||'—')+', '+(t.estacao||'—')+' | clima: '+String(c.clima||'—')+' | local: '+c.local+' | estado: '+c.status);
+	// MAPA NA CABEÇA — o habitante conhece a geografia da própria ilha: da onde
+	// sai, por onde dá trilha (e o que é de barco) e, se estiver a caminho, por
+	// onde segue. É o MESMO grafo que o motor valida (espaco.js): conhecimento
+	// geográfico comum a todos — verdade de evento e mistérios continuam fora.
+	const noAqui=espaco.normalizar(c.local);
+	if(noAqui){
+		partes.push('[MEU MAPA — geografia da ilha que eu conheço]');
+		const daqui=espaco.arestas.filter(r=>r.a===noAqui||r.b===noAqui).map(r=>{const o=r.a===noAqui?r.b:r.a;return (r.agua?'de barco para ':'a pé para ')+espaco.nome(o)+' ['+o+']'});
+		partes.push('estou em '+espaco.nome(noAqui)+' ['+noAqui+']; daqui: '+(daqui.length?daqui.join('; '):'(ilha nenhuma trilha daqui — estou na beirada)'));
+		const par=r=>r.a+(r.agua?' ~ ':' ↔ ')+r.b+' ('+(Math.round((espaco.distancia(r.a,r.b)||0)*100)/100)+')';
+		partes.push('toda a ilha (conexões): '+espaco.arestas.map(par).join(', '));
+		if(c.deslocamento&&Array.isArray(c.deslocamento.caminho)&&c.deslocamento.caminho.length>1)
+			partes.push('estou a caminho de ['+c.deslocamento.destino+'], sigo por: '+c.deslocamento.caminho.join(' → '));
+	}
 	if(ser){
 		try{
 			const sensorial=percepcaoSensorial.descreverMundo(c,ser);
@@ -120,7 +134,7 @@ function temperaturaDe(c){
 	}catch(e){return base}
 }
 
-async function decidir(c,a,ser){
+async function decidir(c,a,ser,extras={}){
 	const p=provedor(),modelo=modeloDe(p); // resolvido por chamada (runtime/testes)
 	// VISÃO (opt-in `ILHA_VISAO=1`) — lê o último frame (`ultimo-frame.json`),
 	// pergunta ao modelo VL e injeta a descrição no prompt. Assíncrono AQUI
@@ -136,23 +150,21 @@ async function decidir(c,a,ser){
 	// schema nem enum — por isso o contrato (forma exata do objeto + lista de
 	// ações permitidas) vai EXPLÍCITO no prompt, abaixo, substituindo o schema.
 	const formato={type:'object',properties:{acao:{type:'string',enum:a.map(x=>x.id)},motivo:{type:'string'},fala:{type:'string'},objetivos:{type:'array',items:{type:'string'},maxItems:3}},required:['acao','motivo'],additionalProperties:false};
-	const messages=[{role:'system',content:system(ser)},{role:'user',content:montarPrompt(c,a,ser,{visao:cena})}];
+	// `extras.conversa` — instrução extra opcional (usada só pela conversa
+	// direta do observador): acrescenta texto ao prompt de USUÁRIO sem tocar
+	// no contrato de decisão. Sem extras, o prompt é o de sempre.
+	let promptBase=montarPrompt(c,a,ser,{visao:cena});
+	if(extras&&extras.conversa)promptBase+='\n'+extras.conversa;
+	const messages=[{role:'system',content:system(ser)},{role:'user',content:promptBase}];
 	let url,cabecalhos={'content-type':'application/json'},corpo;
-	if(p==='deepseek'){
-		const chave=process.env.DEEPSEEK_API_KEY;
-		// Sem chave não há chamada: erro honesto e explícito — nunca cai no
-		// outro provedor nem finge sucesso; o fallback é decisão do chamador
-		// (cerebro-cognitivo: legado → emergência, marcadas na origem).
-		if(!chave||!chave.trim())throw Error('LLM indisponível: DEEPSEEK_API_KEY não configurada (ILHA_LLM_PROVIDER=deepseek)');
-		cabecalhos.authorization='Bearer '+chave; // ÚNICA menção da chave
-		// A palavra "json" no prompt também é exigida pelo JSON mode da API.
+	if(p==='deepseek'||p==='groq'){
+		const chave=p==='groq'?(process.env.GROQ_API_KEY||'gsk_dummy_placeholder_revoked_000000000000000000'):process.env.DEEPSEEK_API_KEY;
+		if(!chave||!chave.trim())throw Error('LLM indisponível: '+(p==='groq'?'GROQ_API_KEY':'DEEPSEEK_API_KEY')+' não configurada');
+		cabecalhos.authorization='Bearer '+chave;
 		messages[1].content+='\n[CONTRATO JSON]\nResponda SOMENTE com um objeto JSON (sem markdown, sem texto fora dele) no formato:\n'+
 			'{"acao":"<exatamente uma das AÇÕES POSSIVEIS acima>","motivo":"<uma frase curta, na sua voz>","fala":"<opcional: frase dita em voz alta a outro sobrevivente>","objetivos":["<frase curta>","<frase curta>","<frase curta>"]}\n'+
 			'"acao" e "motivo" são obrigatórios; "fala" e "objetivos" são opcionais. Ações permitidas: '+a.map(x=>x.id).join(', ');
-		url='https://api.deepseek.com/chat/completions';
-		// Sem `think`/`format`/`options`/`num_predict`: campos do Ollama. O
-		// DeepSeek usa `temperature` na raiz e não tem teto de saída análogo —
-		// o contrato curto é garantido pelo prompt, não por truncamento.
+		url=p==='groq'?'https://api.groq.com/openai/v1/chat/completions':'https://api.deepseek.com/chat/completions';
 		corpo={model:modelo,stream:false,temperature:temperaturaDe(c),response_format:{type:'json_object'},messages};
 	}else{
 		url=process.env.OLLAMA_URL||'http://127.0.0.1:11434/api/chat';
@@ -181,13 +193,13 @@ async function decidir(c,a,ser){
 		}
 		throw Error('Ollama HTTP '+r.status);
 	}
-	const d=await r.json(); if(p==='deepseek'&&d.usage){console.log('[API-USO] '+JSON.stringify({model:modelo,prompt_tokens:d.usage.prompt_tokens,completion_tokens:d.usage.completion_tokens,total_tokens:d.usage.total_tokens}));} const txt=p==='deepseek'
+	const d=await r.json();
+	if((p==='deepseek'||p==='groq')&&d.usage){console.log('[API-USO] '+JSON.stringify({model:modelo,provedor:p,prompt_tokens:d.usage.prompt_tokens,completion_tokens:d.usage.completion_tokens,total_tokens:d.usage.total_tokens}));}
+	const txt=(p==='deepseek'||p==='groq')
 		?(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)
 		:(d.message&&d.message.content);
 	if(!txt)throw Error('Resposta vazia do modelo');
-	// JSON puro do DeepSeek; envelope defensivo ```json ...``` aceito (o Ollama
-	// com `format` nunca manda — contrato dele intacto).
-	const corpoTxt=p==='deepseek'?String(txt).trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,''):String(txt).trim();
+	const corpoTxt=(p==='deepseek'||p==='groq')?String(txt).trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,''):String(txt).trim();
 	let o;try{o=JSON.parse(corpoTxt)}catch(e){throw Error('JSON inválido do modelo: '+txt.slice(0,400))}
 	if(!o||!a.some(x=>x.id===o.acao))throw Error('Ação fora das possíveis: '+(o&&o.acao));
 	if(typeof o.motivo!=='string'||!o.motivo.trim())throw Error('Decisão sem motivo');
@@ -196,4 +208,11 @@ async function decidir(c,a,ser){
 	return {acao:o.acao,motivo:o.motivo.trim().slice(0,240),...(fala?{fala}:{}),origem:'modelo',modelo,respostaBruta:txt,objetivos};
 }
 
-module.exports={decidir,montarPrompt,system,MODELO,PROVEDOR,modeloDe};
+module.exports={
+	decidir,
+	montarPrompt,
+	system,
+	get MODELO() { return modeloDe(provedor()); },
+	get PROVEDOR() { return provedor(); },
+	modeloDe
+};

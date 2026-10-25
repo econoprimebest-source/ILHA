@@ -51,7 +51,16 @@ function carregarTrilhas(f) {
 	return [...saida.values()];
 }
 function resposta(dados) {
-	return { ok: true, status: 200, json: async () => ({ message: { content: typeof dados === 'string' ? dados : JSON.stringify(dados) } }) };
+	const c = typeof dados === 'string' ? dados : JSON.stringify(dados);
+	return {
+		ok: true,
+		status: 200,
+		json: async () => ({
+			message: { content: c },
+			choices: [{ message: { content: c } }],
+			usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 }
+		})
+	};
 }
 function restaurarFetch() { global.fetch = fetchOriginal }
 
@@ -78,12 +87,13 @@ function limparEnv() {
 	// Limpa TODAS as flags da camada e os gates ICARO_* dos módulos: o teste
 	// roda com o comportamento padrão de produção (sombra onde é sombra).
 	for (const k of Object.keys(process.env)) if (/^(ICARO_|ILHA_COG|ILHA_LLM)/.test(k)) delete process.env[k];
+	process.env.ILHA_LLM_PROVIDER = 'ollama';
 }
 function ligar(raiz) { limparEnv(); process.env.ILHA_COG = '1'; cog.ativar(raiz || RAIZ_TESTE); return cog }
 function desligar() { limparEnv(); cog.desligar() }
 function estadoNovo() { return ec.preparar(novo()) }
 function acaoDoModelo(b) { // política determinista válida para o enum do turno
-	const en = b.format.properties.acao.enum;
+	const en = (b && b.format && b.format.properties && b.format.properties.acao && b.format.properties.acao.enum) || ['observar', 'descansar'];
 	return en.includes('observar') ? 'observar' : en[0];
 }
 

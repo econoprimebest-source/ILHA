@@ -26,9 +26,11 @@ const biblia={
 			cachoeira:{nome:'Cachoeira',tipo:'recurso',descricao:'Queda d\'água no fim da trilha da floresta; água limpa e rochedos.'},
 			fazenda:{nome:'Fazenda',tipo:'exploração',descricao:'Área aberta com plantações antigas entre a casa da Maria e o rio.'},
 			mar:{nome:'Mar',tipo:'oceano',descricao:'Praia e oceano na borda sul; ondas, conchas e fundo rochoso perto do cais.'},
-			barco:{nome:'Cais do barco',tipo:'estrutura',descricao:'Cais de madeira com um barco amarrado; saída possível para o mar.'}
+			barco:{nome:'Cais do barco',tipo:'estrutura',descricao:'Cais de madeira com um barco amarrado; saída possível para o mar.'},
+			caverna:{nome:'Caverna',tipo:'exploração',descricao:'Boca escura na rocha do canto nordeste, atrás da floresta; entra por uma trilha estreita e guarda pedras, eco e escuridão.'},
+			ilha_vizinha:{nome:'Ilha Vizinha',tipo:'oceano',descricao:'Ilhote com palmeira a sudoeste, visível do cais e da praia; chega e volta só de barco, pelas trilhas de água.'}
 		},
-		trilhas:'Conectadas como em espaco.js: fogueira articula o lado oeste (casas, bosque, mar, cais); fazenda articula o lado leste (rio, floresta, casa da Maria); o acampamento dá acesso à Arena de Lutas.'
+		trilhas:'Conectadas como em espaco.js: fogueira articula o lado oeste (casas, bosque, mar, cais); fazenda articula o lado leste (rio, floresta, casa da Maria); o acampamento dá acesso à Arena de Lutas e desce direto ao cais; há caminho pelo bosque até o acampamento e pelo campinho da casa do Ícaro, com mais de um jeito de chegar ao rio; a caverna se entra pela floresta; a Ilha Vizinha se alcança só por trilha de água (barco do cais ou da praia).'
 	},
 	clima:{
 		normal:'Ar ameno; estações definem umidade e chuva (seca, transição, chuvas).',
@@ -59,8 +61,8 @@ const biblia={
 		{tipo:'terreno',regioes:['mar','cachoeira'],regra:'rochedos e ondas pressionam quem se aproxima do fim da trilha'}
 	],
 	estruturas:[
-		{estado:'existe',itens:['Casa do Ícaro','Casa do João (do casal João–Maria)','Casa da Maria','Fogueira','Cais do barco','Acampamento coberto','Arena de Lutas (desafio de luta)','Banho no rio, na cachoeira e no mar','Arrumar a casa e o acampamento']},
-		{estado:'futuro',itens:['pesca no mar','plantação ativa na fazenda','navegação do barco','objetos na praia'],nota:'existem no mapa/visual, mas o motor ainda não oferece essas ações — marcado, não fingido'}
+		{estado:'existe',itens:['Casa do Ícaro','Casa do João (do casal João–Maria)','Casa da Maria','Fogueira','Cais do barco','Acampamento coberto','Arena de Lutas (desafio de luta)','Banho no rio, na cachoeira e no mar','Arrumar a casa e o acampamento','Mergulho na água do rio, da cachoeira e do mar','Exploração da caverna (entrada pela floresta)','Navegação do barco até a Ilha Vizinha (trajeto de água, um trecho por ciclo)']},
+		{estado:'futuro',itens:['pesca no mar','plantação ativa na fazenda','objetos na praia'],nota:'existem no mapa/visual, mas o motor ainda não oferece essas ações — marcado, não fingido'}
 	],
 	sociedade:{
 		habitantes:[

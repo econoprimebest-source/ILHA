@@ -204,6 +204,22 @@ async function rodada(estado,opcoes={}){
 		evento.cicloFinal=estado.mundo.tempo.ciclo;
 		evento.statusFinal=ser.status;
 		evento.localFinal=ser.local;
+
+		// NOTIFICAÇÃO AO CÉREBRO REAL (Z-FOLD 2): consolida no self-model, diário e memoria-v2.json
+		try {
+			if (ser && (ser.id === 'icaro' || ser.id === 'lara' || ser.id === 'elara')) {
+				const { criarAdaptador } = require('./adaptador-cerebro-zfold');
+				const porta = ser.id === 'icaro' ? 8793 : 8794;
+				const adapt = criarAdaptador({ id: ser.id, porta });
+				adapt.notificarConsequencia({
+					ciclo: estado.mundo.tempo.ciclo,
+					decisao: evento.decisao,
+					consequencia: evento.consequencia,
+					antes: evento.antes,
+					local: ser.local
+				});
+			}
+		} catch (eZFoldNotif) {}
 	}
 	eco.validarCompleto(estado);
 	return{ciclo:estado.mundo.tempo.ciclo,eventos,mundo:estado.mundo};

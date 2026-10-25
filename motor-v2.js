@@ -3,7 +3,12 @@ const {avancar,regenerar,validar}=require('./estado-v2');const {atualizar}=requi
 function acoes(e,s){const x=e.mundo.ecossistema;const base=[['beber','Beber água',s.inventario.agua>=1],['comer','Comer alimento',s.inventario.alimento>=1],['descansar','Descansar',true],['observar','Observar local',true]];
 // ESPAÇO: o grafo do mundo conecta os locais por trilhas — escolher para onde
 // ir é decisão do personagem; aqui só aparece o caminho possível.
-for(const no of espaco.locais()){if(no===s.local)continue;base.push(no===s.casa?['ir_casa','Voltar para casa',true]:['ir_'+no,'Caminhar até '+espaco.nome(no),true])}
+for(const no of espaco.locais()){if(no===s.local)continue;if(no===s.casa){base.push(['ir_casa','Voltar para casa',true]);continue}
+// TRILHA DE ÁGUA: se o caminho cruza aresta `agua`, a descrição diz barco —
+// o trajeto continua sendo trajeto (um trecho por ciclo), nunca teleporte.
+const rotaNo=espaco.rota(s.local,no);
+const porAgua=!!(rotaNo&&rotaNo.trechos.some(t=>t.agua));
+base.push(['ir_'+no,(porAgua?'Ir até ':'Caminhar até ')+espaco.nome(no)+(porAgua?' de barco':''),true])}
 const temOutro = Object.values(e.seres||{}).some(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);
 base.push(['esperar','Aguardar',true],['procurar_alguem','Procurar alguém (espera no local)',true],['conviver','Conversar com alguém',temOutro],['falar','Falar com alguém',temOutro],['brincar','Brincar/Relaxar',!temOutro],['confrontar','Confrontar alguém',temOutro],['desafiar_luta','Desafiar alguém para uma luta (Arena)',temOutro && s.local === 'arena']);
 // VIDA DIÁRIA: banho só existe onde há água de banho; arrumar casa só na
@@ -21,7 +26,13 @@ if(s.local==='bosque'&&Object.values(x.arvores).some(t=>t.local==='bosque'&&t.fr
 if(s.local==='floresta'&&x.madeira.floresta>0)a.push({id:'coletar_madeira',descricao:'Coletar madeira caída'});
 // NOVA AÇÃO: CAÇAR (Alta dificuldade, recompensa potencialmente maior que peixe)
 if((s.local==='floresta'||s.local==='bosque')&&Object.values(x.fauna||{}).some(f=>f.populacao>0&&f.local===s.local))a.push({id:'caçar',descricao:'Tentar caçar um animal'});
-        if(['floresta', 'caverna', 'bosque'].includes(s.local)) a.push({id:'explorar', descricao:'Explorar a área em busca de tesouros ou recursos raros'});if(s.abrigo<2&&s.inventario.madeira>=2)a.push({id:'melhorar_abrigo',descricao:'Melhorar abrigo'});
+        if(['floresta', 'caverna', 'bosque'].includes(s.local)) a.push({id:'explorar', descricao:'Explorar a área em busca de tesouros ou recursos raros'});
+// NOVOS DESTINOS (grafo ampliado): caverna se explora na boca; mergulho é
+// oferecido só onde há água para mergulhar; barco só do cais ou da margem do mar.
+if(s.local==='caverna')a.push({id:'explorar_caverna',descricao:'Explorar o fundo da caverna no escuro, com cuidado'});
+if(['rio','cachoeira','mar'].includes(s.local))a.push({id:'mergulhar',descricao:'Mergulhar na água fria daqui'});
+if(['barco','mar'].includes(s.local)&&espaco.rota(s.local,'ilha_vizinha'))a.push({id:'navegar',descricao:'Pegar o barco e navegar até a Ilha Vizinha'});
+if(s.abrigo<2&&s.inventario.madeira>=2)a.push({id:'melhorar_abrigo',descricao:'Melhorar abrigo'});
 // HORTA / FAZENDA: plantar mudas do mês do ano e colher quando maduras
 if(s.local==='fazenda'){
   const h=x.horta||{plantados:0,crescendo:0,maduros:0,capacidade:12,vida:0};
@@ -220,19 +231,32 @@ case'explorar_caverna':{
     break;
 }
 case'mergulhar':{
-    const peixes = Math.floor(Math.random() * 4) + 1;
-    s.inventario.alimento = (s.inventario.alimento || 0) + peixes;
-    s.necessidades.higiene = Math.min(100, (s.necessidades.higiene || 0) + 20);
-    r.texto = 'Você mergulhou no rio e pegou ' + peixes + ' peixes com as mãos!';
+    // MERGULHO honesto: peixe vem do ESTOQUE real do rio (nada é inventado);
+    // fora do rio é mergulho de observação — correnteza, água fria, sem saco.
+    const p=x.peixes&&x.peixes.rio;
+    const noRio=s.local==='rio'&&p&&p.populacao>0;
+    let pegos=0;
+    if(noRio){
+        pegos=Math.min(p.populacao,Math.max(1,Math.round((s.capacidades.pesca||1)*1.5)));
+        p.populacao-=pegos;
+        s.inventario.alimento+=pegos;
+    }
+    s.necessidades.higiene=Math.min(100,(s.necessidades.higiene||0)+20);
+    s.necessidades.temperatura=Math.max(0,(s.necessidades.temperatura??50)-8);
+    r.quantidade=pegos;
+    r.pistas=['a água é fria e a correnteza puxa aqui embaixo'];
+    r.texto=noRio?('Você mergulhou na correnteza e trouxe '+pegos+' peixe(s) com as mãos!'):('Você mergulhou em '+(espaco.nome(s.local)||'água')+', sentiu a correnteza e voltou para a margem.');
     break;
 }
 case'navegar':{
-    if (Math.random() > 0.5) {
-        s.local = 'mar_aberto';
-        r.texto = 'Você navegou para o mar aberto. O horizonte se abre diante de você.';
-    } else {
-        r.texto = 'O mar está agitado. Você decide voltar para a costa.';
-    }
+    // SAÍDA DE BARCO: inicia trajeto no grafo (mesmo formato de ir_*), nunca
+    // teletransporta. O avanço é um trecho por ciclo na fase 0 da rodada, e a
+    // rota até a Ilha Vizinha é feita de arestas `agua` (viagem de barco).
+    const caminho=espaco.rota(s.local,'ilha_vizinha');
+    if(!caminho||caminho.caminho.length<2)throw Error('Ação inválida ou indisponível: navegar');
+    s.deslocamento={destino:'ilha_vizinha',caminho:caminho.caminho,i:0,iniciadoNoCiclo:e.mundo.tempo.ciclo};
+    r.deslocamento={estado:'partida',destino:'ilha_vizinha',trechos:caminho.caminho.length-1};
+    r.texto='Você desamarrou o barco e partiu rumo à Ilha Vizinha ('+(caminho.caminho.length-1)+' trecho(s) de água).';
     break;
 }
 case'conviver':{const outros=Object.values(e.seres||{}).filter(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);r.com=outros.length?outros[0].id:null;if(r.com){s.necessidades.solidao=Math.max(0,s.necessidades.solidao-15);outros[0].necessidades.solidao=Math.max(0,outros[0].necessidades.solidao-10)}break}case'falar':{const outros=Object.values(e.seres||{}).filter(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);r.com=outros.length?outros[0].id:null;r.texto=typeof extra.fala==='string'&&extra.fala.trim()?extra.fala.trim().slice(0,280):(typeof extra.texto==='string'&&extra.texto.trim()?extra.texto.trim().slice(0,280):(extra.motivo||'').trim().slice(0,280));if(r.texto){s.ultimaFala=r.texto;s.ultimaFalaCiclo=e.mundo.tempo.ciclo;}if(r.com){const alvo=outros[0];alvo.memoria=Array.isArray(alvo.memoria)?alvo.memoria:[];alvo.memoria.push({tipo:'fala',de:s.id,texto:r.texto,ciclo:e.mundo.tempo.ciclo});alvo.memoria=alvo.memoria.slice(-200)}break}}return r}

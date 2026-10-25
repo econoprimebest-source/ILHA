@@ -130,6 +130,58 @@ http.createServer((req,res)=>{
     });
     return;
   }
+  // FALAR DIRETO COM UM PERSONAGEM (clique no boneco): a mensagem do observador
+  // entra na memória individual do ser (mesmo formato da fala entre habitantes)
+  // e a RESPOSTA vem do próprio cérebro dele — mesmo caminho de decisão, mesmo
+  // LLM, erro honesto se estiver fora. Nada de stand-in fingindo conversa.
+  if(u.pathname==='/api/falar'&&req.method==='POST'){
+    let body='';
+    req.on('data',c=>{body+=c;if(body.length>8192)req.destroy()});
+    req.on('end',async()=>{
+      try{
+        if(fs.existsSync(MARCADOR)){res.writeHead(503,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:'mundo reiniciando; tente de novo'}))}
+        const o=JSON.parse(body||'{}');
+        const msg=String(o.texto||'').trim().slice(0,500);
+        if(!o.id||!msg){res.writeHead(400,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:'id e texto são obrigatórios'}))}
+        const estado=readState();
+        const ser=estado.seres&&estado.seres[o.id];
+        if(!ser){res.writeHead(404,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:'personagem não encontrado: '+o.id}))}
+        const {gravar}=require('./persistencia-v2');
+        // 1) ENTREGA — a fala entra na memória individual (fonte declarada).
+        ser.memoria=Array.isArray(ser.memoria)?ser.memoria:[];
+        ser.memoria.push({tipo:'fala',de:'observador',texto:'Rafael te disse: "'+msg+'"',ciclo:estado.mundo.tempo.ciclo});
+        ser.memoria=ser.memoria.slice(-200);
+        gravar(STATE,estado);
+        // 2) RESPOSTA — cérebro do próprio ser, com o contexto dele. Falha de
+        //    LLM aqui é honesta: mensagem guardada, sem resposta inventada.
+        try{
+          const motor=require('./motor-v2');
+          const cp=require('./cerebro-personagem');
+          const cerebro=require('./cerebro');
+          const possiveis=motor.acoes(estado,ser);
+          const ctx=cp.montarContexto(estado,ser,possiveis);
+          // Enum de UMA opção: o contrato JSON do LLM é reusado só para extrair
+          // a "fala" — nada do mundo é executado com esta resposta.
+          const dec=await cerebro.decidir(ctx,[{id:'conversar',descricao:'Falar com Rafael, que está aqui com você agora'}],ser,{conversa:
+            '[CONVERSA — Rafael está com você AGORA e te chamou pelo nome. Responda somente com o campo "fala", na sua própria voz, como se respondesse em voz alta. Isto NÃO é um ciclo de ação: nada do mundo será executado com esta resposta, então a ação "conversar" é só o envelope da sua fala.]'});
+          const resposta=String(dec.fala||dec.motivo||'').trim().slice(0,240);
+          if(!resposta)throw Error('cérebro respondeu vazio');
+          ser.ultimaFala=resposta;
+          ser.ultimaFalaCiclo=estado.mundo.tempo.ciclo;
+          ser.memoria.push({tipo:'fala',de:'eu',texto:'Respondi a Rafael: "'+resposta+'"',ciclo:estado.mundo.tempo.ciclo});
+          ser.memoria=ser.memoria.slice(-200);
+          gravar(STATE,estado);
+          return json(res,{ok:true,resposta,modelo:dec.modelo||cerebro.MODELO||null});
+        }catch(e){
+          return json(res,{ok:false,guardada:true,erro:'Mensagem guardada, mas o cérebro não respondeu agora: '+(e&&e.message?e.message:e)});
+        }
+      }catch(e){
+        res.writeHead(400,{'content-type':'application/json; charset=utf-8'});
+        return res.end(JSON.stringify({ok:false,erro:e.message}));
+      }
+    });
+    return;
+  }
   if(u.pathname==='/api/reiniciar'&&req.method==='POST'){
     try{return json(res,reiniciarMundo())}
     catch(e){res.writeHead(500,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:e.message}))}

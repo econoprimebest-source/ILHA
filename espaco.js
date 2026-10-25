@@ -15,7 +15,10 @@ const nos={
 	cachoeira:{x:.655,y:.090,nome:'Cachoeira'},
 	fazenda:{x:.948,y:.561,nome:'Fazenda'},
 	mar:{x:.360,y:.910,nome:'Mar'},
-	barco:{x:.487,y:.860,nome:'Cais do barco'}
+	barco:{x:.487,y:.860,nome:'Cais do barco'},
+	// Caverna (boca da arte, canto NE) e Ilha Vizinha (ilhote da palmeira, SO).
+	caverna:{x:.925,y:.175,nome:'Caverna'},
+	ilha_vizinha:{x:.075,y:.815,nome:'Ilha Vizinha'}
 };
 const aliases={pesca_mar:'mar',mar_pesca:'mar',praia:'mar'};
 // Trilhas com waypoints sobre os caminhos pintados do mapa.
@@ -38,7 +41,19 @@ const arestas=[
 	{a:'casa_icaro',b:'mar',wp:[[.24,.58],[.28,.70],[.32,.82]]},
 	{a:'barco',b:'rio',wp:[[.53,.79],[.59,.71],[.645,.64]]},
 	{a:'casa_maria',b:'rio',wp:[[.82,.66],[.76,.64],[.72,.61]]},
-	{a:'rio',b:'cachoeira',wp:[[.71,.48],[.69,.38],[.675,.27],[.66,.17]]}
+	{a:'rio',b:'cachoeira',wp:[[.71,.48],[.69,.38],[.675,.27],[.66,.17]]},
+	// TRILHAS EXTRAS — mais de um caminho para os mesmos destinos: o habitante
+	// escolhe por onde andar (loop oeste, corredor do cais, atalho da arena).
+	{a:'casa_icaro',b:'bosque',wp:[[.23,.40],[.26,.35]]},
+	{a:'bosque',b:'acampamento',wp:[[.36,.36],[.40,.42]]},
+	{a:'arena',b:'fogueira',wp:[[.49,.42]]},
+	{a:'acampamento',b:'barco',wp:[[.46,.62],[.46,.75]]},
+	// Caverna: boca da arte no canto NE, entrada pela floresta.
+	{a:'floresta',b:'caverna',wp:[[.856,.241],[.895,.203]]},
+	// TRILHAS DE ÁGUA (`agua:true`): trajeto de barco — mesmo mecanismo de
+	// deslocamento (um trecho por ciclo), nunca teleporte.
+	{a:'barco',b:'ilha_vizinha',wp:[[.44,.965],[.34,.985],[.24,.975],[.14,.945]],agua:true},
+	{a:'mar',b:'ilha_vizinha',wp:[[.30,.968],[.21,.962],[.13,.925]],agua:true}
 ];
 const chave=(a,b)=>a<b?a+'|'+b:b+'|'+a;
 const mapaAresta=new Map();
@@ -50,7 +65,7 @@ for(const r of arestas){
 	const linha=[ponto(r.a),...r.wp,ponto(r.b)];
 	let d=0;
 	for(let i=1;i<linha.length;i++)d+=distPts(linha[i-1],linha[i]);
-	const trecho={a:r.a,b:r.b,linha,comprimento:d};
+	const trecho={a:r.a,b:r.b,linha,comprimento:d,...(r.agua?{agua:true}:{})};
 	mapaAresta.set(chave(r.a,r.b),trecho);
 	vizinhos.get(r.a).push({no:r.b,trecho});
 	vizinhos.get(r.b).push({no:r.a,trecho});

@@ -35,3 +35,6 @@ node_modules/
 intervencoes-fila.json
 patch-*.js
 reverter-psicologia.js
+
+# frame capturado pelo visualizador (visao.js / ILHA_VISAO=1)
+ultimo-frame.json

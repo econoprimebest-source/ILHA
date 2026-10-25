@@ -31,6 +31,8 @@ Execução: `node ilha.js 1` (um ciclo) ou `node ilha.js 30`. Requer Node.js 18+
 
 `ILHA_LLM_TIMEOUT_MS` (padrão 60000) limita a espera nos dois provedores. Falha de conexão, HTTP de erro, resposta vazia ou JSON inválido interrompe o ciclo com erro explícito; não há decisor substituto que finja sucesso. `node teste-deepseek.js` cobre o provedor DeepSeek offline (fetch stubado).
 
+`ILHA_VISAO=1` habilita a visão de cena: `decidir` lê `ultimo-frame.json`, descreve a imagem com o modelo VL do Ollama (`qwen2.5vl:3b`, via `visao.js`) e injeta `[SUA VISAO]` no prompt. Desligada por padrão; sem a flag nenhuma chamada de visão sai. O frame é gravado pelo servidor do visualizador via `POST /api/frame`, e a página só o envia quando aberta com `?visao=1` — sem esse parâmetro o observatório não captura nem grava nada. A percepção sensorial (`percepcao-sensorial.js`) entra no prompt sempre, é síncrona e não depende de arquivo.
+
 ## Fluxo
 
 `calendario.js` comprime quatro períodos por dia, 30 dias por estação e quatro estações por ano. `mundo.js` conserva estoques e processos ecológicos; `seres.js` contém necessidades/capacidades; `percepcao.js` filtra pistas observáveis; `decisor.js` solicita escolha e justificativa ao modelo; `motor.js` verifica e resolve ações sobre estoques; `persistencia.js` grava estado atômico e histórico JSONL; `ilha.js` integra os ciclos.
