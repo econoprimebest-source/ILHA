@@ -52,15 +52,9 @@ function requisicaoHttp({ host, porta, path, body, timeoutMs = 12000 }) {
   });
 }
 
-function tentarOllamaLocal(contexto, possiveis, ser) {
-  return new Promise((resolve, reject) => {
-    try {
-      const legado = require('./decisor-original');
-      legado.decidir(contexto, possiveis, ser).then(resolve).catch(reject);
-    } catch (e) {
-      reject(e);
-    }
-  });
+async function tentarOllamaLocal(contexto, possiveis, ser) {
+  const cerebro = require('./cerebro');
+  return await cerebro.decidir(contexto, possiveis, ser);
 }
 
 function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
@@ -84,6 +78,10 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
       });
 
       if (res && res.ok && res.decisao && res.decisao.acao) {
+        // Se o daemon remoto estiver preso na resposta estática de vigília, aciona o cérebro cognitivo local
+        if (typeof res.decisao.motivo === 'string' && res.decisao.motivo.includes('aguardar e observar')) {
+          throw new Error('Z-Fold em loop estático de vigília');
+        }
         return {
           acao: res.decisao.acao,
           motivo: res.decisao.motivo || `Decidido pelo cérebro real (${nomeDisplay}).`,
@@ -94,20 +92,20 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
       }
       throw new Error((res && res.erro) || 'Resposta sem ação válida');
     } catch (errZFold) {
-      console.warn(`[ADAPTADOR-ZFOLD:${id}] Cérebro Z-Fold (${host}:${porta}) inacessível: ${errZFold.message}. Acionando Nível 2 (Ollama local)...`);
+      console.warn(`[ADAPTADOR-ZFOLD:${id}] Cérebro Z-Fold (${host}:${porta}) ${errZFold.message}. Acionando Nível 2 (Cérebro Local)...`);
     }
 
-    // NÍVEL 2: Ollama Local (fallback secundário)
+    // NÍVEL 2: Cérebro Local (qwen3:8b / Ollama)
     try {
       const dLocal = await tentarOllamaLocal(contexto, possiveis, ser);
       if (dLocal && dLocal.acao && idsPossiveis.includes(dLocal.acao)) {
         return {
           ...dLocal,
-          origem: 'ollama-local-' + id
+          origem: 'cerebro-local-' + id
         };
       }
     } catch (errOllama) {
-      console.warn(`[ADAPTADOR-ZFOLD:${id}] Ollama local inacessível: ${errOllama.message}. Acionando Nível 3 (Emergência Neutra)...`);
+      console.warn(`[ADAPTADOR-ZFOLD:${id}] Cérebro local falhou: ${errOllama.message}. Acionando Nível 3 (Emergência Neutra)...`);
     }
 
     // NÍVEL 3: Emergência Neutra (O loop da Ilha NUNCA pode travar)
