@@ -176,7 +176,7 @@ async function decidirNoProvedor(c,a,ser,extras={}){
 	const messages=[{role:'system',content:system(ser)},{role:'user',content:promptBase}];
 	let url,cabecalhos={'content-type':'application/json'},corpo;
 	if(p==='deepseek'||p==='groq'){
-		const chave=p==='groq'?(process.env.GROQ_API_KEY||'gsk_dummy_placeholder_revoked_000000000000000000'):process.env.DEEPSEEK_API_KEY;
+		const chave=p==='groq'?(process.env.GROQ_API_KEY):process.env.DEEPSEEK_API_KEY;
 		if(!chave||!chave.trim())throw Error('LLM indisponível: '+(p==='groq'?'GROQ_API_KEY':'DEEPSEEK_API_KEY')+' não configurada');
 		cabecalhos.authorization='Bearer '+chave;
 		messages[1].content+='\n[CONTRATO JSON]\nResponda SOMENTE com um objeto JSON (sem markdown, sem texto fora dele) no formato:\n'+
