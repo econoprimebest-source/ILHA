@@ -226,6 +226,32 @@ http.createServer((req,res)=>{
       return res.end(image);
     } catch(e) { res.writeHead(404); return res.end('Imagem do mapa nova não encontrada'); }
   }
+  if(u.pathname==='/pixi.min.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'pixi.min.js'));
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'public, max-age=86400'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('pixi.min.js nao encontrado'); }
+  }
+  if(u.pathname==='/motor-pixi-ilha.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'motor-pixi-ilha.js'));
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('motor-pixi-ilha.js nao encontrado'); }
+  }
+  if(u.pathname.startsWith('/assets/')){
+    try {
+      const seguro = path.normalize(decodeURIComponent(u.pathname)).replace(/^(\.\.[\/\\])+/, '');
+      const arqPath = path.join(ROOT, seguro);
+      if(!arqPath.startsWith(path.join(ROOT, 'assets'))){ res.writeHead(403); return res.end('Acesso proibido'); }
+      if(!fs.existsSync(arqPath) || fs.statSync(arqPath).isDirectory()){ res.writeHead(404); return res.end('Arquivo nao encontrado'); }
+      const ext = path.extname(arqPath).toLowerCase();
+      const mime = { '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json', '.xml':'application/xml' }[ext] || 'application/octet-stream';
+      res.writeHead(200,{'content-type':mime,'cache-control':'public, max-age=86400','access-control-allow-origin':'*'});
+      return res.end(fs.readFileSync(arqPath));
+    } catch(e) { res.writeHead(404); return res.end('Erro: '+e.message); }
+  }
   if(u.pathname==='/'||u.pathname==='/visualizador-ilha.html'){
     try {
       const html=fs.readFileSync(path.join(ROOT,'visualizador-ilha.html'),'utf8');

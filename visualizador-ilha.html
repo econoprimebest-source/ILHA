@@ -2,7 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Ilha Aurora — Observatório V9</title>
+<title>Ilha Aurora — Observatório V9 (2.5D PixiJS)</title>
+<script src="/pixi.min.js"></script>
+<script src="/motor-pixi-ilha.js"></script>
 <style>
   body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #071827; color: #fff; }
   canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
@@ -159,7 +161,8 @@
       <button type="button" class="dir-submit" id="dir-enviar">&#9889; Disparar Evento no Mundo</button>
       <div id="dir-feedback" style="margin-top:8px;font-size:12.5px;color:#38bdf8;"></div>
     </div>
-    <canvas id="game"></canvas>
+    <canvas id="game" style="display:none;"></canvas>
+    <canvas id="pixi-game"></canvas>
     <div id="map-hint">Clique numa casa ou lugar da ilha para ver quem está lá, o que cada um está fazendo e o diário de bordo.</div>
     <div id="house-panel" hidden>
       <div class="hp-head">
@@ -521,6 +524,7 @@ async function fetchState(){
     const data = await res.json();
     if(data.estado && data.eventos){
       stateData = data.estado;
+      window.stateData = stateData;
       eventsData = data.eventos.slice(-20).reverse();
       updateUI();
       renderPainelLocal();
@@ -2965,7 +2969,24 @@ window.addEventListener('error', ev => {
     ctx.restore();
   }catch(e){}
 });
+window.abrirPainelLocal = function(localId) {
+  selectedLocal = (localId && localId !== selectedLocal) ? localId : null;
+  renderPainelLocal();
+};
+window.abrirModalCortex = function(serId) {
+  const s = seres().find(x => x.id === serId);
+  if (s) {
+    selectedLocal = s.local;
+    renderPainelLocal();
+    carregarCortexSer(serId);
+  }
+};
+
 function drawScene(){
+  if (window.motorPixi && window.motorPixi.carregado) {
+    window.setTimeout(() => { if(!document.hidden) requestAnimationFrame(drawScene); }, 100);
+    return;
+  }
   if(document.hidden && jaDesenhou) return;
   jaDesenhou = true;
   const w = canvas.width, h = canvas.height;
