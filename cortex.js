@@ -51,6 +51,7 @@ function contexto(s){
 		memoria:c.memoria.slice(-12),
 		trajetoriaRecente:c.trajetoria.slice(-8).map(t=>({ciclo:t.ciclo,acao:t.acao,motivo:String(t.motivo||'').slice(0,120),consequencia:t.consequencia?t.consequencia.quantidade:null})),
 		objetivos:c.objetivos.slice(-6),
-		crencas:c.crencas.slice(-6)};
+		crencas:c.crencas.slice(-6),
+		...(Array.isArray(c.marcos)&&c.marcos.length?{marcos:c.marcos.slice(-5).map(x=>x.texto)}:{})};
 }
 module.exports={criar,garantir,registrar,contexto};
