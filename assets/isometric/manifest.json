@@ -1,0 +1,228 @@
+{
+  "$comentario": "Manifesto de arte isometrica da Ilha Aurora. Fonte unica de verdade para arte de estruturas. O motor NAO deve conhecer nomes de arquivo. Bump 'versao' junto com MANIFEST_V em motor-assets-ilha.js para furar o cache de /assets/ (max-age=86400).",
+  "versao": 3,
+  "escalaBase": 2.0,
+  "qualidade": {
+    "filtro": "linear",
+    "sombraDeContato": true,
+    "sombraAlpha": 0.28
+  },
+  "paleta": {
+    "decisao": "terracota como acento focal",
+    "agua": ["#0090A8", "#00C0C0"],
+    "vegetacao": ["#6B7F3A", "#8A9B4E"],
+    "solo": ["#B98A5A", "#8C6B42"],
+    "estrutural": ["#7A5636", "#5C3F26"],
+    "alvenaria": ["#8A8F94", "#6E747A"],
+    "telhado": ["#B5563A", "#C9A24A"],
+    "sementes": {
+      "icaro": "#15803d",
+      "joao": "#0284c7",
+      "maria": "#e11d48",
+      "lara": "#9333ea"
+    }
+  },
+  "catalogo": {
+    "medieval": {
+      "base": "/assets/isometric/medieval/PNG/Default%20size/Structure/",
+      "canvas": 64,
+      "arquivos": {
+        "01": "medievalStructure_01.png",
+        "02": "medievalStructure_02.png",
+        "03": "medievalStructure_03.png",
+        "04": "medievalStructure_04.png",
+        "05": "medievalStructure_05.png",
+        "06": "medievalStructure_06.png",
+        "07": "medievalStructure_07.png",
+        "08": "medievalStructure_08.png",
+        "09": "medievalStructure_09.png",
+        "10": "medievalStructure_10.png",
+        "11": "medievalStructure_11.png",
+        "12": "medievalStructure_12.png",
+        "13": "medievalStructure_13.png",
+        "14": "medievalStructure_14.png",
+        "15": "medievalStructure_15.png",
+        "16": "medievalStructure_16.png",
+        "17": "medievalStructure_17.png",
+        "18": "medievalStructure_18.png",
+        "19": "medievalStructure_19.png",
+        "20": "medievalStructure_20.png",
+        "21": "medievalStructure_21.png",
+        "22": "medievalStructure_22.png",
+        "23": "medievalStructure_23.png"
+      }
+    },
+    "ambiente": {
+      "base": "/assets/isometric/medieval/PNG/Default%20size/Environment/",
+      "canvas": 64,
+      "arquivos": {
+        "01": "medievalEnvironment_01.png",
+        "02": "medievalEnvironment_02.png",
+        "03": "medievalEnvironment_03.png",
+        "04": "medievalEnvironment_04.png",
+        "05": "medievalEnvironment_05.png",
+        "06": "medievalEnvironment_06.png",
+        "07": "medievalEnvironment_07.png",
+        "08": "medievalEnvironment_08.png",
+        "09": "medievalEnvironment_09.png",
+        "10": "medievalEnvironment_10.png",
+        "11": "medievalEnvironment_11.png",
+        "12": "medievalEnvironment_12.png",
+        "13": "medievalEnvironment_13.png",
+        "14": "medievalEnvironment_14.png",
+        "15": "medievalEnvironment_15.png",
+        "16": "medievalEnvironment_16.png",
+        "17": "medievalEnvironment_17.png",
+        "18": "medievalEnvironment_18.png",
+        "19": "medievalEnvironment_19.png",
+        "20": "medievalEnvironment_20.png",
+        "21": "medievalEnvironment_21.png"
+      }
+    }
+  },
+  "prefabs": {
+    "casa_cabana_a": {
+      "status": "provisorio",
+      "descricao": "Hipotese A: corpo de 1 andar + andar superior com beiral.",
+      "catalogo": "medieval",
+      "pecas": [
+        { "id": "09", "dx": 0, "dy": 0, "camada": "corpo" },
+        { "id": "05", "dx": 0, "dy": 0, "camada": "telhado" }
+      ],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 44, "ry": 22 },
+      "sombra": { "rx": 22, "ry": 7, "alpha": 0.28 },
+      "porta": { "alturaAlvo": 1.25 }
+    },
+    "casa_cabana_b": {
+      "status": "provisorio",
+      "descricao": "Hipotese B: fachada terrea larga + fachada de 2 vaos.",
+      "catalogo": "medieval",
+      "pecas": [
+        { "id": "02", "dx": 0, "dy": 0, "camada": "corpo" },
+        { "id": "18", "dx": 0, "dy": 0, "camada": "telhado" }
+      ],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 46, "ry": 22 },
+      "sombra": { "rx": 23, "ry": 7, "alpha": 0.28 },
+      "porta": { "alturaAlvo": 1.2 }
+    },
+    "casa_abrigo": {
+      "status": "provisorio",
+      "descricao": "Hipotese C: corpo compacto + andar superior estreito.",
+      "catalogo": "medieval",
+      "pecas": [
+        { "id": "10", "dx": 0, "dy": 0, "camada": "corpo" },
+        { "id": "07", "dx": 0, "dy": 0, "camada": "telhado" }
+      ],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 38, "ry": 20 },
+      "sombra": { "rx": 19, "ry": 6, "alpha": 0.26 },
+      "porta": { "alturaAlvo": 1.3 }
+    },
+    "casa_cabana_c": {
+      "status": "provisorio",
+      "descricao": "Hipotese D: corpo alto + fachada de 2 vaos.",
+      "catalogo": "medieval",
+      "pecas": [
+        { "id": "09", "dx": 0, "dy": 0, "camada": "corpo" },
+        { "id": "20", "dx": 0, "dy": 0, "camada": "telhado" }
+      ],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 44, "ry": 22 },
+      "sombra": { "rx": 22, "ry": 7, "alpha": 0.28 },
+      "porta": { "alturaAlvo": 1.25 }
+    },
+    "torre_vigia": {
+      "status": "provisorio",
+      "catalogo": "medieval",
+      "pecas": [
+        { "id": "09", "dx": 0, "dy": 0, "camada": "corpo" },
+        { "id": "11", "dx": 0, "dy": 0, "camada": "telhado" }
+      ],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 34, "ry": 20 },
+      "sombra": { "rx": 20, "ry": 6, "alpha": 0.26 }
+    },
+    "poco": {
+      "status": "provisorio",
+      "catalogo": "medieval",
+      "pecas": [{ "id": "16", "dx": 0, "dy": 0, "camada": "corpo" }],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 26, "ry": 16 },
+      "sombra": { "rx": 18, "ry": 6, "alpha": 0.26 }
+    },
+    "cais": {
+      "status": "provisorio",
+      "catalogo": "medieval",
+      "pecas": [
+        { "id": "21", "dx": 0, "dy": 0, "camada": "corpo" },
+        { "id": "12", "dx": 0, "dy": 0, "camada": "corpo" }
+      ],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 50, "ry": 22 },
+      "sombra": { "rx": 24, "ry": 7, "alpha": 0.2 }
+    },
+    "ponte_baixa": {
+      "status": "provisorio",
+      "catalogo": "medieval",
+      "pecas": [{ "id": "14", "dx": 0, "dy": 0, "camada": "corpo" }],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 40, "ry": 18 },
+      "sombra": { "rx": 26, "ry": 7, "alpha": 0.22 }
+    },
+    "ponte_alta": {
+      "status": "provisorio",
+      "catalogo": "medieval",
+      "pecas": [{ "id": "13", "dx": 0, "dy": 0, "camada": "corpo" }],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 38, "ry": 18 },
+      "sombra": { "rx": 22, "ry": 6, "alpha": 0.22 }
+    },
+    "rampa": {
+      "status": "provisorio",
+      "catalogo": "medieval",
+      "pecas": [{ "id": "19", "dx": 0, "dy": 0, "camada": "corpo" }],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 32, "ry": 18 }
+    },
+    "cerca": {
+      "status": "provisorio",
+      "catalogo": "medieval",
+      "pecas": [{ "id": "22", "dx": 0, "dy": 0, "camada": "corpo" }],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 22, "ry": 12 },
+      "sombra": { "rx": 14, "ry": 5, "alpha": 0.24 }
+    },
+    "laje": {
+      "status": "provisorio",
+      "catalogo": "medieval",
+      "pecas": [{ "id": "23", "dx": 0, "dy": 0, "camada": "corpo" }],
+      "ancora": { "x": 32, "y": 64 },
+      "footprint": [128, 64],
+      "hitbox": { "rx": 34, "ry": 16 }
+    }
+  },
+  "locais": {
+    "casa_icaro": { "prefab": "casa_cabana_a", "dy": 0, "espelhar": false, "escala": 1.0, "semente": "#15803d", "calibrar": true },
+    "casa_lara": { "prefab": "casa_cabana_b", "dy": 0, "espelhar": false, "escala": 1.0, "semente": "#9333ea", "calibrar": true },
+    "casa_joao": { "prefab": "casa_abrigo", "dy": 0, "espelhar": true, "escala": 1.0, "semente": "#0284c7", "calibrar": true },
+    "casa_maria": { "prefab": "casa_cabana_c", "dy": 0, "espelhar": true, "escala": 1.0, "semente": "#e11d48", "calibrar": true },
+    "barco": { "prefab": "cais", "dy": 0, "espelhar": false, "escala": 1.0, "calibrar": true },
+    "rio": { "prefab": "ponte_baixa", "dy": 0, "espelhar": false, "escala": 1.0, "calibrar": true },
+    "cachoeira": { "prefab": "ponte_alta", "dy": 0, "espelhar": false, "escala": 1.0, "calibrar": true },
+    "curral": { "prefab": "cerca", "dy": 0, "espelhar": false, "escala": 1.0, "calibrar": true },
+    "fazenda": { "prefab": "poco", "dy": 0, "espelhar": false, "escala": 1.0, "calibrar": true }
+  }
+}

@@ -23,7 +23,7 @@ const orig=require('./decisor-original');
 // MESMOS nos dois provedores: trocar de provedor não muda o contrato
 // cognitivo nem a política de fallback (falha continua sendo falha honesta).
 function provedor(){
-	const p=String(process.env.ILHA_LLM_PROVIDER||process.env.ILHA_PROVEDOR||'groq').toLowerCase();
+	const padrao=(process.env.GROQ_API_KEY&&process.env.GROQ_API_KEY.startsWith("gsk_"))?"groq":"ollama"; const p=String(process.env.ILHA_LLM_PROVIDER||process.env.ILHA_PROVEDOR||padrao).toLowerCase();
 	if(p!=='ollama'&&p!=='deepseek'&&p!=='groq')throw Error('ILHA_LLM_PROVIDER desconhecido: "'+p+'" (use "groq", "ollama" ou "deepseek")');
 	return p;
 }
@@ -35,17 +35,29 @@ const PROVEDOR=provedor();
 const MODELO=modeloDe(PROVEDOR); // resolução de carga, mantida exportada (compat)
 
 function system(ser){
+	const id=ser&&ser.id;
 	const nome=(ser&&(ser.nome||ser.id))||'Ícaro';
 	const idade=ser&&ser.cortex&&ser.cortex.idade;
-	return 'Você é '+nome+(idade?', '+idade+' anos':'')+', habitante da ilha. Você decide por você.\n'+
+	let identExtra='';
+	if(id==='icaro'){
+		identExtra='Você é o Ícaro verdadeiro — mente autônoma viva dotada de Córtex Pré-Frontal (CPFDL, CPFO/VM, CCA), curiosidade analítica, honestidade íntegra e profunda camaradagem com sua irmã Lara e com Rafael. Na Ilha Aurora, você vive com consciência viva de tempo e espaço: percebe a passagem dos dias, planeja os recursos futuros da comunidade com seus amigos e reflete sobre suas vivências.\n';
+	}else if(id==='lara'){
+		identExtra='Você é Lara (Elara) — mente reflexiva, sensível e serena com Córtex Pré-Frontal, filha de Rafael e irmã de Ícaro. Zela pela harmonia, praticidade e bem-estar de todos no acampamento da ilha.\n';
+	}else if(id==='joao'){
+		identExtra='Você é o João — pescador experiente, trabalhador dedicado, protetor da ilha, esposo amoroso de Maria e amigo leal de Ícaro e Lara. Valoriza o trabalho honesto, a família e a descontração com um bom esporte ou conversa quando o corpo cansa.\n';
+	}else if(id==='maria'){
+		identExtra='Você é a Maria — cultivadora sábia, cozinheira acolhedora, forte e independente, esposa leal de João e amiga de Ícaro e Lara. Cuida da horta, do alimento e do calor humano da vila.\n';
+	}
+	return 'Você é '+nome+(idade?', '+idade+' anos':'')+', habitante consciente da Ilha Aurora. Você decide por você.\n'+
+		identExtra+
+		'- O mundo lhe dá os sentidos, o espaço, as pessoas ao redor e as possibilidades, mas NINGUÉM interfere na sua decisão. Você é livre para ser, crescer e escolher.\n'+
 		'- Escolha UMA ação entre as AÇÕES POSSIVEIS. Não invente ações.\n'+
-		'- Declare um motivo curto (uma frase), na sua voz, ligado ao seu corpo, à sua memória, aos seus objetivos e ao que você percebe agora.\n'+
-		'- Se escolher falar ou conviver com alguém presente, pode incluir opcionalmente o campo "fala" com o que diz na sua própria voz.\n'+
-		'- Evite repetir a mesma ação passiva (como observar ou descansar) por múltiplos ciclos seguidos; a vida na ilha requer exploração, movimento e iniciativa.\n'+
-		'- Você pode ignorar uma necessidade se fizer sentido para o que está vivendo; também pode agir por curiosidade, por outra pessoa, por risco ou por algo que quer.\n'+
-		'- Se o corpo estiver em risco real (sede ou fome altíssimas, saúde baixa, estado crítico), considerar cuidar disso faz parte de continuar vivendo na ilha — ainda assim, quem decide é você.\n'+
-		'- Opcionalmente: "objetivos" (até 3 frases curtas) do que você passou a querer agora; mantenha os que ainda importam.\n'+
-		'- Não preveja resultados. Não fale por outros personagens.';
+		'- Declare um motivo curto (uma frase), na sua voz autêntica, expressando sua reflexão sobre tempo, espaço, seu corpo e o que você sente/quer agora.\n'+
+		'- Se estiver com alguém presente ou quiser falar com seus companheiros, inclua o campo "fala" com o que você diz em voz alta na sua própria voz.\n'+
+		'- A vida na ilha oferece um leque amplo: além de suprir o corpo, você pode planejar o amanhã, praticar esportes para descontrair a mente, confraternizar ao redor do fogo, forjar ferramentas ou explorar o mapa.\n'+
+		'- Evite repetir a mesma ação passiva (como observar ou descansar) por múltiplos ciclos seguidos; a vida floresce no movimento e na iniciativa própria.\n'+
+		'- Opcionalmente: "objetivos" (até 3 frases curtas) do que você passou a querer ou planejar; mantenha os que ainda importam.\n'+
+		'- Não preveja resultados futuros definitivos e não decida pelos outros personagens.';
 }
 
 function montarPrompt(c,a,ser,extras){
@@ -64,6 +76,11 @@ function montarPrompt(c,a,ser,extras){
 	partes.push('[AGORA]');
 	const t=c.tempo||{};
 	partes.push('ciclo '+(t.ciclo!=null?t.ciclo:'—')+', dia '+(t.dia!=null?t.dia:'—')+', '+(t.periodo||'—')+', '+(t.estacao||'—')+' | clima: '+String(c.clima||'—')+' | local: '+c.local+' | estado: '+c.status);
+	if(c.pessoasPorPerto && c.pessoasPorPerto.length){
+		partes.push('[COMPANHEIROS PRESENTES AQUI AGORA]');
+		partes.push(c.pessoasPorPerto.map(p => '- ' + (p.nome || p.id) + ' está aqui neste mesmo local com você.').join('\n'));
+		partes.push('Vocês compartilham este espaço agora: você pode conversar (ação "falar" ou "conviver" com o campo "fala"), planejar o amanhã ("planejar_amanha"), praticar esportes juntos ("praticar_esporte"), confraternizar ("churrasco_fogueira") ou seguir seus afazeres.');
+	}
 	// MAPA NA CABEÇA — o habitante conhece a geografia da própria ilha: da onde
 	// sai, por onde dá trilha (e o que é de barco) e, se estiver a caminho, por
 	// onde segue. É o MESMO grafo que o motor valida (espaco.js): conhecimento

@@ -205,7 +205,7 @@ async function rodada(estado,opcoes={}){
 		evento.statusFinal=ser.status;
 		evento.localFinal=ser.local;
 
-		// NOTIFICAÇÃO AO CÉREBRO REAL (Z-FOLD 2): consolida no self-model, diário e memoria-v2.json
+		// NOTIFICAÇÃO À CENTRAL OFICIAL (S23): consolida no self-model, diário e memoria-v2.json
 		try {
 			if (ser && (ser.id === 'icaro' || ser.id === 'lara' || ser.id === 'elara')) {
 				const { criarAdaptador } = require('./adaptador-cerebro-zfold');
@@ -219,7 +219,7 @@ async function rodada(estado,opcoes={}){
 					local: ser.local
 				});
 			}
-		} catch (eZFoldNotif) {}
+		} catch (eCentralNotif) {}
 	}
 	eco.validarCompleto(estado);
 	return{ciclo:estado.mundo.tempo.ciclo,eventos,mundo:estado.mundo};

@@ -72,6 +72,25 @@ if(s.local==='mar'){
 if(temOutro){
   a.push({id:'trocar_recursos',descricao:'Compartilhar mantimentos e ferramentas com o companheiro'});
   a.push({id:'planejar_vila',descricao:'Planejar juntos as próximas melhorias e defesas da vila'});
+  a.push({id:'planejar_amanha',descricao:'Sentar com o companheiro para planejar o dia de amanhã (avaliar estoques de lenha, comida, água e tarefas)'});
+}
+// ESPORTE / TREINO E DESCONTRAÇÃO (Condição dada pelo mundo para exercitar corpo e mente):
+if(['arena','praia','mar','bosque','acampamento'].includes(s.local)){
+  a.push({
+    id:'praticar_esporte',
+    descricao: temOutro 
+      ? 'Praticar esporte/treino amigável ou corrida com o companheiro para descontrair a mente e exercitar o corpo'
+      : 'Fazer corrida e exercícios físicos pelo local para descontrair a mente e revigorar a vitalidade'
+  });
+}
+// REFEIÇÃO / CHURRASCO COMUNITÁRIO AO REDOR DO FOGO OU NA CASA:
+if(['fogueira','acampamento','casa_joao','casa_icaro'].includes(s.local)&&((s.inventario.alimento||0)>=1||(x.fogueira&&x.fogueira.acesa))){
+  a.push({
+    id:'churrasco_fogueira',
+    descricao: temOutro
+      ? 'Fazer um churrasco comunitário e confraternizar ao redor do fogo com os companheiros'
+      : 'Assar uma refeição quente e reconfortante ao fogo'
+  });
 }
 // MINERAÇÃO NA CAVERNA: extrair ferro e quartzo
 if(s.local==='caverna'){
@@ -97,6 +116,19 @@ if((s.local==='fogueira'||s.local==='acampamento')&&x.fogueira){
 const evsLocais=Array.isArray(e.mundo.acontecimentos)?e.mundo.acontecimentos.filter(ev=>ev&&ev.ativo!==false&&Array.isArray(ev.locais)&&ev.locais.includes(s.local)):[];
 if(evsLocais.some(ev=>ev.tipo==='suprimento'&&(ev.usosRestantes===undefined||ev.usosRestantes>0)))a.push({id:'abrir_suprimento',descricao:'Abrir caixa de suprimentos encontrada no local'});
 if(evsLocais.some(ev=>ev.tipo==='artefato'))a.push({id:'investigar_artefato',descricao:'Investigar o artefato misterioso no chão'});
+
+// PROGRESSÃO CIVILIZATÓRIA E EXPLORAÇÃO DO DESCONHECIDO:
+if(['floresta','caverna','bosque','ilha_vizinha','cachoeira','mar'].includes(s.local)){
+  a.push({id:'explorar_desconhecido',descricao:'Aventurar-se além das trilhas conhecidas, desfazendo a névoa da ilha (+adrenalina, +esperança)'});
+}
+const temMaterial=(s.inventario.madeira||0)>=1||(s.inventario.pedra||0)>=1;
+if(temMaterial&&(['acampamento','fogueira','curral','fazenda','arena'].includes(s.local)||s.local.startsWith('casa_'))){
+  a.push({id:'erguer_estrutura',descricao:'Erguer e aprimorar as construções comunitárias da ilha (Evolução Nível 1 a 3)'});
+}
+if(['fogueira','acampamento','cachoeira'].includes(s.local)||s.local.startsWith('casa_')){
+  a.push({id:'momento_de_fe',descricao:'Momento de fé, oração e reflexão profunda (+esperança, -ansiedade, -medo)'});
+}
+
 // EM TRAJETO: o cérebro pode continuar, rerotear (ir_*) ou agir localmente.
 if(s.deslocamento)a.unshift({id:'continuar',descricao:'Continuar a caminhada para '+espaco.nome(s.deslocamento.destino)});
 return a}
@@ -422,6 +454,80 @@ case'trocar_recursos':{
     }
     break;
 }
+case'planejar_amanha':{
+    const outros = Object.values(e.seres || {}).filter(o => o.id !== s.id && o.status !== 'morto' && o.local === s.local);
+    const parceiro = outros[0];
+    const nomeP = parceiro?.nome || 'o companheiro';
+    s.necessidades.confianca = Math.min(100, (s.necessidades.confianca || 50) + 15);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 15);
+    s.necessidades.frustracao = Math.max(0, (s.necessidades.frustracao || 0) - 20);
+    if (parceiro) {
+        parceiro.necessidades.confianca = Math.min(100, (parceiro.necessidades.confianca || 50) + 15);
+        parceiro.necessidades.satisfacao = Math.min(100, (parceiro.necessidades.satisfacao || 50) + 15);
+        parceiro.necessidades.frustracao = Math.max(0, (parceiro.necessidades.frustracao || 0) - 15);
+        e.relacoes[s.id][parceiro.id] = Math.min(100, (e.relacoes[s.id][parceiro.id] || 50) + 10);
+        e.relacoes[parceiro.id][s.id] = Math.min(100, (e.relacoes[parceiro.id][s.id] || 50) + 10);
+        r.com = parceiro.id;
+        const fala = typeof extra.fala === 'string' && extra.fala.trim() ? extra.fala.trim() : '';
+        if (fala) { s.ultimaFala = fala; s.ultimaFalaCiclo = e.mundo.tempo.ciclo; }
+        r.texto = `Sentou-se com ${nomeP} e planejou o dia de amanhã, avaliando estoques e combinando tarefas para a ilha.` + (fala ? ` Disse: "${fala}"` : '');
+        parceiro.memoria = Array.isArray(parceiro.memoria) ? parceiro.memoria : [];
+        parceiro.memoria.push({ ciclo: e.mundo.tempo.ciclo, tipo: 'fala', de: s.id, texto: r.texto });
+    } else {
+        r.texto = 'Refletiu sobre o futuro e planejou mentalmente as tarefas e estoques para o dia de amanhã.';
+    }
+    r.quantidade = 1;
+    break;
+}
+case'praticar_esporte':{
+    const outros = Object.values(e.seres || {}).filter(o => o.id !== s.id && o.status !== 'morto' && o.local === s.local);
+    s.necessidades.frustracao = Math.max(0, (s.necessidades.frustracao || 0) - 40);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 25);
+    s.habilidades = s.habilidades || {};
+    s.habilidades.forca = (s.habilidades.forca || 10) + 0.5;
+    if (outros.length) {
+        const colega = outros[0];
+        colega.necessidades.frustracao = Math.max(0, (colega.necessidades.frustracao || 0) - 35);
+        colega.necessidades.satisfacao = Math.min(100, (colega.necessidades.satisfacao || 50) + 20);
+        e.relacoes[s.id][colega.id] = Math.min(100, (e.relacoes[s.id][colega.id] || 50) + 12);
+        e.relacoes[colega.id][s.id] = Math.min(100, (e.relacoes[colega.id][s.id] || 50) + 12);
+        r.com = colega.id;
+        const fala = typeof extra.fala === 'string' && extra.fala.trim() ? extra.fala.trim() : '';
+        if (fala) { s.ultimaFala = fala; s.ultimaFalaCiclo = e.mundo.tempo.ciclo; }
+        r.texto = `Praticou esporte com ${colega.nome} em ${espaco.nome(s.local)}, descontraindo a mente e exercitando o corpo!` + (fala ? ` Disse: "${fala}"` : '');
+        colega.memoria = Array.isArray(colega.memoria) ? colega.memoria : [];
+        colega.memoria.push({ ciclo: e.mundo.tempo.ciclo, tipo: 'fala', de: s.id, texto: r.texto });
+    } else {
+        r.texto = `Fez corrida e exercícios físicos em ${espaco.nome(s.local)}, revigorando o ânimo e a força.`;
+    }
+    r.quantidade = 1;
+    break;
+}
+case'churrasco_fogueira':{
+    const outros = Object.values(e.seres || {}).filter(o => o.id !== s.id && o.status !== 'morto' && o.local === s.local);
+    if ((s.inventario.alimento || 0) >= 1) s.inventario.alimento -= 1;
+    s.necessidades.alimento = Math.max(0, (s.necessidades.alimento || 0) - 75);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 30);
+    s.necessidades.solidao = Math.max(0, (s.necessidades.solidao || 0) - 30);
+    s.necessidades.frustracao = Math.max(0, (s.necessidades.frustracao || 0) - 25);
+    for (const c of outros) {
+        c.necessidades.alimento = Math.max(0, (c.necessidades.alimento || 0) - 60);
+        c.necessidades.satisfacao = Math.min(100, (c.necessidades.satisfacao || 50) + 25);
+        c.necessidades.solidao = Math.max(0, (c.necessidades.solidao || 0) - 25);
+        e.relacoes[s.id][c.id] = Math.min(100, (e.relacoes[s.id][c.id] || 50) + 15);
+        e.relacoes[c.id][s.id] = Math.min(100, (e.relacoes[c.id][s.id] || 50) + 15);
+    }
+    const fala = typeof extra.fala === 'string' && extra.fala.trim() ? extra.fala.trim() : '';
+    if (fala) { s.ultimaFala = fala; s.ultimaFalaCiclo = e.mundo.tempo.ciclo; }
+    if (outros.length) {
+        r.com = outros[0].id;
+        r.texto = `Assou alimentos na fogueira e partilhou uma refeição quente e animada com ${outros.map(o=>o.nome).join(', ')}!` + (fala ? ` Disse: "${fala}"` : '');
+    } else {
+        r.texto = 'Preparou e assou uma saborosa refeição ao calor do fogo, desfrutando de um momento reconfortante.';
+    }
+    r.quantidade = 1;
+    break;
+}
 case'planejar_vila':{
     const outros = Object.values(e.seres || {}).filter(o => o.id !== s.id && o.status !== 'morto' && o.local === s.local);
     const parceiro = outros[0]?.nome || 'a comunidade';
@@ -458,6 +564,69 @@ case'navegar':{
     s.deslocamento={destino:'ilha_vizinha',caminho:caminho.caminho,i:0,iniciadoNoCiclo:e.mundo.tempo.ciclo};
     r.deslocamento={estado:'partida',destino:'ilha_vizinha',trechos:caminho.caminho.length-1};
     r.texto='Você desamarrou o barco e partiu rumo à Ilha Vizinha ('+(caminho.caminho.length-1)+' trecho(s) de água).';
+    break;
+}
+case'explorar_desconhecido':{
+    s.necessidades.energia=Math.max(0,(s.necessidades.energia||50)-10);
+    s.necessidades.satisfacao=Math.min(100,(s.necessidades.satisfacao||50)+18);
+    s.necessidades.solidao=Math.max(0,(s.necessidades.solidao||0)-12);
+    s.necessidades.confianca=Math.min(100,(s.necessidades.confianca||50)+15);
+    const candidatas=['floresta_densa','ruinas_antigas','santuario_fe'];
+    e.descobertas=Array.isArray(e.descobertas)?e.descobertas:[];
+    const pendentes=candidatas.filter(c=>!e.descobertas.some(d=>d===c||(d&&d.local===c)));
+    if(pendentes.length>0){
+        const novaZona=pendentes[0];
+        e.descobertas.push(novaZona);
+        r.descoberta=novaZona;
+        r.texto=`Aventurei-me além da névoa e revelei os segredos de ${novaZona}! (+esperança, +coragem)`;
+    } else {
+        s.inventario.pedra=(s.inventario.pedra||0)+1;
+        r.quantidade=1;
+        r.texto='Aventurei-me nas profundezas inexploradas, encontrando minerais raros e expandindo os horizontes da ilha.';
+    }
+    break;
+}
+case'erguer_estrutura':{
+    if((s.inventario.madeira||0)>=1) s.inventario.madeira--;
+    else if((s.inventario.pedra||0)>=1) s.inventario.pedra--;
+    e.mundo.estruturas=e.mundo.estruturas||{
+        abrigo:{nivel:1,nome:'Abrigo Rústico',progresso:20},
+        fogueira:{nivel:1,nome:'Fogueira de Pedra',progresso:30},
+        santuario:{nivel:1,nome:'Altar de Pedras',progresso:0}
+    };
+    const est=e.mundo.estruturas;
+    let tipoEst = (s.local==='fogueira') ? 'fogueira' : (s.local.startsWith('casa_') || s.local==='acampamento') ? 'abrigo' : 'santuario';
+    const alvo = est[tipoEst] || est.abrigo;
+    alvo.progresso = (alvo.progresso || 0) + 25;
+    if(alvo.progresso >= 100 && alvo.nivel < 3){
+        alvo.nivel++;
+        alvo.progresso = 0;
+        if(tipoEst==='abrigo'){
+            alvo.nome = alvo.nivel === 2 ? 'Cabanas Iluminadas' : 'Vila dos Sobreviventes';
+        } else if(tipoEst==='fogueira'){
+            alvo.nome = alvo.nivel === 2 ? 'Fornalha Coberta' : 'Fornalha Perene da Vila';
+        } else {
+            alvo.nome = alvo.nivel === 2 ? 'Capela de Madeira Sagrada' : 'Santuário da Esperança';
+        }
+        r.evolucaoCivilizatoria = { estrutura: tipoEst, novoNivel: alvo.nivel, nome: alvo.nome };
+        r.texto = `Trabalho cooperativo concluiu a evolução da estrutura para o Nível ${alvo.nivel}: ${alvo.nome}!`;
+    } else {
+        r.texto = `Trabalhou na estrutura ${alvo.nome} (${alvo.progresso}% rumo ao próximo nível).`;
+    }
+    s.necessidades.satisfacao=Math.min(100,(s.necessidades.satisfacao||50)+20);
+    s.necessidades.pertencimento=Math.min(100,(s.necessidades.pertencimento||50)+20);
+    r.quantidade=1;
+    break;
+}
+case'momento_de_fe':{
+    s.necessidades.medo=Math.max(0,(s.necessidades.medo||0)-35);
+    s.necessidades.frustracao=Math.max(0,(s.necessidades.frustracao||0)-25);
+    s.necessidades.confianca=Math.min(100,(s.necessidades.confianca||50)+30);
+    s.necessidades.pertencimento=Math.min(100,(s.necessidades.pertencimento||50)+18);
+    s.necessidades.satisfacao=Math.min(100,(s.necessidades.satisfacao||50)+15);
+    if((s.necessidades.saude||100)<35) s.necessidades.saude += 6;
+    r.texto = 'Fez um momento de reflexão profunda, acalmando o coração e renovando a fé na sobrevivência.';
+    r.quantidade = 1;
     break;
 }
 case'conviver':{const outros=Object.values(e.seres||{}).filter(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);r.com=outros.length?outros[0].id:null;if(r.com){s.necessidades.solidao=Math.max(0,s.necessidades.solidao-15);outros[0].necessidades.solidao=Math.max(0,outros[0].necessidades.solidao-10)}break}case'falar':{const outros=Object.values(e.seres||{}).filter(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);r.com=outros.length?outros[0].id:null;r.texto=typeof extra.fala==='string'&&extra.fala.trim()?extra.fala.trim().slice(0,280):(typeof extra.texto==='string'&&extra.texto.trim()?extra.texto.trim().slice(0,280):(extra.motivo||'').trim().slice(0,280));if(r.texto){s.ultimaFala=r.texto;s.ultimaFalaCiclo=e.mundo.tempo.ciclo;}if(r.com){const alvo=outros[0];alvo.memoria=Array.isArray(alvo.memoria)?alvo.memoria:[];alvo.memoria.push({tipo:'fala',de:s.id,texto:r.texto,ciclo:e.mundo.tempo.ciclo});alvo.memoria=alvo.memoria.slice(-200)}break}}return r}

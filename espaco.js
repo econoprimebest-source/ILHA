@@ -22,7 +22,12 @@ const nos={
 	caverna:{x:.880,y:.220,nome:'Caverna Sombria'},
 	ilha_vizinha:{x:.080,y:.820,nome:'Ilha Vizinha'}
 };
-const aliases={pesca_mar:'mar',mar_pesca:'mar',praia:'mar'};
+const aliases={pesca_mar:'mar',mar_pesca:'mar',praia:'mar',floresta_densa:'floresta',ruinas_antigas:'caverna',santuario_fe:'cachoeira'};
+const zonasExpansivas={
+	floresta_densa:{x:.810,y:.280,nome:'Floresta Densa & Misteriosa',base:'floresta'},
+	ruinas_antigas:{x:.920,y:.160,nome:'Ruínas Antigas',base:'caverna'},
+	santuario_fe:{x:.620,y:.080,nome:'Santuário da Fé e Esperança',base:'cachoeira'}
+};
 // Trilhas com waypoints sobre os caminhos pintados do mapa.
 const arestas=[
 	{a:'fogueira',b:'casa_icaro',wp:[[.42,.49],[.34,.55],[.27,.56]]},
@@ -117,4 +122,4 @@ function rota(de,para){
 	return{caminho,trechos,comprimento:dist.get(fim)};
 }
 function trechoEntre(a,b){return mapaAresta.get(chave(a,b))||null}
-module.exports={nos,arestas,normalizar,nome,locais,vizinhosDe,distancia,rota,trechoEntre};
+module.exports={nos,arestas,normalizar,nome,locais,vizinhosDe,distancia,rota,trechoEntre,zonasExpansivas};

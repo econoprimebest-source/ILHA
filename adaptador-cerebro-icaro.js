@@ -1,7 +1,7 @@
 'use strict';
-// adaptador-cerebro-icaro.js — ADAPTADOR REAL DO ÍCARO (INTEGRADO AO Z-FOLD 2)
+// adaptador-cerebro-icaro.js — ADAPTADOR DO ÍCARO (INTEGRADO À CENTRAL OFICIAL S23)
 //
-// Conecta a instância do Ícaro na Ilha ao cérebro real rodando na porta 8793 do Z-Fold.
+// Conecta a instância do Ícaro na Ilha à central oficial rodando na porta 8793 do S23.
 // Mantém as funções utilitárias e contrato público para testes.
 
 const { criarAdaptador } = require('./adaptador-cerebro-zfold');

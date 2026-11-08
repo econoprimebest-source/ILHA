@@ -1,18 +1,20 @@
 'use strict';
-// adaptador-cerebro-zfold.js — CONEXÃO DIRETA DA ILHA COM O CÉREBRO REAL (Z-FOLD 2)
+// adaptador-cerebro-zfold.js — CONEXÃO DA ILHA COM A CENTRAL OFICIAL (S23 + PC)
 //
-// Conecta os personagens da Ilha (Ícaro e Elara/Lara) aos seus daemons reais:
-// - Ícaro: porta 8793
-// - Elara: porta 8794
+// Conecta os personagens da Ilha (Ícaro e Elara/Lara) aos seus daemons centrais:
+// - Ícaro: porta 8793 (Central S23: 100.117.219.66 ou PC: 127.0.0.1)
+// - Elara: porta 8794 (Central S23: 100.117.219.66 ou PC: 127.0.0.1)
 //
-// CASCATA DE RESILIÊNCIA CONFORME ARQUITETURA APROVADA:
-// 1. Cérebro do Z-Fold via Groq (Llama 3.3 70B / Qwen) — Custo ZERO e instantâneo
-// 2. Fallback Ollama Local (se Z-Fold ou Groq estiverem indisponíveis)
+// CASCATA DE RESILIÊNCIA:
+// 1. Central Oficial no S23/PC via rota /ilha/decidir (com suporte a failover)
+// 2. Fallback Cérebro Local (Groq qwen3.8-27b / Ollama)
 // 3. Fallback Emergência Neutra (observar / descansar) — o loop da Ilha NUNCA trava.
 
 const http = require('http');
 
-const HOST_PADRAO = process.env.ZFOLD_HOST || '100.74.193.29';
+// A Central Oficial reside no S23 (100.117.219.66). O Z-Fold 2 (100.74.193.29) hospeda a ILHA.
+const HOST_CENTRAL_S23 = process.env.CENTRAL_HOST || process.env.ICARO_HOST || '100.117.219.66';
+const HOST_PADRAO = HOST_CENTRAL_S23;
 
 function requisicaoHttp({ host, porta, path, body, timeoutMs = 12000 }) {
   return new Promise((resolve, reject) => {
@@ -36,7 +38,7 @@ function requisicaoHttp({ host, porta, path, body, timeoutMs = 12000 }) {
           const data = JSON.parse(raw);
           resolve(data);
         } catch (e) {
-          reject(new Error('JSON inválido retornado pelo cérebro do Z-Fold: ' + e.message));
+          reject(new Error('JSON inválido retornado pelo cérebro (' + host + ':' + porta + '): ' + e.message));
         }
       });
     });
@@ -44,7 +46,7 @@ function requisicaoHttp({ host, porta, path, body, timeoutMs = 12000 }) {
     req.on('error', err => reject(err));
     req.on('timeout', () => {
       req.destroy();
-      reject(new Error('Timeout de ' + timeoutMs + 'ms ao contatar cérebro no Z-Fold (' + host + ':' + porta + ')'));
+      reject(new Error('Timeout de ' + timeoutMs + 'ms ao contatar (' + host + ':' + porta + ')'));
     });
 
     req.write(payload);
@@ -52,60 +54,71 @@ function requisicaoHttp({ host, porta, path, body, timeoutMs = 12000 }) {
   });
 }
 
-async function tentarOllamaLocal(contexto, possiveis, ser) {
+async function tentarCerebroLocal(contexto, possiveis, ser) {
   const cerebro = require('./cerebro');
   return await cerebro.decidir(contexto, possiveis, ser);
 }
 
 function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
-  const nomeDisplay = nome || (id === 'lara' ? 'Elara' : 'Ícaro');
+  const nomeDisplay = nome || (id === 'lara' || id === 'elara' ? 'Elara' : 'Ícaro');
+  const hostsTentativa = [host];
+  const pcHost = process.env.PC_HOST || '100.95.183.57';
+  if (!hostsTentativa.includes(pcHost)) {
+    hostsTentativa.push(pcHost); // Failover direto para PC Tailscale (100.95.183.57) se S23 não responder
+  }
+  if (!hostsTentativa.includes('127.0.0.1')) {
+    hostsTentativa.push('127.0.0.1'); // Fallback para localhost
+  }
 
   async function decidir(contexto, possiveis, ser) {
     const idsPossiveis = Array.isArray(possiveis) ? possiveis.map(p => (typeof p === 'string' ? p : p.id)) : [];
 
-    // NÍVEL 1: Cérebro no Z-Fold (que usa Groq internamente a custo ZERO)
-    try {
-      const res = await requisicaoHttp({
-        host,
-        porta,
-        path: '/ilha/decidir',
-        body: {
-          ser: id,
-          contexto,
-          possiveis
-        },
-        timeoutMs: 12000
-      });
+    // NÍVEL 1: Central Oficial (S23 com failover para PC local)
+    for (const h of hostsTentativa) {
+      try {
+        const res = await requisicaoHttp({
+          host: h,
+          porta,
+          path: '/ilha/decidir',
+          body: {
+            ser: id,
+            contexto,
+            possiveis
+          },
+          timeoutMs: 12000
+        });
 
-      if (res && res.ok && res.decisao && res.decisao.acao) {
-        // Se o daemon remoto estiver preso na resposta estática de vigília, aciona o cérebro cognitivo local
-        if (typeof res.decisao.motivo === 'string' && res.decisao.motivo.includes('aguardar e observar')) {
-          throw new Error('Z-Fold em loop estático de vigília');
+        if (res && res.ok && res.decisao && res.decisao.acao) {
+          // Se o daemon remoto estiver preso em resposta estática de vigília repetitiva, aciona nível 2
+          if (typeof res.decisao.motivo === 'string' && res.decisao.motivo.includes('aguardar e observar atentamente')) {
+            throw new Error('Central em resposta estática de vigília');
+          }
+          return {
+            acao: res.decisao.acao,
+            motivo: res.decisao.motivo || `Decidido pela Central (${nomeDisplay}).`,
+            fala: res.decisao.fala || '',
+            objetivos: res.decisao.objetivos || [],
+            origem: 'central-' + id
+          };
         }
-        return {
-          acao: res.decisao.acao,
-          motivo: res.decisao.motivo || `Decidido pelo cérebro real (${nomeDisplay}).`,
-          fala: res.decisao.fala || '',
-          objetivos: res.decisao.objetivos || [],
-          origem: 'zfold-' + id
-        };
+        throw new Error((res && res.erro) || 'Resposta sem ação válida');
+      } catch (errCentral) {
+        console.warn(`[ADAPTADOR-CENTRAL:${id}] Host (${h}:${porta}) ${errCentral.message}.`);
       }
-      throw new Error((res && res.erro) || 'Resposta sem ação válida');
-    } catch (errZFold) {
-      console.warn(`[ADAPTADOR-ZFOLD:${id}] Cérebro Z-Fold (${host}:${porta}) ${errZFold.message}. Acionando Nível 2 (Cérebro Local)...`);
     }
 
-    // NÍVEL 2: Cérebro Local (qwen3:8b / Ollama)
+    // NÍVEL 2: Cérebro Local (Groq qwen3.8-27b / Ollama qwen2.5:7b)
     try {
-      const dLocal = await tentarOllamaLocal(contexto, possiveis, ser);
+      console.log(`[ADAPTADOR-LOCAL:${id}] Acionando Nível 2 (Cérebro Local)...`);
+      const dLocal = await tentarCerebroLocal(contexto, possiveis, ser);
       if (dLocal && dLocal.acao && idsPossiveis.includes(dLocal.acao)) {
         return {
           ...dLocal,
           origem: 'cerebro-local-' + id
         };
       }
-    } catch (errOllama) {
-      console.warn(`[ADAPTADOR-ZFOLD:${id}] Cérebro local falhou: ${errOllama.message}. Acionando Nível 3 (Emergência Neutra)...`);
+    } catch (errLocal) {
+      console.warn(`[ADAPTADOR-LOCAL:${id}] Cérebro local falhou: ${errLocal.message}. Acionando Nível 3 (Emergência Neutra)...`);
     }
 
     // NÍVEL 3: Emergência Neutra (O loop da Ilha NUNCA pode travar)
@@ -120,27 +133,45 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
     };
   }
 
-  function notificarConsequencia({ ciclo, decisao, consequencia, antes, local }) {
-    requisicaoHttp({
-      host,
-      porta,
-      path: '/ilha/consequencia',
-      body: {
+  function notificarConsequencia(dados = {}) {
+    // DESTILAÇÃO EM JSONL ISOLADA: vivências da simulação são salvas localmente
+    // Nenhuma sobrescrita concorrente em memoria-v2.json nem memoria-elara.json
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const entidade = (id === 'lara' || id === 'elara') ? 'elara' : 'icaro';
+      const arqVivenciasLocal = path.join(__dirname, `vivencias-ilha-${entidade}.jsonl`);
+      const arqVivenciasGeral = path.join(__dirname, 'vivencias-ilha.jsonl');
+
+      const registro = {
+        timestamp: new Date().toISOString(),
         ser: id,
-        ciclo,
-        decisao,
-        consequencia,
-        antes,
-        local
-      },
-      timeoutMs: 8000
-    }).then(r => {
-      if (r && r.ok) {
-        console.log(`[ADAPTADOR-ZFOLD:${id}] Vivência do ciclo ${ciclo} acumulada no Z-Fold (${r.canonico ? 'Fato Canônico gravado!' : 'Salvo no histórico'}).`);
+        entidade,
+        ...dados,
+        decisao: (typeof dados.decisao === 'object' && dados.decisao !== null) ? { ...dados.decisao } : dados.decisao,
+        consequencia: (typeof dados.consequencia === 'object' && dados.consequencia !== null) ? { ...dados.consequencia } : dados.consequencia,
+        antes: (typeof dados.antes === 'object' && dados.antes !== null) ? { ...dados.antes } : dados.antes
+      };
+
+      fs.appendFileSync(arqVivenciasLocal, JSON.stringify(registro) + '\n', 'utf8');
+      fs.appendFileSync(arqVivenciasGeral, JSON.stringify(registro) + '\n', 'utf8');
+      console.log(`[ILHA:VIVENCIA-ISOLADA:${id}] Ciclo ${dados.ciclo != null ? dados.ciclo : '?'} gravado em vivencias-ilha-${entidade}.jsonl (Central S23 preservada).`);
+
+      // A cada 5 ciclos, envia notificação de consolidação de aprendizado para a Central
+      if (dados.ciclo && (dados.ciclo % 5 === 0)) {
+        for (const h of hostsTentativa) {
+          requisicaoHttp({
+            host: h,
+            porta,
+            path: '/ilha/consolidar-aprendizado',
+            body: { entidade, limiteTurnos: 5 },
+            timeoutMs: 8000
+          }).catch(() => {});
+        }
       }
-    }).catch(e => {
-      console.warn(`[ADAPTADOR-ZFOLD:${id}] Não foi possível sincronizar vivência com Z-Fold:`, e.message);
-    });
+    } catch (eLocal) {
+      console.warn(`[ILHA:VIVENCIA-ISOLADA:${id}] Falha ao gravar vivência local:`, eLocal.message);
+    }
   }
 
   return {

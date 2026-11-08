@@ -72,7 +72,7 @@ function montarContexto(estado,ser,possiveis,situacao=null){
 		inventario:ser.inventario?{...ser.inventario}:{agua:0,alimento:0,madeira:0},
 		sensacoes:observacaoCorporal(ser),
 		percepcoes:perceber(estado,ser),
-		memorias:(ser.memoria||[]).slice(-12).map(m=>m.texto),
+		memorias:(ser.memoria||[]).slice(-12).map(m=>typeof m==='string'?m:(m.texto||'')),
 		experiencias:(ser.experiencia||[]).slice(-8),
 		relacoes:(estado.relacoes&&estado.relacoes[ser.id])||{},
 		// IDENTIDADE INICIAL (nossa): quem este ser JÁ É — insumos do cérebro,
@@ -116,14 +116,14 @@ function cerebroDe(opcoes,ser){
 		if(c&&typeof c.decidir==='function')return c.decidir.bind(c);
 	}
 	if(opcoes&&opcoes.decisor)return opcoes.decisor;
-	// Ícaro e Elara/Lara: conectam ao cérebro real do Z-Fold por padrão
+	// Ícaro e Elara/Lara: consultam a Central Oficial no S23 por padrão
 	if(ser&&(ser.id==='icaro'||ser.id==='lara'||ser.id==='elara')){
 		try{
 			const {criarAdaptador}=require('./adaptador-cerebro-zfold');
 			const porta=ser.id==='icaro'?8793:8794;
 			const adapt=criarAdaptador({id:ser.id,porta});
 			return adapt.decidir.bind(adapt);
-		}catch(eZ){}
+		}catch(eCentral){}
 	}
 	return require('./decisor').decidir;
 }

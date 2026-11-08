@@ -8,9 +8,9 @@ const ACAO = {
   colher_frutas: n => `${n} está colhendo frutas`, coletar_agua: n => `${n} está pegando água`,
   coletar_madeira: n => `${n} está juntando madeira`, acender_fogueira: n => `${n} cuida da fogueira`,
   plantar: n => `${n} está plantando`, melhorar_abrigo: n => `${n} está reforçando o abrigo`,
-  esperar: n => `${n} espera, pensativo(a)`, falar: n => `${n} puxou conversa`, conviver: n => `${n} está convivendo com os outros`,
+  esperar: n => `${n} espera, pensativo(a)`, falar: n => `${n} puxou conversa`, conviver: n => `${n} está convivendo com os outros`, praticar_esporte: n => `${n} está praticando esporte e treinando`, planejar_amanha: n => `${n} está planejando o dia de amanhã`, churrasco_fogueira: n => `${n} está assando comida e confraternizando na fogueira`,
 };
-const ICONE = { pescar: '🎣', comer: '🍖', beber: '💧', descansar: '😴', dormir: '😴', fala: '💬', missao: '🧭', diretor: '🎬', clima: '🌧️', acao: '🏝️' };
+const ICONE = { praticar_esporte: '🏃', planejar_amanha: '📋', churrasco_fogueira: '🍖', pescar: '🎣', comer: '🍖', beber: '💧', descansar: '😴', dormir: '😴', fala: '💬', missao: '🧭', diretor: '🎬', clima: '🌧️', acao: '🏝️' };
 const PERIODOS = ['madrugada', 'manhã', 'tarde', 'noite'];
 
 function fraseEvento(e) {

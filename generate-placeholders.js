@@ -47,7 +47,7 @@ for (const [charId, rgb] of Object.entries(colors)) {
 console.log('Generated', Object.keys(placeholders).length, 'placeholders');
 
 // Write a JS module with the placeholder data URLs
-const output = `// Auto-generated placeholder sprites for Ilha Aurora characters\n`);
+let output = `// Auto-generated placeholder sprites for Ilha Aurora characters\n`;
 output += `export const PLACEHOLDER_SPRITES = {\n`;
 for (const [charId, url] of Object.entries(placeholders)) {
   // Extract the base64 part

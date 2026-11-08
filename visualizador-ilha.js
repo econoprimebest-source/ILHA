@@ -133,6 +133,82 @@ http.createServer((req,res)=>{
     });
     return;
   }
+  // GATILHO DE INTERVENÇÃO DO PÚBLICO ("Milagre / Suprimento do Espectador")
+  if((u.pathname==='/ilha/intervencao'||u.pathname==='/api/intervencao-publico')&&req.method==='POST'){
+    let body='';
+    req.on('data',c=>{body+=c;if(body.length>8192)req.destroy()});
+    req.on('end',()=>{
+      try{
+        const payload=JSON.parse(body||'{}');
+        const espectador=String(payload.espectador||'Espectador Anônimo').trim().slice(0,50);
+        const tipo=String(payload.tipo||'lenha_fogueira').toLowerCase();
+        const estado=readState();
+        const eco=require('./ecossistema');
+        eco.preparar(estado);
+        const {gravar}=require('./persistencia-v2');
+
+        let msgEfeito='';
+        const evento={tipo:'milagre',espectador,subTipo:tipo,quando:new Date().toISOString()};
+
+        if(tipo==='lenha_fogueira'){
+          estado.mundo.ecossistema.fogueira=estado.mundo.ecossistema.fogueira||{acesa:true,lenha:20,calor:80};
+          estado.mundo.ecossistema.fogueira.acesa=true;
+          estado.mundo.ecossistema.fogueira.lenha=Math.min(60,(estado.mundo.ecossistema.fogueira.lenha||10)+20);
+          msgEfeito=`${espectador} enviou um feixe de lenha e brasa dourada para a Fogueira Central!`;
+        } else if(tipo==='chuva'){
+          estado.mundo.clima='chuva';
+          if(estado.mundo.ecossistema.agua){
+            estado.mundo.ecossistema.agua.nascente=Math.min(estado.mundo.ecossistema.agua.limite||60,(estado.mundo.ecossistema.agua.nascente||30)+15);
+          }
+          msgEfeito=`${espectador} invocou uma chuva mansa e revigorante sobre as nascentes e plantações!`;
+        } else if(tipo==='cura'){
+          if(estado.seres){
+            Object.values(estado.seres).forEach(ser=>{
+              if(ser.status!=='morto'){
+                ser.necessidades.saude=Math.min(100,(ser.necessidades.saude||70)+25);
+                ser.necessidades.energia=Math.min(100,(ser.necessidades.energia||50)+30);
+                ser.necessidades.medo=Math.max(0,(ser.necessidades.medo||0)-20);
+                ser.memoria=Array.isArray(ser.memoria)?ser.memoria:[];
+                ser.memoria.push({
+                  tipo:'milagre',
+                  de:espectador,
+                  texto:`Uma luz dourada desceu do céu: ${espectador} restaurou suas forças com um milagre de cura!`,
+                  ciclo:estado.mundo.tempo.ciclo
+                });
+                ser.memoria=ser.memoria.slice(-200);
+              }
+            });
+          }
+          msgEfeito=`${espectador} emanou um milagre de cura que restaurou a vitalidade de todos os sobreviventes!`;
+        } else {
+          msgEfeito=`${espectador} enviou uma bênção de esperança aos sobreviventes.`;
+        }
+
+        evento.mensagem=msgEfeito;
+        estado.mundo.acontecimentos=Array.isArray(estado.mundo.acontecimentos)?estado.mundo.acontecimentos:[];
+        estado.mundo.acontecimentos.push({
+          id:'intervencao-'+Date.now(),
+          tipo:'milagre_publico',
+          espectador,
+          subTipo:tipo,
+          efeito:msgEfeito,
+          inicio:estado.mundo.tempo.ciclo,
+          duracao:4,
+          ativo:true,
+          locais:['fogueira','acampamento']
+        });
+
+        fs.writeFileSync(path.join(ROOT,'ultimo-milagre.json'),JSON.stringify(evento));
+        gravar(STATE,estado);
+
+        return json(res,{ok:true,espectador,tipo,mensagem:msgEfeito});
+      }catch(e){
+        res.writeHead(500,{'content-type':'application/json; charset=utf-8'});
+        return res.end(JSON.stringify({ok:false,erro:e.message}));
+      }
+    });
+    return;
+  }
   // FALAR DIRETO COM UM PERSONAGEM (clique no boneco): a mensagem do observador
   // entra na memória individual do ser (mesmo formato da fala entre habitantes)
   // e a RESPOSTA vem do próprio cérebro dele — mesmo caminho de decisão, mesmo
@@ -189,6 +265,32 @@ http.createServer((req,res)=>{
     try{return json(res,reiniciarMundo())}
     catch(e){res.writeHead(500,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:e.message}))}
   }
+  if(u.pathname==='/api/ondemand'&&req.method==='POST'){
+    if(fs.existsSync(MARCADOR)){res.writeHead(503,{'content-type':'application/json; charset=utf-8'});return res.end(JSON.stringify({ok:false,erro:'mundo reiniciando'}));}
+    (async()=>{
+      try{
+        const il=require('./ilha');
+        const {rodada}=require('./rodada-autonoma');
+        const {gravar,anexar}=require('./persistencia-v2');
+        const estado=il.carregarEstado();
+        const r=await rodada(estado,{acontecimentos:true});
+        gravar(STATE,estado);
+        if(r&&Array.isArray(r.eventos)){
+          r.eventos.forEach((e,ord)=>anexar(LOGS[0],{
+            ciclo:r.ciclo,ord,serId:e.serId,nome:e.nome,
+            acao:e.decisao.acao,motivo:e.decisao.motivo,
+            ...(e.decisao.fala?{fala:e.decisao.fala}:{}),
+            local:e.localFinal,status:e.statusFinal,consequencia:e.consequencia
+          }));
+        }
+        return json(res,{ok:true,ciclo:r.ciclo,eventos:r.eventos});
+      }catch(err){
+        res.writeHead(500,{'content-type':'application/json; charset=utf-8'});
+        return res.end(JSON.stringify({ok:false,erro:err.message}));
+      }
+    })();
+    return;
+  }
   // FRAME DA VISÃO (opt-in `ILHA_VISAO=1` no mundo) — o visualizador manda o
   // canvas como data URL e aqui gravamos `ultimo-frame.json`, único arquivo
   // que `visao.js` lê. Só o frame é escrito; nada do estado é tocado.
@@ -241,12 +343,26 @@ http.createServer((req,res)=>{
       return res.end(js);
     } catch(e) { res.writeHead(404); return res.end('pixi.min.js nao encontrado'); }
   }
+  if(u.pathname==='/motor-sprites-ilha.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'motor-sprites-ilha.js'));
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('motor-sprites-ilha.js nao encontrado'); }
+  }
   if(u.pathname==='/motor-pixi-ilha.js'){
     try {
       const js=fs.readFileSync(path.join(ROOT,'motor-pixi-ilha.js'));
       res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store'});
       return res.end(js);
     } catch(e) { res.writeHead(404); return res.end('motor-pixi-ilha.js nao encontrado'); }
+  }
+  if(u.pathname==='/motor-assets-ilha.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'motor-assets-ilha.js'));
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('motor-assets-ilha.js nao encontrado'); }
   }
   if(u.pathname.startsWith('/assets/')){
     try {

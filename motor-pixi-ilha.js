@@ -42,7 +42,10 @@
     floresta:     { x: 0.760, y: 0.320, nome: 'Floresta Fechada' },
     rio:          { x: 0.585, y: 0.580, nome: 'Margem do Rio' },
     cachoeira:    { x: 0.650, y: 0.140, nome: 'Cachoeira' },
-    ilha_vizinha: { x: 0.080, y: 0.820, nome: 'Ilha Vizinha' }
+    ilha_vizinha: { x: 0.080, y: 0.820, nome: 'Ilha Vizinha' },
+    floresta_densa: { x: 0.810, y: 0.280, nome: 'Floresta Densa & Misteriosa' },
+    ruinas_antigas: { x: 0.920, y: 0.160, nome: 'Ruínas Antigas' },
+    santuario_fe:   { x: 0.620, y: 0.080, nome: 'Santuário da Fé e Esperança' }
   };
 
   const CORES_PERSONAGEM = {
@@ -66,7 +69,8 @@
     mergulhar_mar: '🤿', mergulhar: '🏊', acender_fogueira: '🔥', alimentar_fogo: '🔥',
     conversar: '💬', conviver: '🤝', falar: '🗣️', compartilhar_historias: '📖',
     planejar_vila: '🗺️', trocar_recursos: '🎁', afugentar_fera: '🔥', desafiar_luta: '⚔️',
-    observar: '👁️', explorar: '🧭', caçar: '🏹'
+    observar: '👁️', explorar: '🧭', caçar: '🏹',
+    explorar_desconhecido: '🧭', erguer_estrutura: '🏛️', momento_de_fe: '🙏'
   };
 
   class MotorPixiIlha {
@@ -87,7 +91,10 @@
         followId: null,
         isDragging: false,
         dragStartX: 0, dragStartY: 0,
-        camStartX: 0, camStartY: 0
+        camStartX: 0, camStartY: 0,
+        modoDiretor: false, // Câmera livre por padrão (Visão geral 100% limpa)
+        ultimoTrocaDiretor: 0,
+        indiceDiretor: 0
       };
 
       // Partículas e Efeitos
@@ -95,6 +102,8 @@
       this.folhasVento = [];
       this.passaros = [];
       this.ondasOceano = [];
+      this.lightningFlash = 0;
+      this.proximoRelampago = 0;
       
       // Atores e Hotspots
       this.actorContainers = {};
@@ -134,7 +143,15 @@
 
       // 2. Ondas do Mar e Água Viva
       this.waterContainer = new PIXI.Container();
+      this.graphicsMar = new PIXI.Graphics();
+      this.graphicsCachoeira = new PIXI.Graphics();
+      this.waterContainer.addChild(this.graphicsMar);
+      this.waterContainer.addChild(this.graphicsCachoeira);
       this.cameraContainer.addChild(this.waterContainer);
+
+      // 2.5 Árvores Interativas e Vegetação com Wind Sway
+      this.treesContainer = new PIXI.Container();
+      this.cameraContainer.addChild(this.treesContainer);
 
       // 3. Estruturas Dinâmicas (Horta, Curral, Jangada, Arena, Obras)
       this.structuresContainer = new PIXI.Container();
@@ -164,6 +181,10 @@
       // 9. Iluminação Dia/Noite com Luz Volumétrica
       this.lightingOverlay = new PIXI.Graphics();
       this.cameraContainer.addChild(this.lightingOverlay);
+
+      if (typeof window !== 'undefined' && window.MotorSpritesIlha) {
+        window.MotorSpritesIlha.inicializar();
+      }
 
       this.inicializarParticulas();
       this.configurarEventosCamera();
@@ -257,11 +278,48 @@
       this.camera.targetX = 0;
       this.camera.targetY = 0;
       this.camera.followId = null;
+      this.camera.modoDiretor = false;
+      if (typeof window.atualizarStatusDiretorUI === 'function') window.atualizarStatusDiretorUI(false);
     }
 
     focarAlvo(id) {
       this.camera.followId = id;
       this.camera.targetZoom = 1.75; // Zoom cinematográfico aproximado
+      this.camera.modoDiretor = false; // Foco manual desliga modo diretor temporariamente
+      if (typeof window.atualizarStatusDiretorUI === 'function') window.atualizarStatusDiretorUI(false);
+    }
+
+    toggleModoDiretor() {
+      this.camera.modoDiretor = !this.camera.modoDiretor;
+      if (this.camera.modoDiretor) {
+        this.camera.ultimoTrocaDiretor = 0;
+      }
+      if (typeof window.atualizarStatusDiretorUI === 'function') window.atualizarStatusDiretorUI(this.camera.modoDiretor);
+      return this.camera.modoDiretor;
+    }
+
+    // Navegação Direta por Zonas de Expansão (Pilar 4)
+    mudarZona(zonaId) {
+      const zonas = (typeof window !== 'undefined' && window.ZONAS_MUNDO) ? window.ZONAS_MUNDO : {};
+      const zona = zonas[zonaId] || zonas.ilha_central;
+      if (!zona) return;
+
+      this.camera.followId = null;
+      this.camera.modoDiretor = false;
+      if (typeof window.atualizarStatusDiretorUI === 'function') window.atualizarStatusDiretorUI(false);
+
+      if (zonaId === 'ilha_central') {
+        this.resetCamera();
+        return;
+      }
+
+      const pos = this.toScreen(zona.centro.x, zona.centro.y);
+      const viewW = this.app.renderer.width / this.app.renderer.resolution;
+      const viewH = this.app.renderer.height / this.app.renderer.resolution;
+
+      this.camera.targetZoom = zona.zoomPadrao;
+      this.camera.targetX = (viewW / 2) - pos.x * zona.zoomPadrao;
+      this.camera.targetY = (viewH / 2) - pos.y * zona.zoomPadrao;
     }
 
     onResize() {
@@ -303,6 +361,11 @@
       }
 
       this.atualizarHotspots();
+    }
+
+    async instalarArtwork() {
+      // O mapa mapa-ilha-evertrail.png já possui arte isométrica completa.
+      return;
     }
 
     toScreen(normX, normY) {
@@ -401,156 +464,21 @@
       });
     }
 
-    // Renderização dos Habitantes com Roupas Tribais e Ferramentas em Mãos
+    // Renderização dos Habitantes com Sprites HD (Stardew Valley / RimWorld)
+    // PROIBIÇÃO DE BONEQUINHOS COM PIXI.Graphics (CÍRCULOS/ELIPSES)
     desenharPersonagem(g, serId, acaoAtual, caminhando, tempo) {
-      g.clear();
-      const cfg = CORES_PERSONAGEM[serId] || CORES_PERSONAGEM.icaro;
-      const s = 1.45 * Math.max(0.80, this.box.scale);
-
-      const bob = caminhando ? -Math.abs(Math.sin(tempo * 0.015)) * 3.5 * s : Math.sin(tempo * 0.004) * 1.2 * s;
-
-      // Sombra projetada no chão
-      g.beginFill(0x000000, 0.45);
-      g.drawEllipse(0, 0, 13 * s, 6 * s);
-      g.endFill();
-
-      // Pernas em passo de caminhada
-      g.beginFill(0x1e293b);
-      const passoL = caminhando ? Math.sin(tempo * 0.02) * 2.8 : 0;
-      const passoR = caminhando ? -Math.sin(tempo * 0.02) * 2.8 : 0;
-      g.drawRect(-5 * s + passoL, -6 * s + bob, 4 * s, 6 * s);
-      g.drawRect(1 * s + passoR, -6 * s + bob, 4 * s, 6 * s);
-      g.endFill();
-
-      // Túnica e Tronco
-      g.beginFill(cfg.roupa);
-      g.drawRoundedRect(-7.5 * s, -21 * s + bob, 15 * s, 15 * s, 3 * s);
-      g.endFill();
-
-      // Cinto de couro
-      g.beginFill(cfg.cinto);
-      g.drawRect(-7.5 * s, -11 * s + bob, 15 * s, 2.5 * s);
-      g.endFill();
-
-      // Cabeça / Rosto
-      g.beginFill(cfg.pele);
-      g.drawCircle(0, -26 * s + bob, 6 * s);
-      g.endFill();
-
-      // Cabelo característico
-      g.beginFill(cfg.cabelo);
-      g.drawCircle(0, -28 * s + bob, 6 * s);
-      if (serId === 'maria' || serId === 'lara') {
-        g.drawRect(-6.5 * s, -27 * s + bob, 13 * s, 10 * s); // Trança / Cabelo longo
-      }
-      g.endFill();
-
-      // Olhos
-      g.beginFill(0x0f172a);
-      g.drawCircle(-2 * s, -26 * s + bob, 1 * s);
-      g.drawCircle(2 * s, -26 * s + bob, 1 * s);
-      g.endFill();
-
-      // Ferramenta em mãos baseada na ação
-      const acao = (acaoAtual || '').toLowerCase();
-      if (acao.includes('cortar') || acao.includes('madeira')) {
-        // Machado na mão
-        g.lineStyle(1.8 * s, 0x78350f);
-        g.moveTo(7 * s, -14 * s + bob);
-        g.lineTo(13 * s, -22 * s + bob);
-        g.lineStyle(0);
-        g.beginFill(0x94a3b8);
-        g.drawRect(11 * s, -24 * s + bob, 5 * s, 4 * s);
-        g.endFill();
-      } else if (acao.includes('pescar')) {
-        // Vara de pesca de bambu
-        g.lineStyle(1.5 * s, 0xd97706);
-        g.moveTo(6 * s, -12 * s + bob);
-        g.lineTo(17 * s, -26 * s + bob);
-        g.lineStyle(0.8 * s, 0xffffff, 0.7);
-        g.lineTo(21 * s, -4 * s + bob); // Linha caindo
-      } else if (acao.includes('constru') || acao.includes('fabricar')) {
-        // Martelo na mão
-        g.lineStyle(1.6 * s, 0x78350f);
-        g.moveTo(6 * s, -12 * s + bob);
-        g.lineTo(12 * s, -18 * s + bob);
-        g.lineStyle(0);
-        g.beginFill(0x475569);
-        g.drawRect(10 * s, -21 * s + bob, 5 * s, 3.5 * s);
-        g.endFill();
-      } else if (acao.includes('caverna') || acao.includes('afugentar')) {
-        // Tocha flamejante na mão
-        g.lineStyle(1.8 * s, 0x78350f);
-        g.moveTo(7 * s, -12 * s + bob);
-        g.lineTo(11 * s, -22 * s + bob);
-        g.lineStyle(0);
-        g.beginFill(0xf97316, 0.9);
-        g.drawCircle(11 * s, -24 * s + bob, 3.5 * s);
-        g.beginFill(0xfef08a, 0.95);
-        g.drawCircle(11 * s, -24 * s + bob, 1.8 * s);
-        g.endFill();
-      }
+      if (g && typeof g.clear === 'function') g.clear();
     }
 
-    // Renderização da Pantera das Sombras (Fera Selvagem)
+    // Renderização da Pantera das Sombras com Sprite HD Anatômico
+    // PROIBIÇÃO DE PREDADOR COMO BOLA PRETA COM OLHOS
     desenharPredador(g, tempo) {
-      g.clear();
-      const s = 1.2 * Math.max(0.75, this.box.scale);
-      const respiracao = Math.sin(tempo * 0.005) * 1.5;
-
-      // Sombra furtiva
-      g.beginFill(0x000000, 0.6);
-      g.drawEllipse(0, 0, 18 * s, 8 * s);
-      g.endFill();
-
-      // Corpo esguio felino preto
-      g.beginFill(0x09090b);
-      g.drawEllipse(0, -9 * s + respiracao, 14 * s, 7 * s);
-
-      // Patas dianteiras e traseiras com garras
-      g.drawRect(-10 * s, -5 * s, 4 * s, 6 * s);
-      g.drawRect(6 * s, -5 * s, 4 * s, 6 * s);
-
-      // Cabeça felina e orelhas triangulares
-      g.drawCircle(12 * s, -12 * s + respiracao, 5.5 * s);
-      g.drawPolygon([
-        10 * s, -17 * s,
-        12 * s, -21 * s,
-        14 * s, -17 * s
-      ]);
-
-      // Olhos amarelos reluzentes predadores
-      g.beginFill(0xfacc15);
-      g.drawCircle(13 * s, -13 * s + respiracao, 1.3 * s);
-      g.drawCircle(15 * s, -13 * s + respiracao, 1.3 * s);
-
-      // Cauda longa sinuosa
-      g.lineStyle(2.2 * s, 0x09090b);
-      const chicotada = Math.sin(tempo * 0.01) * 4;
-      g.moveTo(-12 * s, -9 * s + respiracao);
-      g.bezierCurveTo(-18 * s, -14 * s, -22 * s, -6 * s + chicotada, -25 * s, -12 * s + chicotada);
-      g.endFill();
+      if (g && typeof g.clear === 'function') g.clear();
     }
 
-    // Renderização do Tubarão nos Recifes do Oceano Sul
+    // Renderização do Tubarão com Sprite HD Hidrodinâmico
     desenharTubarao(g, tempo) {
-      g.clear();
-      const s = 1.1 * this.box.scale;
-
-      // Ondulação da água ao redor da barbatana
-      const onda = Math.sin(tempo * 0.008) * 3;
-      g.lineStyle(1.5, 0xbae6fd, 0.65);
-      g.drawEllipse(0, 0, 18 * s + onda, 7 * s);
-
-      // Barbatana dorsal cinzenta cortando a água
-      g.lineStyle(0);
-      g.beginFill(0x334155, 0.95);
-      g.drawPolygon([
-        -8 * s, 2 * s,
-        -1 * s, -14 * s,
-        6 * s, 2 * s
-      ]);
-      g.endFill();
+      if (g && typeof g.clear === 'function') g.clear();
     }
 
     // Estruturas Dinâmicas: Horta, Curral, Arena, Jangada e Obras
@@ -559,45 +487,11 @@
       if (!estado || !estado.mundo) return;
       const eco = estado.mundo.ecossistema || {};
 
-      // 1. Horta da Fazenda com fases de crescimento reais
+      // 1. Fazenda e Canteiros Agrícolas Vivos com 4 Estágios Reais (Terra arada, Brotos, Madura com Cenouras, Colhida)
       const posFaz = this.toScreen(LOCAIS_MAPA.fazenda.x, LOCAIS_MAPA.fazenda.y);
-      const hortaG = new PIXI.Graphics();
-      hortaG.x = posFaz.x;
-      hortaG.y = posFaz.y;
-
-      const h = eco.horta || {};
-      const totalPlantas = (h.plantados || 0) + (h.crescendo || 0) + (h.maduros || 0);
-
-      // Canteiros de terra arada
-      hortaG.beginFill(0x573418, 0.88);
-      hortaG.drawRoundedRect(-32, -16, 64, 32, 6);
-      hortaG.endFill();
-      hortaG.lineStyle(1.2, 0x3d230f, 0.7);
-      hortaG.moveTo(-28, -6); hortaG.lineTo(28, -6);
-      hortaG.moveTo(-28, 6);  hortaG.lineTo(28, 6);
-
-      if (h.plantadoPor && totalPlantas > 0) {
-        if ((h.maduros || 0) > 0.5) {
-          // Plantas maduras com vegetais visíveis
-          hortaG.beginFill(0x16a34a);
-          hortaG.drawCircle(-18, -6, 4.5); hortaG.drawCircle(0, -6, 4.5); hortaG.drawCircle(18, -6, 4.5);
-          hortaG.drawCircle(-18, 6, 4.5);  hortaG.drawCircle(0, 6, 4.5);  hortaG.drawCircle(18, 6, 4.5);
-          // Frutos maduros
-          hortaG.beginFill(0xf59e0b);
-          hortaG.drawCircle(-18, -6, 2.5); hortaG.drawCircle(0, -6, 2.5); hortaG.drawCircle(18, -6, 2.5);
-          hortaG.drawCircle(-18, 6, 2.5);  hortaG.drawCircle(0, 6, 2.5);  hortaG.drawCircle(18, 6, 2.5);
-        } else if ((h.crescendo || 0) > 0.5) {
-          // Folhagens crescendo
-          hortaG.beginFill(0x22c55e);
-          hortaG.drawCircle(-18, -6, 3); hortaG.drawCircle(0, -6, 3); hortaG.drawCircle(18, -6, 3);
-          hortaG.drawCircle(-18, 6, 3);  hortaG.drawCircle(0, 6, 3);  hortaG.drawCircle(18, 6, 3);
-        } else {
-          // Brotos germinando (mounds de terra com pontinhos verdes)
-          hortaG.beginFill(0x84cc16);
-          hortaG.drawCircle(-18, -6, 1.8); hortaG.drawCircle(0, -6, 1.8); hortaG.drawCircle(18, -6, 1.8);
-        }
+      if (typeof window !== 'undefined' && window.MotorSpritesIlha) {
+        window.MotorSpritesIlha.atualizarHortaProps(this.structuresContainer, eco, posFaz, this.box.scale);
       }
-      this.structuresContainer.addChild(hortaG);
 
       // 2. Curral de Animais (Cercado de madeira com cabras e galinhas)
       const posCur = this.toScreen(LOCAIS_MAPA.curral.x, LOCAIS_MAPA.curral.y);
@@ -709,26 +603,32 @@
       }
     }
 
-    // Ondas do Mar e Água Animada
+    // Ondas do Mar e Água Animada (Tidal foam & waterfall spray)
     atualizarAgua(tempo) {
-      this.waterContainer.removeChildren();
-      const g = new PIXI.Graphics();
+      if (typeof window !== 'undefined' && window.MotorSpritesIlha && this.graphicsMar && this.graphicsCachoeira) {
+        window.MotorSpritesIlha.atualizarAguaViva(
+          this.graphicsMar,
+          this.graphicsCachoeira,
+          tempo,
+          this.box,
+          (x, y) => this.toScreen(x, y)
+        );
+      }
+    }
 
-      // Espuma das ondas na costa do sul
-      const onda = Math.sin(tempo * 0.003) * 6;
-      const posMar = this.toScreen(0.38, 0.91);
-
-      g.lineStyle(2.5, 0xffffff, 0.55 + Math.sin(tempo * 0.003) * 0.25);
-      g.arc(posMar.x, posMar.y, 45 + onda, Math.PI * 0.15, Math.PI * 0.85);
-
-      // Riacho de água doce descendo da cachoeira até o mar
-      const posRio = this.toScreen(0.61, 0.45);
-      g.lineStyle(1.8, 0x7dd3fc, 0.45);
-      const corrente = (tempo * 0.05) % 30;
-      g.moveTo(posRio.x - 10, posRio.y - 20 + corrente);
-      g.lineTo(posRio.x + 8, posRio.y + 10 + corrente);
-
-      this.waterContainer.addChild(g);
+    // Árvores e Vegetação Interativas com Balanço Orgânico de Vento (Wind Sway)
+    atualizarArvores(estado, tempo) {
+      if (!this.treesContainer) return;
+      const clima = (estado && estado.mundo && estado.mundo.clima) || '';
+      const ehTempestade = clima.toLowerCase().includes('tempestade');
+      if (typeof window !== 'undefined' && window.MotorSpritesIlha) {
+        window.MotorSpritesIlha.atualizarArvoresProps(
+          this.treesContainer,
+          tempo,
+          ehTempestade ? 1.0 : 0.35,
+          (x, y) => this.toScreen(x, y)
+        );
+      }
     }
 
     // Pássaros sobrevoando a Ilha
@@ -769,8 +669,9 @@
         aura.name = 'aura';
         cont.addChild(aura);
 
-        const corpo = new PIXI.Graphics();
+        const corpo = new PIXI.Sprite();
         corpo.name = 'corpo';
+        corpo.anchor.set(0.5, 0.9);
         cont.addChild(corpo);
 
         const tag = new PIXI.Container();
@@ -842,8 +743,22 @@
       cont.zIndex = Math.round(cont.y);
 
       const caminhando = Math.hypot(alvo.x - cont.x, alvo.y - cont.y) > 3;
-      const corpo = cont.getChildByName('corpo');
-      if (corpo) this.desenharPersonagem(corpo, id, ser.acao, caminhando, tempo);
+      let corpo = cont.getChildByName('corpo');
+      if (!corpo || !(corpo instanceof PIXI.Sprite)) {
+        if (corpo) cont.removeChild(corpo);
+        corpo = new PIXI.Sprite();
+        corpo.name = 'corpo';
+        corpo.anchor.set(0.5, 0.9);
+        cont.addChildAt(corpo, 1);
+      }
+      if (typeof window !== 'undefined' && window.MotorSpritesIlha) {
+        const tex = window.MotorSpritesIlha.obterTexturaHabitante(id, ser.acao, caminhando, tempo);
+        if (tex) {
+          corpo.texture = tex;
+          const s = 1.05 * Math.max(0.85, this.box.scale);
+          corpo.scale.set(s, s);
+        }
+      }
 
       // Aura CORTEX
       const aura = cont.getChildByName('aura');
@@ -911,21 +826,22 @@
       }
     }
 
-    // Atualização da Pantera das Sombras e do Tubarão
+    // Atualização da Pantera das Sombras e do Tubarão (Sprites HD Anatômicos)
     atualizarCriaturas(estado, tempo) {
       if (!estado || !estado.mundo) return;
       const eco = estado.mundo.ecossistema || {};
 
-      // 1. Pantera das Sombras
+      // 1. Pantera das Sombras (Sprite Felino Muscular Animado)
       const pred = eco.predador;
       if (pred && pred.status === 'vivo') {
         let pCont = this.actorContainers['pantera'];
         if (!pCont) {
           pCont = new PIXI.Container();
           pCont.name = 'ser_pantera';
-          const g = new PIXI.Graphics();
-          g.name = 'corpo';
-          pCont.addChild(g);
+          const spr = new PIXI.Sprite();
+          spr.name = 'corpo';
+          spr.anchor.set(0.5, 0.7);
+          pCont.addChild(spr);
 
           const tag = new PIXI.Text('🐾 Pantera das Sombras', {
             fontFamily: 'Segoe UI, sans-serif',
@@ -956,24 +872,44 @@
         const locInfo = LOCAIS_MAPA[pred.local] || LOCAIS_MAPA.caverna;
         const alvo = this.toScreen(locInfo.x, locInfo.y);
 
+        const dx = alvo.x - pCont.x;
+        if (Math.abs(dx) > 1) {
+          pCont.scale.x = dx < 0 ? -1 : 1;
+        }
+
         pCont.x += (alvo.x - pCont.x) * 0.08;
         pCont.y += (alvo.y - pCont.y) * 0.08;
         pCont.zIndex = Math.round(pCont.y);
 
-        const corpo = pCont.getChildByName('corpo');
-        if (corpo) this.desenharPredador(corpo, tempo);
+        let corpo = pCont.getChildByName('corpo');
+        if (!corpo || !(corpo instanceof PIXI.Sprite)) {
+          if (corpo) pCont.removeChild(corpo);
+          corpo = new PIXI.Sprite();
+          corpo.name = 'corpo';
+          corpo.anchor.set(0.5, 0.7);
+          pCont.addChild(corpo);
+        }
+        if (typeof window !== 'undefined' && window.MotorSpritesIlha) {
+          const tex = window.MotorSpritesIlha.obterTexturaPantera(tempo);
+          if (tex) {
+            corpo.texture = tex;
+            const s = 1.15 * Math.max(0.85, this.box.scale);
+            corpo.scale.set(s, s);
+          }
+        }
       }
 
-      // 2. Tubarão nos Recifes
+      // 2. Tubarão nos Recifes (Sprite Hidrodinâmico com Cauda Animada)
       const tub = eco.tubarao;
       if (tub && tub.status === 'vivo') {
         let tCont = this.actorContainers['tubarao'];
         if (!tCont) {
           tCont = new PIXI.Container();
           tCont.name = 'ser_tubarao';
-          const g = new PIXI.Graphics();
-          g.name = 'corpo';
-          tCont.addChild(g);
+          const spr = new PIXI.Sprite();
+          spr.name = 'corpo';
+          spr.anchor.set(0.5, 0.5);
+          tCont.addChild(spr);
 
           const tag = new PIXI.Text('🦈 Tubarão-dos-Recifes', {
             fontFamily: 'Segoe UI, sans-serif',
@@ -999,40 +935,40 @@
         tCont.y = centroMar.y + Math.sin(this.tubaraoAngulo) * (raioPatrulha * 0.4);
         tCont.zIndex = Math.round(tCont.y);
 
-        const corpo = tCont.getChildByName('corpo');
-        if (corpo) this.desenharTubarao(corpo, tempo);
+        let corpo = tCont.getChildByName('corpo');
+        if (!corpo || !(corpo instanceof PIXI.Sprite)) {
+          if (corpo) tCont.removeChild(corpo);
+          corpo = new PIXI.Sprite();
+          corpo.name = 'corpo';
+          corpo.anchor.set(0.5, 0.5);
+          tCont.addChild(corpo);
+        }
+        if (typeof window !== 'undefined' && window.MotorSpritesIlha) {
+          const tex = window.MotorSpritesIlha.obterTexturaTubarao(tempo);
+          if (tex) {
+            corpo.texture = tex;
+            const s = 1.05 * this.box.scale;
+            corpo.scale.set(s, s);
+            corpo.rotation = this.tubaraoAngulo + Math.PI / 2;
+          }
+        }
       }
     }
 
-    // Fogueira Viva Central com Chamas e Fagulhas
+    // Fogueira Viva Central com Chamas e Fagulhas (3 Estágios Reais)
     atualizarFogueira(tempo) {
       this.campfireContainer.removeChildren();
       const pos = this.toScreen(LOCAIS_MAPA.fogueira.x, LOCAIS_MAPA.fogueira.y);
 
-      const fogueiraCont = new PIXI.Container();
-      fogueiraCont.x = pos.x;
-      fogueiraCont.y = pos.y;
+      const estado = window.stateData || (typeof stateData !== 'undefined' ? stateData : null);
+      const lenha = (estado && estado.mundo && estado.mundo.ecossistema && estado.mundo.ecossistema.recursos && estado.mundo.ecossistema.recursos.lenha) || 15;
+      const clima = (estado && estado.mundo && estado.mundo.clima) || 'normal';
 
-      const fogo = new PIXI.Graphics();
-      const osc = Math.sin(tempo * 0.012) * 3;
-      const osc2 = Math.cos(tempo * 0.016) * 2;
+      if (typeof window !== 'undefined' && window.MotorSpritesIlha) {
+        window.MotorSpritesIlha.atualizarFogueiraProps(this.campfireContainer, lenha, clima, pos, this.box.scale, tempo);
+      }
 
-      // Toras na base da fogueira
-      fogo.beginFill(0x451a03);
-      fogo.drawRoundedRect(-12, -3, 24, 6, 2);
-      fogo.drawRoundedRect(-4, -5, 8, 10, 2);
-
-      // Chamas
-      fogo.beginFill(0xf97316, 0.85);
-      fogo.drawEllipse(0, -9 + osc, 8 + osc2, 13 + osc);
-      fogo.beginFill(0xfde047, 0.95);
-      fogo.drawEllipse(0, -7 + osc, 4 + osc2 * 0.5, 8 + osc * 0.7);
-      fogo.beginFill(0xffffff, 0.9);
-      fogo.drawCircle(0, -5 + osc, 2.5);
-      fogo.endFill();
-      fogueiraCont.addChild(fogo);
-
-      // Fagulhas subindo
+      // Fagulhas subindo organicamente
       if (Math.random() < 0.35) {
         this.faiscas.push({
           x: pos.x + (Math.random() - 0.5) * 10,
@@ -1060,11 +996,10 @@
         }
       }
 
-      this.campfireContainer.addChild(fogueiraCont);
       this.campfireContainer.addChild(gFaiscas);
     }
 
-    // Iluminação e Clima Sazonal
+    // Iluminação 2.5D Suave & Clima (sem manchas opacas sobre o mapa)
     atualizarIluminacao(estadoMundo, tempo) {
       this.lightingOverlay.clear();
       this.weatherOverlay.clear();
@@ -1073,58 +1008,105 @@
       const periodo = (estadoMundo.mundo.tempo && estadoMundo.mundo.tempo.periodo) || 'manha';
       const clima = (estadoMundo.mundo.clima || '').toLowerCase();
       const estacao = (estadoMundo.mundo.tempo && estadoMundo.mundo.tempo.estacao) || 'chuvas';
-      const w = this.app.renderer.width;
-      const h = this.app.renderer.height;
+      const ehTempestade = clima.includes('tempestade');
+      const ehChuvoso = clima.includes('chuva') || ehTempestade;
+
+      const minX = this.box.x - 400;
+      const minY = this.box.y - 400;
+      const areaW = this.box.w + 800;
+      const areaH = this.box.h + 800;
 
       let corLuz = 0x000000;
       let alphaLuz = 0;
 
       if (periodo === 'manha') {
         corLuz = 0xfef08a;
-        alphaLuz = 0.02;
+        alphaLuz = 0;
       } else if (periodo === 'tarde') {
-        corLuz = 0xf97316; // Entardecer dourado
-        alphaLuz = 0.16;
+        corLuz = 0xf97316; // Entardecer dourado sutil
+        alphaLuz = 0.04;
       } else if (periodo === 'noite' || periodo === 'madrugada') {
-        corLuz = 0x040e24; // Noite azul-marinho
-        alphaLuz = 0.65;
+        corLuz = 0x051329; // Noite azulada suave
+        alphaLuz = 0.25;
       }
 
-      if (clima.includes('chuva') || clima.includes('tempestade')) {
-        corLuz = 0x0b192c;
-        alphaLuz = Math.max(alphaLuz, 0.38);
+      if (ehChuvoso) {
+        corLuz = 0x071b2e;
+        alphaLuz = Math.min(0.18, alphaLuz + (ehTempestade ? 0.08 : 0.04));
       }
 
+      // 1. Atmosfera transparente e suave (mapa sempre perfeitamente visível)
       if (alphaLuz > 0) {
         this.lightingOverlay.beginFill(corLuz, alphaLuz);
-        this.lightingOverlay.drawRect(0, 0, w, h);
+        this.lightingOverlay.drawRect(minX, minY, areaW, areaH);
         this.lightingOverlay.endFill();
-
-        // Raio de luz da fogueira à noite
-        if (periodo === 'noite' || periodo === 'madrugada') {
-          const posFog = this.toScreen(LOCAIS_MAPA.fogueira.x, LOCAIS_MAPA.fogueira.y);
-          const pulso = Math.sin(tempo * 0.006) * 6;
-          const raioMax = (90 + pulso) * this.box.scale;
-
-          this.lightingOverlay.beginFill(0xfbbf24, 0.22);
-          this.lightingOverlay.drawCircle(posFog.x, posFog.y, raioMax);
-          this.lightingOverlay.beginFill(0xfef08a, 0.38);
-          this.lightingOverlay.drawCircle(posFog.x, posFog.y, raioMax * 0.45);
-          this.lightingOverlay.endFill();
-        }
       }
 
-      // Efeito de Chuva em 30 FPS econômico
-      if (clima.includes('chuva') || clima.includes('tempestade')) {
-        this.weatherOverlay.lineStyle(1.1, 0xbae6fd, 0.55);
-        for (let i = 0; i < 40; i++) {
-          const rx = ((i * 53 + tempo * 0.45) % w);
-          const ry = ((i * 79 + tempo * 0.9) % h);
-          this.weatherOverlay.moveTo(rx, ry);
-          this.weatherOverlay.lineTo(rx - 3, ry + 11);
+      // 2. Fogueira Viva Central (Aura de calor suave e orgânica)
+      const posFog = this.toScreen(LOCAIS_MAPA.fogueira.x, LOCAIS_MAPA.fogueira.y);
+      const flicker = Math.sin(tempo * 0.008) * 3;
+      const raioBase = (48 + flicker) * this.box.scale;
+      this.lightingOverlay.beginFill(0xf97316, 0.06);
+      this.lightingOverlay.drawCircle(posFog.x, posFog.y, raioBase * 1.3);
+      this.lightingOverlay.beginFill(0xfbbf24, 0.09);
+      this.lightingOverlay.drawCircle(posFog.x, posFog.y, raioBase * 0.65);
+      this.lightingOverlay.endFill();
+
+      // 3. Tochas e Lanternas dos Personagens (apenas se noite ou tempestade)
+      if (estadoMundo && estadoMundo.seres && (periodo === 'noite' || periodo === 'madrugada')) {
+        Object.values(estadoMundo.seres).forEach(ser => {
+          if (ser.status !== 'morto' && this.actorContainers[ser.id]) {
+            const cont = this.actorContainers[ser.id];
+            const raioTocha = 36 * this.box.scale;
+            this.lightingOverlay.beginFill(0xfef08a, 0.12);
+            this.lightingOverlay.drawCircle(cont.x, cont.y, raioTocha);
+            this.lightingOverlay.endFill();
+          }
+        });
+      }
+
+      // 4. Relâmpago Estocástico durante Tempestade
+      if (ehTempestade) {
+        if (!this.proximoRelampago) {
+          this.proximoRelampago = tempo + 4000 + Math.random() * 8000;
+        }
+        if (tempo >= this.proximoRelampago) {
+          this.lightningFlash = 0.85; // Flash iluminando toda a ilha
+          this.proximoRelampago = tempo + 7000 + Math.random() * 11000;
+        }
+        if (this.lightningFlash > 0) {
+          this.lightingOverlay.beginFill(0xe0f2fe, this.lightningFlash);
+          this.lightingOverlay.drawRect(minX, minY, areaW, areaH);
+          this.lightingOverlay.endFill();
+          this.lightningFlash -= 0.055; // Fade out suave
+          if (this.lightningFlash < 0) this.lightningFlash = 0;
         }
       } else {
-        // Partículas do vento da estação (Folhas douradas ou pétalas de primavera)
+        this.lightningFlash = 0;
+      }
+
+      // 4.5 Intervenção do Público / Coluna de Luz Dourada
+      if (this.milagreAtivo && this.milagreAtivo.alpha > 0) {
+        this.lightingOverlay.beginFill(0xfbbf24, this.milagreAtivo.alpha * 0.45);
+        this.lightingOverlay.drawCircle(posFog.x, posFog.y, 180 * this.box.scale);
+        this.lightingOverlay.beginFill(0xffffff, this.milagreAtivo.alpha * 0.75);
+        this.lightingOverlay.drawRect(posFog.x - 24 * this.box.scale, minY, 48 * this.box.scale, areaH);
+        this.lightingOverlay.endFill();
+        this.milagreAtivo.alpha -= 0.015;
+      }
+
+      // 5. Chuva com Inclinação e Partículas de Clima
+      if (ehChuvoso) {
+        const velChuva = ehTempestade ? 1.4 : 0.85;
+        const qtdLinhas = ehTempestade ? 65 : 35;
+        this.weatherOverlay.lineStyle(ehTempestade ? 1.4 : 1.0, 0xbae6fd, ehTempestade ? 0.65 : 0.45);
+        for (let i = 0; i < qtdLinhas; i++) {
+          const rx = minX + ((i * 59 + tempo * 0.65 * velChuva) % areaW);
+          const ry = minY + ((i * 83 + tempo * 1.15 * velChuva) % areaH);
+          this.weatherOverlay.moveTo(rx, ry);
+          this.weatherOverlay.lineTo(rx - (ehTempestade ? 6 : 3), ry + (ehTempestade ? 15 : 10));
+        }
+      } else {
         let corParticula = estacao === 'transicao_seca' ? 0xd97706 : (estacao === 'chuvas' ? 0x16a34a : 0xf472b6);
         this.weatherOverlay.lineStyle(0);
         this.folhasVento.forEach(f => {
@@ -1140,8 +1122,32 @@
       }
     }
 
-    // Atualização da Câmera com interpolação suave (Lerp)
+    // Atualização da Câmera (com Câmera Diretora Automática e Lerp Suave)
     atualizarCamera() {
+      // 1. Câmera Diretora Automática
+      if (this.camera.modoDiretor && !this.camera.isDragging) {
+        const agora = performance.now();
+        if (agora - this.camera.ultimoTrocaDiretor > 9500 || !this.camera.followId) {
+          this.camera.ultimoTrocaDiretor = agora;
+          const estado = window.stateData || (typeof stateData !== 'undefined' ? stateData : null);
+          if (estado && estado.seres) {
+            const vivos = Object.values(estado.seres).filter(s => s.status !== 'morto');
+            if (vivos.length > 0) {
+              const cicloAtual = (estado.mundo && estado.mundo.tempo && estado.mundo.tempo.ciclo) || 0;
+              const falando = vivos.find(s => s.ultimaFalaCiclo && (cicloAtual - s.ultimaFalaCiclo <= 3));
+              const acaoDestaque = vivos.find(s => ['beber', 'explorar', 'lutar', 'desafiar_luta', 'afugentar_fera', 'construir'].includes(s.acao));
+              const serAlvo = falando || acaoDestaque || vivos[this.camera.indiceDiretor % vivos.length];
+              this.camera.indiceDiretor++;
+              if (serAlvo) {
+                this.camera.followId = serAlvo.id;
+                this.camera.targetZoom = 1.70;
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Cálculo do ponto alvo
       if (this.camera.followId) {
         let alvoCont = this.actorContainers[this.camera.followId];
         let targetX = 0.5, targetY = 0.5;
@@ -1170,6 +1176,46 @@
       this.cameraContainer.scale.set(this.camera.zoom);
       this.cameraContainer.x = this.camera.x;
       this.cameraContainer.y = this.camera.y;
+
+      // 3. Atualiza Legenda Cinematográfica e Vinheta de Tensão / Batimento Cardíaco
+      const elCaption = document.getElementById('cinematic-caption');
+      const elTension = document.getElementById('tension-vignette');
+      const estado = window.stateData || (typeof stateData !== 'undefined' ? stateData : null);
+      if (this.camera.followId && estado && estado.seres && estado.seres[this.camera.followId]) {
+        const serFoco = estado.seres[this.camera.followId];
+        const nec = serFoco.necessidades || {};
+        const saude = Number(nec.saude ?? 100);
+        const energia = Number(nec.energia ?? 100);
+        const sobTensao = saude < 25 || energia < 25;
+
+        if (elTension) {
+          elTension.style.display = sobTensao ? 'block' : 'none';
+        }
+
+        if (elCaption) {
+          const nomeSer = serFoco.nome || this.camera.followId.toUpperCase();
+          const fala = serFoco.ultimaFala || '';
+          const acao = serFoco.acao || 'observando';
+          const motivo = (serFoco.ultimaDecisao && serFoco.ultimaDecisao.motivo) || serFoco.motivo || '';
+          
+          let textoLegenda = `<span style="color:#38bdf8;font-weight:700;">[ ${nomeSer} ]</span> `;
+          if (fala) {
+            textoLegenda += `<span style="color:#fef08a;">"${fala}"</span>`;
+          } else if (motivo) {
+            textoLegenda += `<span style="font-style:italic;color:#cbd5e1;">(${motivo})</span>`;
+          } else {
+            textoLegenda += `<span style="color:#94a3b8;">Em atividade: ${acao}</span>`;
+          }
+          if (sobTensao) {
+            textoLegenda += ` <span style="color:#ef4444;font-weight:800;">[⚠️ TENSÃO CRÍTICA: Saúde ${Math.round(saude)}% | Energia ${Math.round(energia)}%]</span>`;
+          }
+          elCaption.innerHTML = textoLegenda;
+          elCaption.style.display = 'block';
+        }
+      } else {
+        if (elCaption) elCaption.style.display = 'none';
+        if (elTension) elTension.style.display = 'none';
+      }
     }
 
     mostrarTooltip(id, nome, ev) {
@@ -1217,6 +1263,7 @@
       this.atualizarAgua(tempo);
       this.atualizarPassaros(tempo);
       this.atualizarEstruturas(estado, tempo);
+      this.atualizarArvores(estado, tempo);
       this.atualizarFogueira(tempo);
       this.atualizarIluminacao(estado, tempo);
       this.atualizarHotspots();

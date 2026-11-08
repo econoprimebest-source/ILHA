@@ -39,3 +39,5 @@ reverter-psicologia.js
 # frame capturado pelo visualizador (visao.js / ILHA_VISAO=1)
 ultimo-frame.json
 missoes-fila.json
+chrome-profile/
+chrome-test-profile*/

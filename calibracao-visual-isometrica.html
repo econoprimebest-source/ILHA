@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Gate 0 — Calibração Visual Isométrica · Ilha Aurora</title>
+<style>
+  :root {
+    --bg: #10161d;
+    --panel: #182028;
+    --line: #2b3a49;
+    --ink: #e6edf3;
+    --dim: #8b9bab;
+    --accent: #fbbf24;
+    --ok: #34d399;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 32px 120px;
+    background: var(--bg); color: var(--ink);
+    font: 13px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: .5px; }
+  h2 { font-size: 14px; margin: 40px 0 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  .sub { color: var(--dim); margin: 0 0 20px; max-width: 90ch; }
+  .nota {
+    background: #1c2530; border-left: 3px solid var(--accent);
+    padding: 10px 14px; margin: 12px 0 24px; color: #c7d3de; max-width: 100ch;
+  }
+  .grid { display: flex; flex-wrap: wrap; gap: 14px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 10px;
+  }
+  .card canvas, .card img { display: block; border-radius: 3px; }
+  .card .rot { margin-top: 8px; font-size: 12px; color: var(--ink); }
+  .card .meta { font-size: 10px; color: var(--dim); margin-top: 2px; }
+  .card select {
+    width: 100%; margin-top: 6px;
+    background: #0f151b; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 4px; padding: 4px;
+    font: inherit; font-size: 11px;
+  }
+  .peca { width: 300px; }
+  .peca .thumb {
+    width: 300px; height: 300px; display: grid; place-items: center;
+    background-color: #202a35;
+    background-image:
+      linear-gradient(45deg, #2a3644 25%, transparent 25%),
+      linear-gradient(-45deg, #2a3644 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a3644 75%),
+      linear-gradient(-45deg, transparent 75%, #2a3644 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    border-radius: 3px;
+  }
+  .peca .thumb img {
+    width: 256px; height: 256px;
+    image-rendering: pixelated;
+  }
+  .env .thumb { width: 96px; height: 96px; }
+  .env .thumb img { width: 88px; height: 88px; }
+  .env { width: 112px; padding: 8px; }
+  .env .rot { font-size: 10px; margin-top: 4px; }
+  .placa { width: 620px; }
+  #saida {
+    width: 100%; height: 260px; margin-top: 10px;
+    background: #0b1016; color: var(--ok);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px; font: inherit; font-size: 11px; resize: vertical;
+  }
+  button {
+    background: var(--accent); color: #10161d; border: 0;
+    padding: 9px 18px; border-radius: 5px; font: inherit;
+    font-weight: 700; cursor: pointer;
+  }
+  button:hover { filter: brightness(1.1); }
+  .barra { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%); padding-top: 20px; }
+  code { background: #0b1016; padding: 1px 5px; border-radius: 3px; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>Gate 0 — Calibração Visual Isométrica</h1>
+<p class="sub">
+  Abra este arquivo direto do disco (<code>file://</code>), não pelo servidor:
+  a rota <code>/assets/</code> serve <code>.html</code> como binário.
+  Nada aqui é salvo automaticamente — ao final, copie o relatório e cole de volta no chat.
+</p>
+
+<div class="nota">
+  <strong>Por que esta página existe.</strong>
+  A ferramenta que gerou o plano de arte não tem visão de imagem. Tudo o que ela afirmou sobre
+  os assets veio de medição de pixels (bounding box de alpha, paleta, densidade de borda).
+  Este é o ponto onde olho humano entra e corrige o que a medição não pode saber:
+  <em>o que cada peça realmente é</em>, e <em>se o fundo já tem casas pintadas</em>.
+</div>
+
+<h2>1 · O fundo já tem casas nesses pontos?</h2>
+<p class="sub">
+  Recorte de 240×190 px do plate, ampliado 2,5×. A cruz marca exatamente a coordenada
+  <code>LOCAIS_MAPA</code>. Procure por telhado, parede, porta ou sombra de construção pintada.
+</p>
+<div class="grid" id="alvos"></div>
+
+<h2>2 · As 23 peças do kit medieval — classificar</h2>
+<p class="sub">
+  4× de ampliação sobre xadrez. <code>baseY</code> = última linha com pixel não-transparente:
+  <strong>63</strong> significa que a peça toca o chão do canvas; <strong>0–41</strong> significa
+  que ela flutua na metade superior e provavelmente é andar superior.
+</p>
+<div class="grid" id="pecas"></div>
+
+<h2>3 · Peças de ambiente (referência para props)</h2>
+<p class="sub">Árvores, pedras, arbustos. Sem classificação obrigatória — só para saber o que existe.</p>
+<div class="grid" id="ambiente"></div>
+
+<h2>4 · Relatório</h2>
+<div class="barra">
+  <button onclick="gerarRelatorio()">Gerar relatório</button>
+  <span class="sub" style="margin-left:12px">depois: Ctrl+C no campo abaixo</span>
+  <textarea id="saida" spellcheck="false" placeholder="Clique em 'Gerar relatório'..."></textarea>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Dados de calibração
+// ---------------------------------------------------------------------------
+
+const PLATE = { w: 1376, h: 768 };
+const BASE = 'assets/isometric/medieval/PNG/Default size';
+
+const ALVOS = [
+  { id: 'casa_icaro', x: 0.220, y: 0.480, esperado: 'contorno escuro 13,0% · borda 20,5% → provável estrutura' },
+  { id: 'casa_lara',  x: 0.240, y: 0.410, esperado: 'contorno escuro 19,8% · borda 15,2% → provável estrutura' },
+  { id: 'casa_joao',  x: 0.460, y: 0.240, esperado: 'contorno escuro 19,4% · borda  8,6% → indefinido' },
+  { id: 'casa_maria', x: 0.820, y: 0.580, esperado: 'contorno escuro  4,7% · borda 10,8% → provável terreno' },
+  { id: 'fogueira',   x: 0.490, y: 0.485, esperado: 'controle: centro da vila, deve ser área aberta' },
+  { id: 'mar',        x: 0.350, y: 0.880, esperado: 'controle negativo: água, sem construção' }
+];
+
+// bbox de alpha medido programaticamente. bY = última linha opaca.
+const PECAS = [
+  { id: '01', bbox: '14,22-49,63', bY: 63, hip: 'bloco baixo no chão' },
+  { id: '02', bbox: '2,26-61,63',  bY: 63, hip: 'fachada térrea larga' },
+  { id: '03', bbox: '6,30-57,63',  bY: 63, hip: 'base / varanda' },
+  { id: '04', bbox: '10,0-53,35',  bY: 0,  hip: 'andar superior' },
+  { id: '05', bbox: '10,0-53,41',  bY: 0,  hip: 'andar superior c/ beiral' },
+  { id: '06', bbox: '2,0-61,37',   bY: 0,  hip: 'fachada com vãos' },
+  { id: '07', bbox: '6,0-57,33',   bY: 0,  hip: 'andar superior estreito' },
+  { id: '08', bbox: '16,12-47,51', bY: 51, hip: 'MESMA silhueta de _22 — variante' },
+  { id: '09', bbox: '4,2-59,61',   bY: 61, hip: 'corpo/torre quase cheio' },
+  { id: '10', bbox: '10,24-53,63', bY: 63, hip: 'corpo compacto no chão' },
+  { id: '11', bbox: '10,0-53,39',  bY: 0,  hip: 'andar superior compacto' },
+  { id: '12', bbox: '22,14-41,49', bY: 49, hip: 'poste / placa' },
+  { id: '13', bbox: '7,7-58,58',   bY: 58, hip: 'ponte' },
+  { id: '14', bbox: '1,1-63,63',   bY: 63, hip: 'ponte (canvas cheio)' },
+  { id: '15', bbox: '1,0-62,63',   bY: 63, hip: 'ponte (canvas cheio)' },
+  { id: '16', bbox: '10,2-53,61',  bY: 61, hip: 'poço / arco' },
+  { id: '17', bbox: '10,2-53,61',  bY: 61, hip: 'MESMA silhueta de _16 — variante' },
+  { id: '18', bbox: '10,8-53,55',  bY: 55, hip: 'fachada 2 vãos' },
+  { id: '19', bbox: '6,2-57,61',   bY: 61, hip: 'rampa / escada' },
+  { id: '20', bbox: '10,8-53,55',  bY: 55, hip: 'MESMA silhueta de _18 — variante' },
+  { id: '21', bbox: '2,2-61,61',   bY: 61, hip: 'plataforma / cais' },
+  { id: '22', bbox: '16,12-47,51', bY: 51, hip: 'MESMA silhueta de _08 — variante' },
+  { id: '23', bbox: '10,28-53,63', bY: 63, hip: 'laje / degrau' }
+];
+
+const CLASSES = [
+  ['', '— o que é? —'],
+  ['fachada_terrea', 'fachada térrea (casa)'],
+  ['andar_superior', 'andar superior / telhado'],
+  ['corpo_completo', 'corpo completo de 1 andar'],
+  ['torre', 'torre / estrutura alta'],
+  ['ponte', 'ponte'],
+  ['poco', 'poço / arco'],
+  ['cerca', 'cerca / paliçada'],
+  ['plataforma', 'plataforma / cais / laje'],
+  ['poste', 'poste / placa / chaminé'],
+  ['outro', 'outro (descrevo no chat)']
+];
+
+const PLATE_OPCOES = [
+  ['', '— o que há aqui? —'],
+  ['casa_grande', 'casa pintada (grande)'],
+  ['casa_pequena', 'casa pintada (pequena)'],
+  ['ruina', 'ruína / mancha / rocha'],
+  ['so_terreno', 'só terreno'],
+  ['vazio_de_proposito', 'vazio de propósito (não mexer)'],
+  ['nao_sei', 'não sei']
+];
+
+// ---------------------------------------------------------------------------
+// Seção 1 — recortes do plate
+// ---------------------------------------------------------------------------
+
+function montarAlvos() {
+  const caixa = document.getElementById('alvos');
+  const img = new Image();
+
+  img.onload = () => {
+    ALVOS.forEach(alvo => {
+      const card = document.createElement('div');
+      card.className = 'card placa';
+
+      const cv = document.createElement('canvas');
+      cv.width = 600;
+      cv.height = 475;
+      const ctx = cv.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+
+      const sw = 240, sh = 190;
+      let sx = alvo.x * PLATE.w - sw / 2;
+      let sy = alvo.y * PLATE.h - sh / 2;
+      sx = Math.max(0, Math.min(PLATE.w - sw, sx));
+      sy = Math.max(0, Math.min(PLATE.h - sh, sy));
+
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 600, 475);
+
+      // cruz exata da coordenada
+      const px = ((alvo.x * PLATE.w) - sx) * 2.5;
+      const py = ((alvo.y * PLATE.h) - sy) * 2.5;
+      ctx.strokeStyle = 'rgba(251,191,36,.9)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px - 14, py); ctx.lineTo(px + 14, py);
+      ctx.moveTo(px, py - 14); ctx.lineTo(px, py + 14);
+      ctx.stroke();
+
+      card.appendChild(cv);
+
+      const rot = document.createElement('div');
+      rot.className = 'rot';
+      rot.textContent = alvo.id + '  (' + alvo.x.toFixed(3) + ', ' + alvo.y.toFixed(3) + ')';
+      card.appendChild(rot);
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = 'medição: ' + alvo.esperado;
+      card.appendChild(meta);
+
+      const sel = document.createElement('select');
+      sel.dataset.alvo = alvo.id;
+      PLATE_OPCOES.forEach(([v, t]) => sel.add(new Option(t, v)));
+      card.appendChild(sel);
+
+      caixa.appendChild(card);
+    });
+  };
+
+  img.onerror = () => {
+    // o arquivo .png é na verdade um JPEG (magic FF D8 FF E0): tenta o gêmeo .jpg
+    if (!img.dataset.tentouJpg) {
+      img.dataset.tentouJpg = '1';
+      img.src = 'mapa-ilha-evertrail.jpg';
+    } else {
+      caixa.innerHTML =
+        '<div class="nota">Não foi possível carregar o plate. ' +
+        'Confirme que este HTML está na raiz do projeto e que ' +
+        '<code>mapa-ilha-evertrail.png</code> existe ao lado dele.</div>';
+    }
+  };
+
+  img.src = 'mapa-ilha-evertrail.png';
+}
+
+// ---------------------------------------------------------------------------
+// Seção 2 — peças
+// ---------------------------------------------------------------------------
+
+function montarPecas() {
+  const caixa = document.getElementById('pecas');
+
+  PECAS.forEach(peca => {
+    const card = document.createElement('div');
+    card.className = 'card peca';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+
+    const im = document.createElement('img');
+    im.src = BASE + '/Structure/medievalStructure_' + peca.id + '.png';
+    im.alt = 'peça ' + peca.id;
+    im.onerror = () => {
+      thumb.innerHTML = '<div style="color:#f87171;font-size:11px">não carregou<br>_'
+        + peca.id + '</div>';
+    };
+    thumb.appendChild(im);
+    card.appendChild(thumb);
+
+    const rot = document.createElement('div');
+    rot.className = 'rot';
+    rot.textContent = '_' + peca.id;
+    card.appendChild(rot);
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = 'bbox ' + peca.bbox + ' · baseY ' + peca.bY + ' · ' + peca.hip;
+    card.appendChild(meta);
+
+    const sel = document.createElement('select');
+    sel.dataset.peca = peca.id;
+    CLASSES.forEach(([v, t]) => sel.add(new Option(t, v)));
+    card.appendChild(sel);
+
+    caixa.appendChild(card);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Seção 3 — ambiente
+// ---------------------------------------------------------------------------
+
+function montarAmbiente() {
+  const caixa = document.getElementById('ambiente');
+  for (let i = 1; i <= 21; i++) {
+    const id = String(i).padStart(2, '0');
+    const card = document.createElement('div');
+    card.className = 'card env';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    const im = document.createElement('img');
+    im.src = BASE + '/Environment/medievalEnvironment_' + id + '.png';
+    im.loading = 'lazy';
+    thumb.appendChild(im);
+    card.appendChild(thumb);
+
+    const rot = document.createElement('div');
+    rot.className = 'rot';
+    rot.textContent = 'env_' + id;
+    card.appendChild(rot);
+
+    caixa.appendChild(card);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Relatório
+// ---------------------------------------------------------------------------
+
+function gerarRelatorio() {
+  const relatorio = {
+    quando: new Date().toISOString(),
+    plate: {},
+    pecas: {}
+  };
+
+  document.querySelectorAll('select[data-alvo]').forEach(sel => {
+    relatorio.plate[sel.dataset.alvo] = sel.value || null;
+  });
+
+  document.querySelectorAll('select[data-peca]').forEach(sel => {
+    if (sel.value) relatorio.pecas[sel.dataset.peca] = sel.value;
+  });
+
+  const faltam = Object.values(relatorio.plate).filter(v => !v).length;
+  relatorio.aviso = faltam > 0
+    ? faltam + ' ponto(s) do plate sem resposta'
+    : 'todos os pontos do plate respondidos';
+
+  const saida = document.getElementById('saida');
+  saida.value = JSON.stringify(relatorio, null, 2);
+  saida.focus();
+  saida.select();
+}
+
+montarAlvos();
+montarPecas();
+montarAmbiente();
+</script>
+</body>
+</html>
