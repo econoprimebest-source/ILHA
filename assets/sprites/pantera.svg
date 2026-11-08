@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 50" width="90" height="50">
+  <defs>
+    <radialGradient id="sombraPantera" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="peloPele" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#090d16"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sombra no Chão -->
+  <ellipse cx="45" cy="44" rx="34" ry="5.5" fill="url(#sombraPantera)"/>
+
+  <!-- Pata Traseira Direita -->
+  <path d="M22,26 Q18,36 14,44 L19,44 Q24,36 27,28 Z" fill="#090d16"/>
+  <!-- Pata Dianteira Direita -->
+  <path d="M58,26 Q60,35 64,44 L68,44 Q65,34 62,24 Z" fill="#090d16"/>
+
+  <!-- Cauda Longa Sinuosa com Curva Fina -->
+  <path d="M14,24 Q6,20 4,12 Q2,4 8,2 Q12,2 10,8 Q8,16 18,22 Z" fill="#090d16"/>
+
+  <!-- Tronco Muscular Arqueado -->
+  <path d="M18,22 Q24,14 42,16 Q58,16 66,20 Q68,26 62,32 Q44,36 26,32 Q18,28 18,22 Z" fill="url(#peloPele)"/>
+
+  <!-- Pata Traseira Esquerda (Primeiro plano) -->
+  <path d="M26,24 Q20,32 22,44 L27,44 Q28,34 32,28 Z" fill="url(#peloPele)"/>
+  <ellipse cx="25" cy="44" rx="3.5" ry="2" fill="#020617"/>
+
+  <!-- Pata Dianteira Esquerda (Primeiro plano) -->
+  <path d="M54,24 Q52,34 54,44 L60,44 Q60,34 60,24 Z" fill="url(#peloPele)"/>
+  <ellipse cx="57" cy="44" rx="3.5" ry="2" fill="#020617"/>
+
+  <!-- Pescoço e Cabeça de Felino Predador -->
+  <path d="M64,18 Q72,12 80,18 Q84,24 78,28 Q70,30 64,24 Z" fill="url(#peloPele)"/>
+
+  <!-- Focinho -->
+  <path d="M78,19 Q86,21 82,26 Q77,27 76,23 Z" fill="#090d16"/>
+  <circle cx="82" cy="22" r="1.5" fill="#f43f5e"/> <!-- Nariz -->
+
+  <!-- Orelhas Afiadas de Pantera -->
+  <polygon points="72,14 74,8 78,14" fill="#090d16"/>
+  <polygon points="74,13 75,10 77,13" fill="#f43f5e"/>
+  <polygon points="68,16 69,11 73,16" fill="#1e293b"/>
+
+  <!-- Olhos Dourados Brilhantes -->
+  <ellipse cx="76" cy="19" rx="2.5" ry="2" fill="#fbbf24"/>
+  <line x1="76" y1="17.5" x2="76" y2="20.5" stroke="#000000" stroke-width="1.2"/>
+</svg>

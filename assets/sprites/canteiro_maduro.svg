@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">
+  
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">
+  <defs>
+    <linearGradient id="terraArada" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3e2112"/>
+      <stop offset="100%" stop-color="#241207"/>
+    </linearGradient>
+  </defs>
+  <!-- Borda do Canteiro de Madeira Rústica -->
+  <rect x="4" y="4" width="92" height="42" rx="4" fill="#5c2e0b" stroke="#381a05" stroke-width="2"/>
+  <!-- Camada de Terra Fértil Úmida -->
+  <rect x="7" y="7" width="86" height="36" rx="2" fill="url(#terraArada)"/>
+  <!-- 4 Sulcos de Plantio com Sombra -->
+  <path d="M12,14 L88,14" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
+  <path d="M12,22 L88,22" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
+  <path d="M12,30 L88,30" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
+  <path d="M12,38 L88,38" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
+  <!-- Destaques de Terra Escavada -->
+  <line x1="12" y1="12" x2="88" y2="12" stroke="#5a3118" stroke-width="1"/>
+  <line x1="12" y1="20" x2="88" y2="20" stroke="#5a3118" stroke-width="1"/>
+  <line x1="12" y1="28" x2="88" y2="28" stroke="#5a3118" stroke-width="1"/>
+  <line x1="12" y1="36" x2="88" y2="36" stroke="#5a3118" stroke-width="1"/>
+
+
+  <!-- Vegetais Maduros Despontando da Terra -->
+  <g>
+    <!-- Cenouras visíveis na terra -->
+    <ellipse cx="20" cy="14" rx="4" ry="3" fill="#ea580c"/>
+    <ellipse cx="38" cy="14" rx="4.5" ry="3.5" fill="#f97316"/>
+    <ellipse cx="56" cy="14" rx="4" ry="3" fill="#ea580c"/>
+    <ellipse cx="74" cy="14" rx="4.5" ry="3.5" fill="#f97316"/>
+
+    <ellipse cx="26" cy="22" rx="4.5" ry="3.5" fill="#f97316"/>
+    <ellipse cx="44" cy="22" rx="4" ry="3" fill="#ea580c"/>
+    <ellipse cx="62" cy="22" rx="4.5" ry="3.5" fill="#f97316"/>
+    <ellipse cx="80" cy="22" rx="4" ry="3" fill="#ea580c"/>
+
+    <ellipse cx="20" cy="30" rx="4" ry="3" fill="#ea580c"/>
+    <ellipse cx="38" cy="30" rx="4.5" ry="3.5" fill="#f97316"/>
+    <ellipse cx="56" cy="30" rx="4" ry="3" fill="#ea580c"/>
+    <ellipse cx="74" cy="30" rx="4.5" ry="3.5" fill="#f97316"/>
+
+    <ellipse cx="26" cy="38" rx="4.5" ry="3.5" fill="#f97316"/>
+    <ellipse cx="44" cy="38" rx="4" ry="3" fill="#ea580c"/>
+    <ellipse cx="62" cy="38" rx="4.5" ry="3.5" fill="#f97316"/>
+    <ellipse cx="80" cy="38" rx="4" ry="3" fill="#ea580c"/>
+  </g>
+
+  <!-- Folhagem Exuberante das Cenouras -->
+  <g fill="#15803d" stroke="#166534" stroke-width="0.8">
+    <!-- Ramas Densas Linha 1 -->
+    <path d="M20,12 Q14,4 10,7 Q16,11 20,12 Q20,3 24,5 Q22,10 20,12 Q28,6 26,11 Z"/>
+    <path d="M38,12 Q32,4 28,7 Q34,11 38,12 Q38,3 42,5 Q40,10 38,12 Q46,6 44,11 Z"/>
+    <path d="M56,12 Q50,4 46,7 Q52,11 56,12 Q56,3 60,5 Q58,10 56,12 Q64,6 62,11 Z"/>
+    <path d="M74,12 Q68,4 64,7 Q70,11 74,12 Q74,3 78,5 Q76,10 74,12 Q82,6 80,11 Z"/>
+    <!-- Ramas Densas Linha 2 -->
+    <path d="M26,20 Q20,12 16,15 Q22,19 26,20 Q26,11 30,13 Q28,18 26,20 Q34,14 32,19 Z"/>
+    <path d="M44,20 Q38,12 34,15 Q40,19 44,20 Q44,11 48,13 Q46,18 44,20 Q52,14 50,19 Z"/>
+    <path d="M62,20 Q56,12 52,15 Q58,19 62,20 Q62,11 66,13 Q64,18 62,20 Q70,14 68,19 Z"/>
+    <path d="M80,20 Q74,12 70,15 Q76,19 80,20 Q80,11 84,13 Q82,18 80,20 Q88,14 86,19 Z"/>
+    <!-- Ramas Densas Linha 3 -->
+    <path d="M20,28 Q14,20 10,23 Q16,27 20,28 Q20,19 24,21 Q22,26 20,28 Q28,22 26,27 Z"/>
+    <path d="M38,28 Q32,20 28,23 Q34,27 38,28 Q38,19 42,21 Q40,26 38,28 Q46,22 44,27 Z"/>
+    <path d="M56,28 Q50,20 46,23 Q52,27 56,28 Q56,19 60,21 Q58,26 56,28 Q64,22 62,27 Z"/>
+    <path d="M74,28 Q68,20 64,23 Q70,27 74,28 Q74,19 78,21 Q76,26 74,28 Q82,22 80,27 Z"/>
+  </g>
+</svg>

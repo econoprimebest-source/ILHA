@@ -755,7 +755,7 @@
         const tex = window.MotorSpritesIlha.obterTexturaHabitante(id, ser.acao, caminhando, tempo);
         if (tex) {
           corpo.texture = tex;
-          const s = 1.05 * Math.max(0.85, this.box.scale);
+          const s = 0.65 * Math.max(0.85, this.box.scale);
           corpo.scale.set(s, s);
         }
       }
@@ -893,7 +893,7 @@
           const tex = window.MotorSpritesIlha.obterTexturaPantera(tempo);
           if (tex) {
             corpo.texture = tex;
-            const s = 1.15 * Math.max(0.85, this.box.scale);
+            const s = 0.68 * Math.max(0.85, this.box.scale);
             corpo.scale.set(s, s);
           }
         }
@@ -947,7 +947,7 @@
           const tex = window.MotorSpritesIlha.obterTexturaTubarao(tempo);
           if (tex) {
             corpo.texture = tex;
-            const s = 1.05 * this.box.scale;
+            const s = 0.72 * this.box.scale;
             corpo.scale.set(s, s);
             corpo.rotation = this.tubaraoAngulo + Math.PI / 2;
           }

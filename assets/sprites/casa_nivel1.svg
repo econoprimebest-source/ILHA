@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 80" width="90" height="80">
+  <ellipse cx="45" cy="72" rx="36" ry="7" fill="#000" opacity="0.4"/>
+  <!-- Toras de Estrutura em A -->
+  <line x1="16" y1="70" x2="45" y2="16" stroke="#451a03" stroke-width="6" stroke-linecap="round"/>
+  <line x1="74" y1="70" x2="45" y2="16" stroke="#451a03" stroke-width="6" stroke-linecap="round"/>
+  <line x1="45" y1="16" x2="45" y2="70" stroke="#78350f" stroke-width="4"/>
+  <!-- Cobertura de Peles e Sapê -->
+  <polygon points="45,18 18,68 72,68" fill="#854d0e" stroke="#3d2105" stroke-width="2"/>
+  <polygon points="45,22 24,66 45,66" fill="#a16207"/>
+  <!-- Entrada do Abrigo com interior escuro -->
+  <polygon points="45,34 32,68 58,68" fill="#1c1917"/>
+</svg>

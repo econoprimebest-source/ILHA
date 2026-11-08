@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 46" width="100" height="46">
+  <defs>
+    <linearGradient id="tubaraoCorpo" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="55%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="marReflexo" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ondulação de Água ao Redor -->
+  <ellipse cx="50" cy="24" rx="46" ry="16" fill="url(#marReflexo)"/>
+
+  <!-- Barbatana Caudal (Rabo em foice clássico) -->
+  <path d="M18,22 Q10,12 2,4 Q10,20 16,23 Q10,28 4,40 Q12,32 18,26 Z" fill="#1e293b"/>
+
+  <!-- Barbatana Dorsal Secundária -->
+  <polygon points="26,20 22,14 30,20" fill="#1e293b"/>
+
+  <!-- Corpo Hidrodinâmico do Tubarão -->
+  <path d="M18,24 Q28,14 56,14 Q80,16 96,24 Q86,34 56,34 Q28,32 18,24 Z" fill="url(#tubaraoCorpo)"/>
+
+  <!-- Barbatana Dorsal Triangular Icônica -->
+  <path d="M46,14 Q52,2 58,2 Q56,10 64,14 Z" fill="#0f172a"/>
+
+  <!-- Barbatana Peitoral -->
+  <path d="M52,28 Q44,42 36,44 Q42,34 58,30 Z" fill="#1e293b"/>
+
+  <!-- Guelras Laterais (3 ranhuras curvas) -->
+  <path d="M68,20 Q67,24 68,28" stroke="#0f172a" stroke-width="1.2" fill="none"/>
+  <path d="M71,20 Q70,24 71,28" stroke="#0f172a" stroke-width="1.2" fill="none"/>
+  <path d="M74,21 Q73,24 74,27" stroke="#0f172a" stroke-width="1.2" fill="none"/>
+
+  <!-- Olho Frio do Predador -->
+  <circle cx="86" cy="21" r="2" fill="#020617"/>
+  <circle cx="86.5" cy="20.5" r="0.6" fill="#ffffff"/>
+
+  <!-- Linha da Boca -->
+  <path d="M84,27 Q89,28 92,26" stroke="#0f172a" stroke-width="1.2" fill="none"/>
+</svg>

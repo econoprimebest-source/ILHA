@@ -76,6 +76,9 @@
     fogueiraEstagios: []
   };
 
+  // Cache de Texturas SVG HD Pré-renderizadas (/assets/sprites/)
+  const cacheSvg = {};
+
   /**
    * Helper: Cria canvas offscreen com dimensões dadas
    */
@@ -691,7 +694,23 @@
 
     inicializar() {
       if (this.carregado) return;
-      console.log('🎨 [SPRITES-ILHA] Pré-renderizando Atlas de Sprites HD...');
+      console.log('🎨 [SPRITES-ILHA] Pré-renderizando Atlas de Sprites HD e carregando assets/sprites/ ...');
+
+      // 0. Carregamento Direto das Texturas SVG de Alta Definição
+      try {
+        const arqs = [
+          'icaro', 'icaro_walk', 'lara', 'lara_walk', 'joao', 'joao_walk', 'maria', 'maria_walk',
+          'pantera', 'tubarao',
+          'canteiro_arado', 'canteiro_broto', 'canteiro_maduro', 'canteiro_colhido',
+          'fogueira_apagada', 'fogueira_brasa', 'fogueira_alta',
+          'casa_nivel1', 'casa_nivel2', 'casa_nivel3'
+        ];
+        arqs.forEach(nome => {
+          cacheSvg[nome] = PIXI.Texture.from('/assets/sprites/' + nome + '.svg');
+        });
+      } catch (errSvg) {
+        console.warn('⚠️ [SPRITES-ILHA] Aviso ao pré-carregar SVGs:', errSvg);
+      }
 
       // 1. Texturas dos Habitantes (4 seres x 4 frames de caminhada x 6 ações)
       const seres = ['icaro', 'lara', 'joao', 'maria'];
@@ -746,6 +765,17 @@
     obterTexturaHabitante(serId, acaoAtual, caminhando, tempo) {
       if (!this.carregado) this.inicializar();
       const sId = (serId || 'icaro').toLowerCase();
+
+      // PRIORIDADE 1: Textura SVG Rica Pré-renderizada de Alta Definição
+      if (cacheSvg[sId]) {
+        if (caminhando && cacheSvg[sId + '_walk']) {
+          const passo = Math.sin(tempo * 0.009) > 0;
+          return passo ? cacheSvg[sId + '_walk'] : cacheSvg[sId];
+        }
+        return cacheSvg[sId];
+      }
+
+      // Fallback: Atlas offscreen
       const tabelaSer = cacheTexturas.habitantes[sId] || cacheTexturas.habitantes.icaro;
 
       let chaveAcao = 'parado';
@@ -771,6 +801,7 @@
      */
     obterTexturaPantera(tempo) {
       if (!this.carregado) this.inicializar();
+      if (cacheSvg.pantera) return cacheSvg.pantera;
       const idx = Math.floor((tempo * 0.005) % cacheTexturas.pantera.length);
       return cacheTexturas.pantera[idx];
     },
@@ -780,6 +811,7 @@
      */
     obterTexturaTubarao(tempo) {
       if (!this.carregado) this.inicializar();
+      if (cacheSvg.tubarao) return cacheSvg.tubarao;
       const idx = Math.floor((tempo * 0.004) % cacheTexturas.tubarao.length);
       return cacheTexturas.tubarao[idx];
     },
@@ -810,8 +842,10 @@
         { dx: -4,  dy: 12,  est: estagioGeral === 2 ? 2 : Math.min(3, estagioGeral + 1) }
       ];
 
+      const chavesEstagios = ['canteiro_arado', 'canteiro_broto', 'canteiro_maduro', 'canteiro_colhido'];
       canteirosOffsets.forEach(c => {
-        const spr = new PIXI.Sprite(cacheTexturas.hortaEstagios[c.est]);
+        const tex = cacheSvg[chavesEstagios[c.est]] || cacheTexturas.hortaEstagios[c.est];
+        const spr = new PIXI.Sprite(tex);
         spr.anchor.set(0.5, 0.5);
         spr.x = posFazenda.x + c.dx * scale;
         spr.y = posFazenda.y + c.dy * scale;
@@ -832,7 +866,9 @@
       if (chuvoso && lenha < 10) nivel = 0; // Apagada na chuva sem lenha
       else if (lenha < 8) nivel = 1; // Brasas fracas
 
-      const spr = new PIXI.Sprite(cacheTexturas.fogueiraEstagios[nivel]);
+      const chavesFogo = ['fogueira_apagada', 'fogueira_brasa', 'fogueira_alta'];
+      const tex = cacheSvg[chavesFogo[nivel]] || cacheTexturas.fogueiraEstagios[nivel];
+      const spr = new PIXI.Sprite(tex);
       spr.anchor.set(0.5, 0.7);
       spr.x = posFogueira.x;
       spr.y = posFogueira.y;

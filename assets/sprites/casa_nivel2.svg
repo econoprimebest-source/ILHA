@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90" width="100" height="90">
+  <ellipse cx="50" cy="84" rx="42" ry="6" fill="#000" opacity="0.4"/>
+  <!-- Paredes de Toras Encaixadas -->
+  <rect x="20" y="44" width="60" height="38" rx="3" fill="#78350f" stroke="#381a05" stroke-width="2"/>
+  <!-- Linhas das Toras Horizontais -->
+  <line x1="20" y1="52" x2="80" y2="52" stroke="#451a03" stroke-width="2"/>
+  <line x1="20" y1="60" x2="80" y2="60" stroke="#451a03" stroke-width="2"/>
+  <line x1="20" y1="68" x2="80" y2="68" stroke="#451a03" stroke-width="2"/>
+  <line x1="20" y1="76" x2="80" y2="76" stroke="#451a03" stroke-width="2"/>
+  <!-- Porta de Madeira Reforçada -->
+  <rect x="42" y="56" width="16" height="26" rx="2" fill="#381a05"/>
+  <circle cx="55" cy="70" r="1.5" fill="#facc15"/>
+  <!-- Janela com Luz Interior Acolhedora -->
+  <rect x="64" y="54" width="10" height="10" rx="1.5" fill="#fef08a" stroke="#381a05" stroke-width="1.5"/>
+  <line x1="69" y1="54" x2="69" y2="64" stroke="#381a05" stroke-width="1"/>
+  <line x1="64" y1="59" x2="74" y2="59" stroke="#381a05" stroke-width="1"/>
+  <!-- Telhado de Palha e Madeira com Beiral -->
+  <polygon points="50,14 10,48 90,48" fill="#b45309" stroke="#451a03" stroke-width="2"/>
+  <polygon points="50,16 16,46 50,46" fill="#d97706"/>
+</svg>

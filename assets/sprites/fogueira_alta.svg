@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 64" width="80" height="64">
+  <defs>
+    <radialGradient id="fogoGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#ea580c" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="brasaGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Brilho no Chão -->
+  <ellipse cx="40" cy="42" rx="34" ry="18" fill="url(#fogoGlow)"/>
+
+  <!-- Círculo de Pedras Rústicas de Proteção -->
+  <g fill="#57534e" stroke="#292524" stroke-width="1.5">
+    <ellipse cx="20" cy="40" rx="6" ry="4"/>
+    <ellipse cx="26" cy="48" rx="7" ry="4.5"/>
+    <ellipse cx="38" cy="52" rx="8" ry="5"/>
+    <ellipse cx="52" cy="50" rx="7.5" ry="4.5"/>
+    <ellipse cx="60" cy="42" rx="6.5" ry="4"/>
+    <ellipse cx="56" cy="34" rx="6" ry="3.5"/>
+    <ellipse cx="44" cy="30" rx="7" ry="4"/>
+    <ellipse cx="28" cy="32" rx="6.5" ry="3.5"/>
+  </g>
+
+  <!-- Cinzas e Carvão de Base -->
+  <ellipse cx="40" cy="42" rx="16" ry="8" fill="#1c1917"/>
+
+  <!-- Toras de Lenha Cruzadas -->
+  <g stroke="#180c05" stroke-width="1">
+    <rect x="26" y="38" width="28" height="6" rx="2" fill="#78350f" transform="rotate(-18 40 41)"/>
+    <rect x="26" y="38" width="28" height="6" rx="2" fill="#5c2e0b" transform="rotate(22 40 41)"/>
+    <rect x="28" y="38" width="24" height="5" rx="1.5" fill="#451a03"/>
+  </g>
+
+  
+    <!-- Labaredas de Fogo Alto (Camadas Amarela, Laranja e Branca) -->
+    <path d="M40,10 Q48,22 52,38 Q40,46 28,38 Q32,22 40,10 Z" fill="#ea580c"/>
+    <path d="M40,16 Q46,26 48,39 Q40,44 32,39 Q34,26 40,16 Z" fill="#f59e0b"/>
+    <path d="M40,24 Q44,30 44,40 Q40,43 36,40 Q36,30 40,24 Z" fill="#fef08a"/>
+    <!-- Labaredas Secundárias Dançantes -->
+    <path d="M32,28 Q36,34 33,40 Q28,38 32,28 Z" fill="#f59e0b"/>
+    <path d="M48,26 Q52,34 47,40 Q44,38 48,26 Z" fill="#ea580c"/>
+    <!-- Fagulhas Subindo -->
+    <circle cx="37" cy="8" r="1.5" fill="#fef08a"/>
+    <circle cx="44" cy="4" r="1.2" fill="#f59e0b"/>
+    <circle cx="32" cy="14" r="1.2" fill="#facc15"/>
+  
+</svg>
