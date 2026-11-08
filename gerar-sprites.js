@@ -532,3 +532,144 @@ const svgCasaNivel3 = `
 salvar('casa_nivel3.svg', svgCasaNivel3);
 
 console.log('[SPRITES] Todos os assets foram gerados com sucesso!');
+
+// ============================================================================
+// 6. ESTRUTURAS ADICIONAIS ISOMÉTRICAS LIVRES DE PRIMITIVAS GEOMÉTRICAS
+// ============================================================================
+// Curral de Animais Isométrico
+const svgCurral = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 60" width="90" height="60">
+  <defs>
+    <radialGradient id="palhaChao" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#ca8a04" stop-opacity="0.1"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="45" cy="35" rx="40" ry="18" fill="url(#palhaChao)"/>
+  <g fill="#78350f" stroke="#451a03" stroke-width="1.5">
+    <rect x="8" y="24" width="6" height="24" rx="2"/>
+    <rect x="30" y="32" width="6" height="24" rx="2"/>
+    <rect x="54" y="32" width="6" height="24" rx="2"/>
+    <rect x="76" y="24" width="6" height="24" rx="2"/>
+    <rect x="20" y="16" width="5" height="20" rx="1.5"/>
+    <rect x="65" y="16" width="5" height="20" rx="1.5"/>
+  </g>
+  <line x1="10" y1="30" x2="78" y2="30" stroke="#92400e" stroke-width="3" stroke-linecap="round"/>
+  <line x1="10" y1="40" x2="78" y2="40" stroke="#92400e" stroke-width="3" stroke-linecap="round"/>
+  <line x1="22" y1="22" x2="67" y2="22" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Cabra Pastando -->
+  <ellipse cx="32" cy="34" rx="10" ry="6" fill="#78350f"/>
+  <circle cx="24" cy="30" r="4.5" fill="#5c2e0b"/>
+  <polygon points="21,27 20,22 23,26" fill="#fde047"/>
+  <rect x="26" y="38" width="3" height="8" rx="1" fill="#451a03"/>
+  <rect x="34" y="38" width="3" height="8" rx="1" fill="#451a03"/>
+  <!-- Galinha Ciscando -->
+  <ellipse cx="58" cy="38" rx="5" ry="4" fill="#ffffff"/>
+  <circle cx="62" cy="35" r="2.5" fill="#f8fafc"/>
+  <polygon points="64,35 67,36 64,37" fill="#f59e0b"/>
+  <polygon points="61,33 63,31 63,33" fill="#dc2626"/>
+  <rect x="57" y="41" width="1.5" height="4" fill="#f59e0b"/>
+</svg>
+`;
+salvar('curral.svg', svgCurral);
+
+// Barco / Jangada do Cais
+const svgBarco = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 60" width="90" height="60">
+  <defs>
+    <radialGradient id="aguaOndulacao" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="45" cy="35" rx="42" ry="16" fill="url(#aguaOndulacao)"/>
+  <g fill="#78350f" stroke="#451a03" stroke-width="1.5">
+    <rect x="12" y="16" width="66" height="7" rx="3"/>
+    <rect x="10" y="22" width="70" height="8" rx="3.5" fill="#854d0e"/>
+    <rect x="8" y="29" width="74" height="9" rx="4" fill="#92400e"/>
+    <rect x="10" y="37" width="70" height="8" rx="3.5" fill="#854d0e"/>
+    <rect x="12" y="44" width="66" height="7" rx="3"/>
+  </g>
+  <line x1="24" y1="14" x2="24" y2="52" stroke="#fef08a" stroke-width="2.5" stroke-dasharray="3,2"/>
+  <line x1="66" y1="14" x2="66" y2="52" stroke="#fef08a" stroke-width="2.5" stroke-dasharray="3,2"/>
+  <rect x="42" y="8" width="5" height="36" rx="2" fill="#5c2e0b"/>
+  <rect x="36" y="12" width="18" height="6" rx="2" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+  <line x1="22" y1="46" x2="68" y2="20" stroke="#b45309" stroke-width="2.5" stroke-linecap="round"/>
+  <polygon points="64,18 72,15 70,24" fill="#78350f"/>
+</svg>
+`;
+salvar('barco.svg', svgBarco);
+
+// Arena de Lutas / Ringue de Treino
+const svgArena = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70" width="100" height="70">
+  <defs>
+    <radialGradient id="arenaChao" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d97706" stop-opacity="0.8"/>
+      <stop offset="70%" stop-color="#b45309" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#78350f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="50" cy="40" rx="46" ry="24" fill="url(#arenaChao)"/>
+  <ellipse cx="50" cy="40" rx="44" ry="22" fill="none" stroke="#78350f" stroke-width="3" stroke-dasharray="6,3"/>
+  <!-- 4 Tochas nos Cantos -->
+  <rect x="49" y="16" width="3" height="12" rx="1" fill="#451a03"/>
+  <circle cx="50.5" cy="14" r="3" fill="#f59e0b"/>
+  <circle cx="50.5" cy="13" r="1.5" fill="#fef08a"/>
+  <rect x="49" y="52" width="3" height="12" rx="1" fill="#451a03"/>
+  <circle cx="50.5" cy="50" r="3" fill="#f59e0b"/>
+  <rect x="8" y="34" width="3" height="12" rx="1" fill="#451a03"/>
+  <circle cx="9.5" cy="32" r="3" fill="#f59e0b"/>
+  <rect x="89" y="34" width="3" height="12" rx="1" fill="#451a03"/>
+  <circle cx="90.5" cy="32" r="3" fill="#f59e0b"/>
+  <!-- Boneco de Treino de Palha -->
+  <rect x="62" y="28" width="4" height="20" rx="1.5" fill="#78350f"/>
+  <ellipse cx="64" cy="32" rx="6" ry="7" fill="#ca8a04"/>
+  <circle cx="64" cy="24" r="4" fill="#eab308"/>
+  <line x1="56" y1="30" x2="72" y2="30" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
+`;
+salvar('arena.svg', svgArena);
+
+// Canteiro de Obras
+const svgConstrucao = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 70" width="90" height="70">
+  <ellipse cx="45" cy="56" rx="38" ry="10" fill="#000000" opacity="0.35"/>
+  <rect x="14" y="46" width="30" height="6" rx="2" fill="#78350f" stroke="#381a05" stroke-width="1"/>
+  <rect x="16" y="41" width="26" height="6" rx="2" fill="#854d0e" stroke="#381a05" stroke-width="1"/>
+  <rect x="18" y="36" width="22" height="6" rx="2" fill="#92400e" stroke="#381a05" stroke-width="1"/>
+  <line x1="48" y1="18" x2="48" y2="58" stroke="#78350f" stroke-width="4" stroke-linecap="round"/>
+  <line x1="78" y1="18" x2="78" y2="58" stroke="#78350f" stroke-width="4" stroke-linecap="round"/>
+  <line x1="44" y1="34" x2="82" y2="34" stroke="#92400e" stroke-width="3"/>
+  <line x1="44" y1="48" x2="82" y2="48" stroke="#92400e" stroke-width="3"/>
+  <rect x="42" y="31" width="42" height="4" rx="1" fill="#b45309" stroke="#451a03" stroke-width="1"/>
+  <line x1="48" y1="34" x2="78" y2="48" stroke="#5c2e0b" stroke-width="2"/>
+  <line x1="48" y1="48" x2="78" y2="34" stroke="#5c2e0b" stroke-width="2"/>
+</svg>
+`;
+salvar('construcao_obras.svg', svgConstrucao);
+
+// Árvore Pinheiro
+const svgPinheiro = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 90" width="70" height="90">
+  <ellipse cx="35" cy="82" rx="22" ry="6" fill="#000" opacity="0.4"/>
+  <rect x="31" y="58" width="8" height="26" rx="2" fill="#5c2e0b" stroke="#291204" stroke-width="1.5"/>
+  <polygon points="35,10 14,42 56,42" fill="#15803d" stroke="#14532d" stroke-width="1.5"/>
+  <polygon points="35,26 10,58 60,58" fill="#166534" stroke="#0f3b1e" stroke-width="1.5"/>
+  <polygon points="35,42 6,72 64,72" fill="#14532d" stroke="#052e16" stroke-width="1.5"/>
+</svg>
+`;
+salvar('arvore_pinheiro.svg', svgPinheiro);
+
+// Árvore Carvalho
+const svgCarvalho = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 90" width="80" height="90">
+  <ellipse cx="40" cy="82" rx="26" ry="6" fill="#000" opacity="0.4"/>
+  <path d="M36,82 L34,54 Q38,48 42,46 Q46,48 44,54 L44,82 Z" fill="#5c2e0b" stroke="#291204" stroke-width="1.5"/>
+  <circle cx="40" cy="38" r="28" fill="#15803d" stroke="#166534" stroke-width="1.5"/>
+  <circle cx="28" cy="42" r="18" fill="#166534"/>
+  <circle cx="52" cy="40" r="18" fill="#16a34a"/>
+  <circle cx="38" cy="26" r="20" fill="#22c55e"/>
+</svg>
+`;
+salvar('arvore_carvalho.svg', svgCarvalho);

@@ -703,7 +703,9 @@
           'pantera', 'tubarao',
           'canteiro_arado', 'canteiro_broto', 'canteiro_maduro', 'canteiro_colhido',
           'fogueira_apagada', 'fogueira_brasa', 'fogueira_alta',
-          'casa_nivel1', 'casa_nivel2', 'casa_nivel3'
+          'casa_nivel1', 'casa_nivel2', 'casa_nivel3',
+          'curral', 'barco', 'arena', 'construcao_obras',
+          'arvore_pinheiro', 'arvore_carvalho'
         ];
         arqs.forEach(nome => {
           cacheSvg[nome] = PIXI.Texture.from('/assets/sprites/' + nome + '.svg');
@@ -902,7 +904,7 @@
 
       florestaArvores.forEach(arv => {
         const pos = toScreen(arv.x, arv.y);
-        const tex = cacheTexturas.arvores[arv.tipo] || cacheTexturas.arvores.carvalho;
+        const tex = (cacheSvg['arvore_' + arv.tipo] || cacheTexturas.arvores[arv.tipo]) || cacheTexturas.arvores.carvalho;
         const spr = new PIXI.Sprite(tex);
         spr.anchor.set(0.5, 0.9);
         spr.x = pos.x;
@@ -978,6 +980,7 @@
     }
   };
 
+  MotorSpritesIlha.cacheSvg = cacheSvg;
   window.MotorSpritesIlha = MotorSpritesIlha;
   window.ZONAS_MUNDO = ZONAS_MUNDO;
 

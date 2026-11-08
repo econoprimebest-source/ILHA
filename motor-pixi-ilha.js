@@ -119,8 +119,8 @@
 
     init() {
       const rect = this.containerStage.getBoundingClientRect();
-      const w = Math.max(700, rect.width || 1000);
-      const h = Math.max(480, rect.height || 650);
+      const w = Math.max(320, rect.width || window.innerWidth || 360);
+      const h = Math.max(320, rect.height || Math.round(window.innerHeight * 0.6) || 480);
 
       this.app = new PIXI.Application({
         view: this.canvas,
@@ -129,7 +129,7 @@
         resolution: Math.min(window.devicePixelRatio || 1, 2),
         autoDensity: true,
         backgroundColor: 0x082b45,
-        antialias: true,
+        antialias: false, // Máxima economia de GPU e bateria no chipset ARM do Z Fold
         powerPreference: 'low-power'
       });
 
@@ -218,6 +218,8 @@
 
     configurarEventosCamera() {
       const el = this.canvas;
+      let touchDistanceInicial = 0;
+      let zoomInicial = 1;
 
       // Zoom com a roda do mouse
       el.addEventListener('wheel', ev => {
@@ -236,9 +238,61 @@
         this.camera.followId = null; // Solta o follow se o usuário interagir
       }, { passive: false });
 
-      // Pan / Arrastar mapa com mouse ou touch
+      // Suporte a Touch / Pinch-to-zoom e Drag para Samsung Galaxy Z Fold
+      el.addEventListener('touchstart', ev => {
+        if (ev.touches.length === 1) {
+          const t = ev.touches[0];
+          this.camera.isDragging = true;
+          this.camera.dragStartX = t.clientX;
+          this.camera.dragStartY = t.clientY;
+          this.camera.camStartX = this.camera.targetX;
+          this.camera.camStartY = this.camera.targetY;
+        } else if (ev.touches.length === 2) {
+          this.camera.isDragging = false;
+          const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+          const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+          touchDistanceInicial = Math.hypot(dx, dy);
+          zoomInicial = this.camera.targetZoom;
+        }
+      }, { passive: true });
+
+      el.addEventListener('touchmove', ev => {
+        if (ev.touches.length === 1 && this.camera.isDragging) {
+          const t = ev.touches[0];
+          const dx = t.clientX - this.camera.dragStartX;
+          const dy = t.clientY - this.camera.dragStartY;
+          if (Math.hypot(dx, dy) > 3) {
+            this.camera.targetX = this.camera.camStartX + dx;
+            this.camera.targetY = this.camera.camStartY + dy;
+            this.camera.followId = null;
+          }
+        } else if (ev.touches.length === 2 && touchDistanceInicial > 0) {
+          const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+          const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+          const distAtual = Math.hypot(dx, dy);
+          const ratio = distAtual / touchDistanceInicial;
+          this.camera.targetZoom = Math.max(this.camera.minZoom, Math.min(this.camera.maxZoom, zoomInicial * ratio));
+          this.camera.followId = null;
+        }
+      }, { passive: true });
+
+      el.addEventListener('touchend', ev => {
+        if (ev.touches.length === 0) {
+          this.camera.isDragging = false;
+          touchDistanceInicial = 0;
+        } else if (ev.touches.length === 1) {
+          const t = ev.touches[0];
+          this.camera.isDragging = true;
+          this.camera.dragStartX = t.clientX;
+          this.camera.dragStartY = t.clientY;
+          this.camera.camStartX = this.camera.targetX;
+          this.camera.camStartY = this.camera.targetY;
+        }
+      }, { passive: true });
+
+      // Pan com mouse
       el.addEventListener('pointerdown', ev => {
-        if (ev.button === 0 || ev.pointerType === 'touch') {
+        if (ev.pointerType === 'mouse' && ev.button === 0) {
           this.camera.isDragging = true;
           this.camera.dragStartX = ev.clientX;
           this.camera.dragStartY = ev.clientY;
@@ -248,19 +302,19 @@
       });
 
       window.addEventListener('pointermove', ev => {
-        if (this.camera.isDragging) {
+        if (ev.pointerType === 'mouse' && this.camera.isDragging) {
           const dx = ev.clientX - this.camera.dragStartX;
           const dy = ev.clientY - this.camera.dragStartY;
           if (Math.hypot(dx, dy) > 4) {
             this.camera.targetX = this.camera.camStartX + dx;
             this.camera.targetY = this.camera.camStartY + dy;
-            this.camera.followId = null; // Parar de seguir ao arrastar
+            this.camera.followId = null;
           }
         }
       });
 
-      window.addEventListener('pointerup', () => {
-        this.camera.isDragging = false;
+      window.addEventListener('pointerup', ev => {
+        if (ev.pointerType === 'mouse') this.camera.isDragging = false;
       });
     }
 
@@ -486,6 +540,7 @@
       this.structuresContainer.removeChildren();
       if (!estado || !estado.mundo) return;
       const eco = estado.mundo.ecossistema || {};
+      const cache = (window.MotorSpritesIlha && window.MotorSpritesIlha.cacheSvg) || {};
 
       // 1. Fazenda e Canteiros Agrícolas Vivos com 4 Estágios Reais (Terra arada, Brotos, Madura com Cenouras, Colhida)
       const posFaz = this.toScreen(LOCAIS_MAPA.fazenda.x, LOCAIS_MAPA.fazenda.y);
@@ -493,83 +548,39 @@
         window.MotorSpritesIlha.atualizarHortaProps(this.structuresContainer, eco, posFaz, this.box.scale);
       }
 
-      // 2. Curral de Animais (Cercado de madeira com cabras e galinhas)
+      // 2. Curral de Animais (Sprite Isométrico com Cabras e Galinhas)
       const posCur = this.toScreen(LOCAIS_MAPA.curral.x, LOCAIS_MAPA.curral.y);
-      const curralG = new PIXI.Graphics();
-      curralG.x = posCur.x;
-      curralG.y = posCur.y;
+      if (cache.curral) {
+        const sprCurral = new PIXI.Sprite(cache.curral);
+        sprCurral.anchor.set(0.5, 0.6);
+        sprCurral.x = posCur.x;
+        sprCurral.y = posCur.y;
+        sprCurral.scale.set(0.85 * this.box.scale);
+        this.structuresContainer.addChild(sprCurral);
+      }
 
-      // Cercado de madeira
-      curralG.lineStyle(2, 0x854d0e, 0.95);
-      curralG.drawRoundedRect(-28, -18, 56, 36, 4);
-      curralG.beginFill(0xfef08a, 0.4); // Palha no chão
-      curralG.drawEllipse(0, 0, 24, 14);
-      curralG.endFill();
-
-      // Cabra pastando
-      const bobCabra = Math.sin(tempo * 0.006) * 1.5;
-      curralG.beginFill(0x78350f);
-      curralG.drawEllipse(-10, -4 + bobCabra, 6, 4);
-      curralG.drawCircle(-15, -7 + bobCabra, 3);
-      // Galinha ciscando
-      const ciscar = Math.sin(tempo * 0.018) * 2;
-      curralG.beginFill(0xffffff);
-      curralG.drawCircle(12, 2 + ciscar, 3);
-      curralG.beginFill(0xdc2626);
-      curralG.drawCircle(14, 0 + ciscar, 1.2);
-
-      this.structuresContainer.addChild(curralG);
-
-      // 3. Jangada Rústica ancorada no cais balançando no mar
+      // 3. Jangada Rústica ancorada no cais (Sprite Isométrico com Ondulação da Maré)
       const posCais = this.toScreen(LOCAIS_MAPA.barco.x, LOCAIS_MAPA.barco.y);
-      const barcoG = new PIXI.Graphics();
-      barcoG.x = posCais.x + 8;
-      barcoG.y = posCais.y + 12;
+      if (cache.barco) {
+        const sprBarco = new PIXI.Sprite(cache.barco);
+        sprBarco.anchor.set(0.5, 0.5);
+        sprBarco.x = posCais.x + 8;
+        sprBarco.y = posCais.y + 12 + Math.sin(tempo * 0.005) * 2;
+        sprBarco.rotation = Math.sin(tempo * 0.003) * 0.04;
+        sprBarco.scale.set(0.85 * this.box.scale);
+        this.structuresContainer.addChild(sprBarco);
+      }
 
-      const balanco = Math.sin(tempo * 0.005) * 2.5;
-      barcoG.rotation = Math.sin(tempo * 0.003) * 0.05;
-
-      // Toras da jangada amarradas
-      barcoG.beginFill(0x78350f);
-      barcoG.drawRoundedRect(-14, -8 + balanco, 28, 16, 3);
-      barcoG.lineStyle(1.5, 0x451a03);
-      barcoG.moveTo(-14, -3 + balanco); barcoG.lineTo(14, -3 + balanco);
-      barcoG.moveTo(-14, 3 + balanco);  barcoG.lineTo(14, 3 + balanco);
-      // Mastro com vela recolhida
-      barcoG.lineStyle(2, 0x1e293b);
-      barcoG.moveTo(0, balanco); barcoG.lineTo(0, -18 + balanco);
-      barcoG.beginFill(0xf1f5f9, 0.9);
-      barcoG.drawRect(-3, -16 + balanco, 6, 8);
-      barcoG.endFill();
-
-      this.structuresContainer.addChild(barcoG);
-
-      // 4. Arena de Lutas em terra firme com Tochas
+      // 4. Arena de Lutas em terra firme (Sprite Isométrico de Ringue com Tochas)
       const posArena = this.toScreen(LOCAIS_MAPA.arena.x, LOCAIS_MAPA.arena.y);
-      const arenaG = new PIXI.Graphics();
-      arenaG.x = posArena.x;
-      arenaG.y = posArena.y;
-
-      // Círculo de terra batida
-      arenaG.beginFill(0x713f12, 0.65);
-      arenaG.drawEllipse(0, 0, 32, 18);
-      arenaG.endFill();
-      arenaG.lineStyle(2, 0x451a03, 0.9);
-      arenaG.drawEllipse(0, 0, 32, 18);
-
-      // 4 Tochas nos cantos com chamas animadas
-      const tochas = [[-28, -12], [28, -12], [-28, 12], [28, 12]];
-      tochas.forEach(([tx, ty]) => {
-        arenaG.lineStyle(2, 0x1e293b);
-        arenaG.moveTo(tx, ty); arenaG.lineTo(tx, ty - 10);
-        arenaG.lineStyle(0);
-        const osc = Math.sin(tempo * 0.015 + tx) * 1.5;
-        arenaG.beginFill(0xf97316, 0.9);
-        arenaG.drawCircle(tx, ty - 12 + osc, 3.5);
-        arenaG.beginFill(0xfef08a, 0.95);
-        arenaG.drawCircle(tx, ty - 12 + osc, 1.8);
-      });
-      this.structuresContainer.addChild(arenaG);
+      if (cache.arena) {
+        const sprArena = new PIXI.Sprite(cache.arena);
+        sprArena.anchor.set(0.5, 0.5);
+        sprArena.x = posArena.x;
+        sprArena.y = posArena.y;
+        sprArena.scale.set(0.88 * this.box.scale);
+        this.structuresContainer.addChild(sprArena);
+      }
 
       // 5. Obras e Projetos Ativos da Comunidade
       if (Array.isArray(eco.projetos)) {
@@ -578,27 +589,28 @@
           if (!loc) return;
           const posP = this.toScreen(loc.x, loc.y);
 
-          const projG = new PIXI.Graphics();
-          projG.x = posP.x;
-          projG.y = posP.y - 28;
+          if (cache.construcao_obras) {
+            const sprObra = new PIXI.Sprite(cache.construcao_obras);
+            sprObra.anchor.set(0.5, 0.7);
+            sprObra.x = posP.x;
+            sprObra.y = posP.y;
+            sprObra.scale.set(0.8 * this.box.scale);
+            this.structuresContainer.addChild(sprObra);
+          }
 
-          // Andaimes e barra de progresso
-          projG.lineStyle(1.5, 0xb45309);
-          projG.moveTo(-16, 0); projG.lineTo(-16, -16);
-          projG.moveTo(16, 0);  projG.lineTo(16, -16);
-          projG.moveTo(-16, -12); projG.lineTo(16, -12);
-
-          // Fundo da barra
-          projG.lineStyle(0);
-          projG.beginFill(0x0f172a, 0.9);
-          projG.drawRoundedRect(-22, -26, 44, 7, 3);
-          // Preenchimento do progresso
-          const progW = (proj.progresso / 100) * 42;
-          projG.beginFill(0x38bdf8);
-          projG.drawRoundedRect(-21, -25, progW, 5, 2);
-          projG.endFill();
-
-          this.structuresContainer.addChild(projG);
+          // Barra de progresso do projeto
+          const barraCont = new PIXI.Container();
+          barraCont.x = posP.x;
+          barraCont.y = posP.y - 28 * this.box.scale;
+          const bgBarra = new PIXI.Graphics();
+          bgBarra.beginFill(0x0f172a, 0.9);
+          bgBarra.drawRoundedRect(-22, -4, 44, 7, 3);
+          const progW = Math.max(2, (proj.progresso / 100) * 42);
+          bgBarra.beginFill(0x38bdf8);
+          bgBarra.drawRoundedRect(-21, -3, progW, 5, 2);
+          bgBarra.endFill();
+          barraCont.addChild(bgBarra);
+          this.structuresContainer.addChild(barraCont);
         });
       }
     }

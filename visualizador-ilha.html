@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <title>Ilha Aurora — Observatório V9 (2.5D PixiJS)</title>
 <script src="/pixi.min.js"></script>
-<script src="/motor-sprites-ilha.js?v=20261108_1102"></script>
-<script src="/motor-pixi-ilha.js?v=20261108_1102"></script>
+<script src="/motor-sprites-ilha.js?v=20261108_1115"></script>
+<script src="/motor-pixi-ilha.js?v=20261108_1115"></script>
 <style>
   body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #071827; color: #fff; }
   canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
@@ -15,21 +15,16 @@
   canvas { width:100%; height:100%; border-radius:18px; }
   #header { position:absolute; left:16px; top:16px; z-index:10; padding:13px 16px; border-radius:14px; background:rgba(8,24,39,.86); border:1px solid #334155; font-size:14px; pointer-events:none; backdrop-filter:blur(12px); box-shadow:0 10px 28px #02061780; }
   #cycle-info { display:inline-block; color:#dbeafe; font-weight:600; letter-spacing:.02em; }
-  #btn-ondemand { position:absolute; right:535px; top:16px; z-index:11; padding:10px 16px; border-radius:12px; border:1px solid #059669; background:linear-gradient(135deg,rgba(5,150,105,.94),rgba(16,185,129,.94)); color:#ecfdf5; font-size:13.5px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #064e3b70; transition:all .2s ease; }
+  #top-actions { position:absolute; right:16px; top:16px; z-index:11; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; max-width:calc(100% - 250px); }
+  #top-actions button { position:static; margin:0; }
+  #btn-ondemand { padding:10px 15px; border-radius:12px; border:1px solid #059669; background:linear-gradient(135deg,rgba(5,150,105,.94),rgba(16,185,129,.94)); color:#ecfdf5; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #064e3b70; transition:all .2s ease; }
   #btn-ondemand:hover { background:linear-gradient(135deg,#059669,#10b981); transform:translateY(-1px); box-shadow:0 12px 30px #10b98166; }
-  #tension-vignette { display:none; position:absolute; inset:0; pointer-events:none; z-index:9; border-radius:18px; box-shadow:inset 0 0 95px rgba(239,68,68,0.55); animation:pulseTension 1.1s infinite ease-in-out; }
-  @keyframes pulseTension {
-    0%, 100% { box-shadow: inset 0 0 50px rgba(239,68,68,0.25); }
-    50% { box-shadow: inset 0 0 115px rgba(239,68,68,0.72); }
-  }
-  #milagre-banner { display:none; position:absolute; top:75px; left:50%; transform:translateX(-50%); z-index:25; padding:11px 24px; border-radius:30px; background:linear-gradient(135deg,#f59e0b,#eab308); color:#0f172a; font-weight:800; font-size:14px; box-shadow:0 12px 35px rgba(245,158,11,0.6); letter-spacing:.03em; pointer-events:none; }
-  #cinematic-caption { display:none; position:absolute; bottom:60px; left:50%; transform:translateX(-50%); z-index:12; max-width:85%; padding:10px 22px; border-radius:14px; background:rgba(8,20,34,0.92); backdrop-filter:blur(10px); border:1px solid rgba(56,189,248,0.6); color:#f1f5f9; font-size:13.5px; line-height:1.45; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); pointer-events:none; }
-  #btn-reiniciar { position:absolute; right:16px; top:16px; z-index:11; padding:10px 16px; border-radius:12px; border:1px solid #7f1d1d; background:rgba(127,29,29,.88); color:#fecaca; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
-  #btn-reiniciar:hover { background:rgba(153,27,27,.95); transform:translateY(-1px); }
-  #btn-diretor { position:absolute; right:190px; top:16px; z-index:11; padding:10px 16px; border-radius:12px; border:1px solid #0284c7; background:rgba(3,105,161,.92); color:#e0f2fe; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
-  #btn-diretor:hover { background:rgba(2,132,199,.98); transform:translateY(-1px); }
-  #btn-predador-rapido { position:absolute; right:378px; top:16px; z-index:11; padding:10px 15px; border-radius:12px; border:1px solid #dc2626; background:linear-gradient(135deg,rgba(153,27,27,.94),rgba(127,29,29,.94)); color:#fee2e2; font-size:13.5px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #450a0a90; transition:all .2s ease; }
+  #btn-predador-rapido { padding:10px 14px; border-radius:12px; border:1px solid #dc2626; background:linear-gradient(135deg,rgba(153,27,27,.94),rgba(127,29,29,.94)); color:#fee2e2; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #450a0a90; transition:all .2s ease; }
   #btn-predador-rapido:hover { background:linear-gradient(135deg,#dc2626,#991b1b); transform:translateY(-1px); box-shadow:0 12px 30px #ef444466; }
+  #btn-diretor { padding:10px 15px; border-radius:12px; border:1px solid #0284c7; background:rgba(3,105,161,.92); color:#e0f2fe; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
+  #btn-diretor:hover { background:rgba(2,132,199,.98); transform:translateY(-1px); }
+  #btn-reiniciar { padding:10px 14px; border-radius:12px; border:1px solid #7f1d1d; background:rgba(127,29,29,.88); color:#fecaca; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
+  #btn-reiniciar:hover { background:rgba(153,27,27,.95); transform:translateY(-1px); }
   .ev-pill { display:inline-flex; align-items:center; gap:5px; margin:4px 6px 0 0; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:700; background:rgba(15,23,42,.92); border:1px solid #38bdf8; color:#e0f2fe; box-shadow:0 4px 12px #0006; }
   .ev-pill.predador { border-color:#ef4444; background:rgba(127,29,29,.92); color:#fecaca; animation:pulseDanger 1.4s infinite ease-in-out; }
   .ev-pill.suprimento { border-color:#fbbf24; background:rgba(120,53,15,.92); color:#fef3c7; }
@@ -123,16 +118,44 @@
   @media (max-width:850px) {
     body { overflow:auto; }
     #layout { height:auto; min-height:100dvh; grid-template-columns:1fr; grid-template-rows:minmax(55vh,65dvh) auto; }
-    #side-column { grid-template-columns:1fr 1fr; grid-template-rows:minmax(300px,auto); }
+    #side-column { grid-template-columns:1fr 1fr; grid-template-rows:minmax(280px,auto); }
+    #top-actions {
+      max-width:100%;
+      right:8px;
+      top:auto;
+      bottom:52px;
+      justify-content:center;
+      background:rgba(8,24,39,0.92);
+      padding:6px 10px;
+      border-radius:14px;
+      backdrop-filter:blur(10px);
+      border:1px solid #334155;
+    }
+    #top-actions button {
+      padding:7px 11px;
+      font-size:11.5px;
+      border-radius:8px;
+    }
   }
   @media (max-width:560px) {
-    #layout { gap:10px; padding:10px; grid-template-rows:minmax(48vh,55dvh) auto; }
-    #side-column { grid-template-columns:1fr; grid-template-rows:auto minmax(220px,auto); }
-    #header { left:10px; top:10px; padding:10px 12px; }
+    #layout { gap:10px; padding:8px; grid-template-rows:minmax(46vh,54dvh) auto; }
+    #side-column { grid-template-columns:1fr; grid-template-rows:auto minmax(200px,auto); }
+    #header { left:8px; top:8px; padding:8px 10px; }
     #cycle-info { font-size:11px; }
-    #time-display { font-size:15px; }
-    .panel-section { padding:14px; }
+    #time-display { font-size:14px; }
+    .panel-section { padding:12px; }
     #map-hint { display:none; }
+    #top-actions {
+      bottom:44px;
+      right:6px;
+      left:6px;
+      gap:4px;
+      padding:4px 6px;
+    }
+    #top-actions button {
+      padding:5px 8px;
+      font-size:10px;
+    }
   }
 </style>
 </head>
@@ -145,10 +168,12 @@
       <span id="time-display">--:--</span>
       <div id="active-events-bar" style="margin-top:4px;"></div>
     </div>
-    <button id="btn-ondemand" title="Disparar 1 ciclo da Ilha em modo On-Demand agora (mantendo pausa automática)">&#9654; Ciclo On-Demand</button>
-    <button id="btn-predador-rapido" title="Soltar um predador feroz imediatamente na ilha para testar a reação livre dos habitantes">&#128058; Soltar Predador</button>
-    <button id="btn-diretor" title="Manipular o mundo físico (Drops da Audiência, Clima, Artefatos, Predadores)">&#127916; Console do Diretor</button>
-    <button id="btn-reiniciar" title="Salvar o estado atual em backups/ e iniciar um novo mundo">&#10227; Reiniciar mundo</button>
+    <div id="top-actions">
+      <button id="btn-ondemand" title="Disparar 1 ciclo da Ilha em modo On-Demand agora (mantendo pausa automática)">&#9654; Ciclo On-Demand</button>
+      <button id="btn-predador-rapido" title="Soltar um predador feroz imediatamente na ilha para testar a reação livre dos habitantes">&#128058; Soltar Predador</button>
+      <button id="btn-diretor" title="Manipular o mundo físico (Drops da Audiência, Clima, Artefatos, Predadores)">&#127916; Console do Diretor</button>
+      <button id="btn-reiniciar" title="Salvar o estado atual em backups/ e iniciar um novo mundo">&#10227; Reiniciar mundo</button>
+    </div>
     <div id="director-panel" hidden>
       <div class="hp-head">
         <div>

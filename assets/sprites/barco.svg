@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 60" width="90" height="60">
+  <defs>
+    <radialGradient id="aguaOndulacao" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="45" cy="35" rx="42" ry="16" fill="url(#aguaOndulacao)"/>
+  <g fill="#78350f" stroke="#451a03" stroke-width="1.5">
+    <rect x="12" y="16" width="66" height="7" rx="3"/>
+    <rect x="10" y="22" width="70" height="8" rx="3.5" fill="#854d0e"/>
+    <rect x="8" y="29" width="74" height="9" rx="4" fill="#92400e"/>
+    <rect x="10" y="37" width="70" height="8" rx="3.5" fill="#854d0e"/>
+    <rect x="12" y="44" width="66" height="7" rx="3"/>
+  </g>
+  <line x1="24" y1="14" x2="24" y2="52" stroke="#fef08a" stroke-width="2.5" stroke-dasharray="3,2"/>
+  <line x1="66" y1="14" x2="66" y2="52" stroke="#fef08a" stroke-width="2.5" stroke-dasharray="3,2"/>
+  <rect x="42" y="8" width="5" height="36" rx="2" fill="#5c2e0b"/>
+  <rect x="36" y="12" width="18" height="6" rx="2" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+  <line x1="22" y1="46" x2="68" y2="20" stroke="#b45309" stroke-width="2.5" stroke-linecap="round"/>
+  <polygon points="64,18 72,15 70,24" fill="#78350f"/>
+</svg>
