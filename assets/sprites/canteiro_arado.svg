@@ -1,22 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">
   <defs>
-    <linearGradient id="terraArada" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#3e2112"/>
-      <stop offset="100%" stop-color="#241207"/>
-    </linearGradient>
+    <radialGradient id="terraOrganica" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#382012" stop-opacity="0.85"/>
+      <stop offset="70%" stop-color="#2a160a" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#1c0e06" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <!-- Borda do Canteiro de Madeira Rústica -->
-  <rect x="4" y="4" width="92" height="42" rx="4" fill="#5c2e0b" stroke="#381a05" stroke-width="2"/>
-  <!-- Camada de Terra Fértil Úmida -->
-  <rect x="7" y="7" width="86" height="36" rx="2" fill="url(#terraArada)"/>
-  <!-- 4 Sulcos de Plantio com Sombra -->
-  <path d="M12,14 L88,14" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
-  <path d="M12,22 L88,22" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
-  <path d="M12,30 L88,30" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
-  <path d="M12,38 L88,38" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
-  <!-- Destaques de Terra Escavada -->
-  <line x1="12" y1="12" x2="88" y2="12" stroke="#5a3118" stroke-width="1"/>
-  <line x1="12" y1="20" x2="88" y2="20" stroke="#5a3118" stroke-width="1"/>
-  <line x1="12" y1="28" x2="88" y2="28" stroke="#5a3118" stroke-width="1"/>
-  <line x1="12" y1="36" x2="88" y2="36" stroke="#5a3118" stroke-width="1"/>
+  <!-- Montículo de terra fértil escavada (sem moldura de madeira) -->
+  <ellipse cx="50" cy="25" rx="44" ry="20" fill="url(#terraOrganica)"/>
+  <!-- Sulcos suaves na terra -->
+  <path d="M18,20 Q50,16 82,20" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M14,26 Q50,22 86,26" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M20,32 Q50,28 80,32" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <!-- Estacas rústicas de galho -->
+  <line x1="14" y1="14" x2="14" y2="28" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+  <line x1="86" y1="14" x2="86" y2="28" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+  <line x1="14" y1="17" x2="86" y2="17" stroke="#fef3c7" stroke-width="0.8" opacity="0.4"/>
 </svg>

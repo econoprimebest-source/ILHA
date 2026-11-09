@@ -41,3 +41,14 @@ ultimo-frame.json
 missoes-fila.json
 chrome-profile/
 chrome-test-profile*/
+
+# Imagens temporarias de inpainting/teste
+check_farm_area.png
+clean_map_crop*.png
+exact_farm_beds.png
+farm_beds_candidate.png
+fazenda_*.png
+inpaint_*.png
+mask_farm.png
+real_farm_area.png
+seamless_test.png

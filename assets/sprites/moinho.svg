@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 100" width="90" height="100">
+  <defs>
+    <radialGradient id="sombraMoinho" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.38"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Sombra no solo -->
+  <ellipse cx="45" cy="94" rx="36" ry="6" fill="url(#sombraMoinho)"/>
+  <!-- Torre Cônica de Alvenaria de Pedra e Madeira -->
+  <polygon points="26,92 34,42 56,42 64,92" fill="#78716c" stroke="#44403c" stroke-width="2"/>
+  <polygon points="34,42 36,28 54,28 56,42" fill="#57534e"/>
+  <!-- Porta de Madeira do Moinho -->
+  <rect x="40" y="74" width="10" height="18" rx="2" fill="#451a03"/>
+  <circle cx="48" cy="83" r="1" fill="#facc15"/>
+  <!-- Janelinha da torre -->
+  <rect x="42" y="48" width="6" height="8" rx="1" fill="#fef08a" stroke="#292524" stroke-width="1"/>
+  <!-- Cúpula de Madeira com Telhas -->
+  <polygon points="45,16 28,30 62,30" fill="#b45309" stroke="#451a03" stroke-width="1.5"/>
+  <!-- Eixo Central das Pás -->
+  <circle cx="45" cy="34" r="4" fill="#292524" stroke="#d97706" stroke-width="1.5"/>
+  <!-- 4 Pás de Lona Branca e Madeira em Cruz -->
+  <!-- Pá Cima -->
+  <line x1="45" y1="34" x2="45" y2="4" stroke="#451a03" stroke-width="2.5"/>
+  <polygon points="46,30 46,6 56,10 46,30" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8"/>
+  <!-- Pá Baixo -->
+  <line x1="45" y1="34" x2="45" y2="64" stroke="#451a03" stroke-width="2.5"/>
+  <polygon points="44,38 44,62 34,58 44,38" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8"/>
+  <!-- Pá Direita -->
+  <line x1="45" y1="34" x2="75" y2="34" stroke="#451a03" stroke-width="2.5"/>
+  <polygon points="48,35 72,35 68,45 48,35" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8"/>
+  <!-- Pá Esquerda -->
+  <line x1="45" y1="34" x2="15" y2="34" stroke="#451a03" stroke-width="2.5"/>
+  <polygon points="42,33 18,33 22,23 42,33" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8"/>
+</svg>

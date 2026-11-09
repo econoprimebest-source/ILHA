@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 96" width="76" height="96">
+  <defs>
+    <radialGradient id="sombraPier" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0284c7" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Sombra na água sob o píer -->
+  <rect x="18" y="10" width="40" height="80" rx="4" fill="url(#sombraPier)"/>
+  <!-- Pilares de Madeira Cravados no Fundo do Mar -->
+  <line x1="22" y1="12" x2="22" y2="92" stroke="#291104" stroke-width="5" stroke-linecap="round"/>
+  <line x1="54" y1="12" x2="54" y2="92" stroke="#291104" stroke-width="5" stroke-linecap="round"/>
+  <!-- Pranchas de Madeira do Deck -->
+  <g fill="#78350f" stroke="#381a05" stroke-width="1.2">
+    <rect x="20" y="14" width="36" height="7" rx="1"/>
+    <rect x="20" y="23" width="36" height="7" rx="1" fill="#92400e"/>
+    <rect x="20" y="32" width="36" height="7" rx="1"/>
+    <rect x="20" y="41" width="36" height="7" rx="1" fill="#b45309"/>
+    <rect x="20" y="50" width="36" height="7" rx="1"/>
+    <rect x="20" y="59" width="36" height="7" rx="1" fill="#92400e"/>
+    <rect x="20" y="68" width="36" height="7" rx="1"/>
+    <rect x="20" y="77" width="36" height="7" rx="1" fill="#b45309"/>
+    <rect x="18" y="86" width="40" height="8" rx="1.5" fill="#78350f"/>
+  </g>
+  <!-- Postes de Amarração de Barco com cordas -->
+  <rect x="17" y="82" width="4" height="10" rx="1" fill="#451a03"/>
+  <rect x="55" y="82" width="4" height="10" rx="1" fill="#451a03"/>
+  <circle cx="19" cy="84" r="1.5" fill="#d97706"/>
+  <circle cx="57" cy="84" r="1.5" fill="#d97706"/>
+  <!-- Boia Salva-vidas na cabeceira -->
+  <circle cx="28" cy="89" r="3.5" fill="#dc2626" stroke="#ffffff" stroke-width="1"/>
+  <circle cx="28" cy="89" r="1.5" fill="#78350f"/>
+</svg>

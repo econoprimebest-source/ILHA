@@ -1,49 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">
-  
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">
   <defs>
-    <linearGradient id="terraArada" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#3e2112"/>
-      <stop offset="100%" stop-color="#241207"/>
-    </linearGradient>
+    <radialGradient id="terraOrganicaB" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#382012" stop-opacity="0.85"/>
+      <stop offset="70%" stop-color="#2a160a" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#1c0e06" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <!-- Borda do Canteiro de Madeira Rústica -->
-  <rect x="4" y="4" width="92" height="42" rx="4" fill="#5c2e0b" stroke="#381a05" stroke-width="2"/>
-  <!-- Camada de Terra Fértil Úmida -->
-  <rect x="7" y="7" width="86" height="36" rx="2" fill="url(#terraArada)"/>
-  <!-- 4 Sulcos de Plantio com Sombra -->
-  <path d="M12,14 L88,14" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
-  <path d="M12,22 L88,22" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
-  <path d="M12,30 L88,30" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
-  <path d="M12,38 L88,38" stroke="#170a03" stroke-width="4" stroke-linecap="round"/>
-  <!-- Destaques de Terra Escavada -->
-  <line x1="12" y1="12" x2="88" y2="12" stroke="#5a3118" stroke-width="1"/>
-  <line x1="12" y1="20" x2="88" y2="20" stroke="#5a3118" stroke-width="1"/>
-  <line x1="12" y1="28" x2="88" y2="28" stroke="#5a3118" stroke-width="1"/>
-  <line x1="12" y1="36" x2="88" y2="36" stroke="#5a3118" stroke-width="1"/>
-
-
-  <!-- Pequenos Brotos Verdes de Folhagem Emergente -->
+  <!-- Montículo de terra orgânica -->
+  <ellipse cx="50" cy="25" rx="44" ry="20" fill="url(#terraOrganicaB)"/>
+  <path d="M18,20 Q50,16 82,20" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M14,26 Q50,22 86,26" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M20,32 Q50,28 80,32" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <!-- Brotos verdes nascendo da terra -->
   <g fill="#4ade80" stroke="#15803d" stroke-width="0.8">
-    <!-- Linha 1 -->
-    <path d="M20,13 Q18,9 15,11 Q17,14 20,13 Q22,9 25,11 Q23,14 20,13 Z"/>
-    <path d="M38,13 Q36,9 33,11 Q35,14 38,13 Q40,9 43,11 Q41,14 38,13 Z"/>
-    <path d="M56,13 Q54,9 51,11 Q53,14 56,13 Q58,9 61,11 Q59,14 56,13 Z"/>
-    <path d="M74,13 Q72,9 69,11 Q71,14 74,13 Q76,9 79,11 Q77,14 74,13 Z"/>
-    <!-- Linha 2 -->
-    <path d="M26,21 Q24,17 21,19 Q23,22 26,21 Q28,17 31,19 Q29,22 26,21 Z"/>
-    <path d="M44,21 Q42,17 39,19 Q41,22 44,21 Q46,17 49,19 Q47,22 44,21 Z"/>
-    <path d="M62,21 Q60,17 57,19 Q59,22 62,21 Q64,17 67,19 Q65,22 62,21 Z"/>
-    <path d="M80,21 Q78,17 75,19 Q77,22 80,21 Q82,17 85,19 Q83,22 80,21 Z"/>
-    <!-- Linha 3 -->
-    <path d="M20,29 Q18,25 15,27 Q17,30 20,29 Q22,25 25,27 Q23,30 20,29 Z"/>
-    <path d="M38,29 Q36,25 33,27 Q35,30 38,29 Q40,25 43,27 Q41,30 38,29 Z"/>
-    <path d="M56,29 Q54,25 51,27 Q53,30 56,29 Q58,25 61,27 Q59,30 56,29 Z"/>
-    <path d="M74,29 Q72,25 69,27 Q71,30 74,29 Q76,25 79,27 Q77,30 74,29 Z"/>
-    <!-- Linha 4 -->
-    <path d="M26,37 Q24,33 21,35 Q23,38 26,37 Q28,33 31,35 Q29,38 26,37 Z"/>
-    <path d="M44,37 Q42,33 39,35 Q41,38 44,37 Q46,33 49,35 Q47,38 44,37 Z"/>
-    <path d="M62,37 Q60,33 57,35 Q59,38 62,37 Q64,33 67,35 Q65,38 62,37 Z"/>
-    <path d="M80,37 Q78,33 75,35 Q77,38 80,37 Q82,33 85,35 Q83,38 80,37 Z"/>
+    <path d="M24,18 Q22,13 18,15 Q21,19 24,18 Q27,13 30,15 Q27,19 24,18 Z"/>
+    <path d="M44,17 Q42,12 38,14 Q41,18 44,17 Q47,12 50,14 Q47,18 44,17 Z"/>
+    <path d="M64,18 Q62,13 58,15 Q61,19 64,18 Q67,13 70,15 Q67,19 64,18 Z"/>
+    <path d="M30,24 Q28,19 24,21 Q27,25 30,24 Q33,19 36,21 Q33,25 30,24 Z"/>
+    <path d="M50,23 Q48,18 44,20 Q47,24 50,23 Q53,18 56,20 Q53,24 50,23 Z"/>
+    <path d="M70,24 Q68,19 64,21 Q67,25 70,24 Q73,19 76,21 Q73,25 70,24 Z"/>
+    <path d="M36,30 Q34,25 30,27 Q33,31 36,30 Q39,25 42,27 Q39,31 36,30 Z"/>
+    <path d="M56,29 Q54,24 50,26 Q53,30 56,29 Q59,24 62,26 Q59,30 56,29 Z"/>
   </g>
 </svg>

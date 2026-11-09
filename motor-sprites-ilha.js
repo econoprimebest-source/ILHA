@@ -420,188 +420,135 @@
   }
 
   // ========================================================================
-  // 3. GERADOR DE PROPS DA FAZENDA VIVA (4 ESTÁGIOS REAIS NO MAPA)
+  // 3. GERADOR DE PROPS DA FAZENDA VIVA (INTEGRADO À ARTE DO MAPA)
   // ========================================================================
   function gerarTexturaCanteiro(estagio) {
-    const W = 84, H = 46;
+    // Canvas transparente apenas com a vegetação/cultura (sem caixote artificial de madeira)
+    const W = 64, H = 36;
     const { cv, ctx } = criarCanvas(W, H);
 
-    // 1. Moldura de Toras de Madeira Rústica
-    ctx.fillStyle = '#5c3a21';
-    ctx.fillRect(2, 2, W - 4, H - 4);
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(4, 4, W - 8, H - 8);
-
-    // 2. Terra Arada Interior (com sulcos agrícolas)
-    ctx.fillStyle = estagio === 0 ? '#451a03' : '#3d1d07';
-    ctx.fillRect(8, 8, W - 16, H - 16);
-
-    // Sulcos de arado
-    ctx.strokeStyle = '#291104';
-    ctx.lineWidth = 2;
-    for (let y = 14; y < H - 10; y += 7) {
-      ctx.beginPath();
-      ctx.moveTo(10, y);
-      ctx.lineTo(W - 10, y);
-      ctx.stroke();
-    }
-
-    // 3. Renderização conforme o Estágio
     if (estagio === 0) {
-      // ESTÁGIO 1: Terra Arada Fresca (pequenas estacas e pedregulhos)
-      ctx.fillStyle = '#78716c';
-      ctx.fillRect(16, 12, 3, 2);
-      ctx.fillRect(42, 22, 3, 2);
-      ctx.fillRect(66, 15, 3, 2);
-      // Estaca com barbante de alinhamento
+      // ESTÁGIO 1: Terra fresca arada - pequenas estacas discretas de marcação
       ctx.fillStyle = '#d97706';
-      ctx.fillRect(12, 10, 2, 8);
-      ctx.fillRect(W - 14, 10, 2, 8);
+      ctx.fillRect(8, 6, 2, 8);
+      ctx.fillRect(W - 10, 6, 2, 8);
+      ctx.strokeStyle = 'rgba(254, 243, 199, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(9, 7);
+      ctx.lineTo(W - 9, 7);
+      ctx.stroke();
     } else if (estagio === 1) {
-      // ESTÁGIO 2: Brotos Verdes (plantinhas pequenas saindo do solo)
-      ctx.fillStyle = '#4ade80';
-      for (let x = 15; x < W - 15; x += 11) {
-        for (let y = 13; y < H - 12; y += 7) {
-          ctx.beginPath();
-          ctx.arc(x, y - 2, 2.5, 0, Math.PI * 2);
-          ctx.fill();
+      // ESTÁGIO 2: Brotos Verdes (mudas delicadas crescendo)
+      for (let x = 8; x < W - 8; x += 10) {
+        for (let y = 8; y < H - 6; y += 8) {
           ctx.fillStyle = '#22c55e';
-          ctx.fillRect(x - 0.5, y - 1, 1, 3);
-          ctx.fillStyle = '#4ade80';
+          ctx.beginPath();
+          ctx.arc(x, y - 2, 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#16a34a';
+          ctx.fillRect(x - 0.5, y - 1, 1, 2.5);
         }
       }
     } else if (estagio === 2) {
-      // ESTÁGIO 3: Plantação Madura (folhagem farta + cenouras laranjas visíveis)
-      for (let x = 14; x < W - 14; x += 12) {
-        for (let y = 13; y < H - 12; y += 8) {
+      // ESTÁGIO 3: Plantação Madura (folhagem volumosa + topos de cenouras)
+      for (let x = 8; x < W - 8; x += 11) {
+        for (let y = 8; y < H - 6; y += 9) {
           // Folhagem densa
-          ctx.fillStyle = '#16a34a';
+          ctx.fillStyle = '#15803d';
           ctx.beginPath();
-          ctx.arc(x, y - 4, 4.5, 0, Math.PI * 2);
+          ctx.arc(x, y - 3, 3.5, 0, Math.PI * 2);
           ctx.fill();
           ctx.fillStyle = '#22c55e';
           ctx.beginPath();
-          ctx.arc(x - 2, y - 5, 3, 0, Math.PI * 2);
+          ctx.arc(x - 1, y - 4, 2.2, 0, Math.PI * 2);
           ctx.fill();
-          // Raiz / Cenoura pontuda para fora da terra
+          // Raiz / Cenoura pontuda saindo da terra
           ctx.fillStyle = '#f97316';
           ctx.beginPath();
-          ctx.moveTo(x - 2, y);
-          ctx.lineTo(x + 2, y);
-          ctx.lineTo(x, y + 5);
+          ctx.moveTo(x - 1.5, y);
+          ctx.lineTo(x + 1.5, y);
+          ctx.lineTo(x, y + 4);
           ctx.closePath();
           ctx.fill();
-          // Rama verde no topo da cenoura
-          ctx.fillStyle = '#15803d';
-          ctx.fillRect(x - 1, y - 2, 2, 2);
         }
       }
     } else if (estagio === 3) {
-      // ESTÁGIO 4: Lote Recém-Colhido (terra revolvida + cestos de colheita cheios)
-      ctx.fillStyle = '#291104';
-      ctx.fillRect(12, 12, 14, 8);
-      ctx.fillRect(36, 18, 18, 8);
-      // Cestos de vime cheios na cabeceira
+      // ESTÁGIO 4: Lote Recém-Colhido (pequenos cestos de colheita no canto)
       ctx.fillStyle = '#92400e';
-      ctx.fillRect(W - 22, 10, 10, 8);
-      ctx.fillRect(W - 20, 22, 9, 8);
-      // Cenouras dentro do cesto
+      ctx.fillRect(W - 14, H - 12, 8, 7);
       ctx.fillStyle = '#f97316';
-      ctx.fillRect(W - 20, 9, 3, 4);
-      ctx.fillRect(W - 16, 8, 3, 5);
+      ctx.fillRect(W - 13, H - 14, 3, 3);
+      ctx.fillRect(W - 9, H - 13, 2.5, 3);
       ctx.fillStyle = '#16a34a';
-      ctx.fillRect(W - 19, 7, 2, 2);
-      ctx.fillRect(W - 15, 6, 2, 2);
+      ctx.fillRect(W - 12, H - 15, 2, 2);
     }
 
     return PIXI.Texture.from(cv);
   }
 
   // ========================================================================
-  // 4. GERADOR DE FOGUEIRA VIVA (3 ESTÁGIOS REAIS)
+  // 4. GERADOR DE FOGUEIRA VIVA (INTEGRADA AO CÍRCULO DE PEDRAS DO MAPA)
   // ========================================================================
   function gerarTexturaFogueira(nivel) {
-    const W = 52, H = 44;
+    const W = 48, H = 48;
     const { cv, ctx } = criarCanvas(W, H);
     const cx = W / 2, cy = H / 2 + 6;
 
-    // 1. Círculo de Pedras Rústicas
-    const pedras = [
-      [-16, -3], [-12, -8], [0, -10], [12, -8], [16, -3],
-      [14, 5], [4, 8], [-8, 7], [-15, 3]
-    ];
-    pedras.forEach(([px, py]) => {
-      ctx.fillStyle = '#57534e';
-      ctx.beginPath();
-      ctx.arc(cx + px, cy + py, 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#78716c';
-      ctx.beginPath();
-      ctx.arc(cx + px - 1, cy + py - 1, 2, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
     if (nivel === 0) {
-      // NÍVEL 1: Apagada / Frio (Cinzas escuras, carvão e fumaça tênue)
-      ctx.fillStyle = '#1c1917';
+      // NÍVEL 1: Apagada / Frio (Cinzas escuras e fumaça tênue)
+      ctx.fillStyle = 'rgba(28, 25, 23, 0.7)';
       ctx.beginPath();
-      ctx.ellipse(cx, cy, 10, 5, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy, 8, 4, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Pedaços de carvão
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(cx - 5, cy - 2, 4, 3);
-      ctx.fillRect(cx + 2, cy - 1, 5, 3);
-      // Fumaça cinza fria
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.4)';
+      // Fumaça cinza tênue
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.3)';
       ctx.beginPath();
-      ctx.arc(cx, cy - 12, 4, 0, Math.PI * 2);
-      ctx.arc(cx + 2, cy - 18, 6, 0, Math.PI * 2);
+      ctx.arc(cx, cy - 8, 3, 0, Math.PI * 2);
+      ctx.arc(cx + 1, cy - 14, 4.5, 0, Math.PI * 2);
       ctx.fill();
     } else if (nivel === 1) {
-      // NÍVEL 2: Brasas Baixas (Carvão incandescente avermelhado e pequenas chamas)
-      ctx.fillStyle = '#291104';
+      // NÍVEL 2: Brasas Baixas (Carvão incandescente avermelhado)
+      ctx.fillStyle = 'rgba(185, 28, 28, 0.85)';
       ctx.beginPath();
-      ctx.ellipse(cx, cy, 11, 5.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy, 7, 3.5, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Brasas vermelhas e laranjas
-      ctx.fillStyle = '#b91c1c';
-      ctx.fillRect(cx - 7, cy - 3, 14, 5);
       ctx.fillStyle = '#ea580c';
-      ctx.fillRect(cx - 4, cy - 2, 8, 3);
+      ctx.fillRect(cx - 3, cy - 2, 6, 2.5);
       ctx.fillStyle = '#fde047';
-      ctx.fillRect(cx - 1, cy - 4, 3, 4);
+      ctx.fillRect(cx - 1, cy - 3, 2, 2);
     } else {
-      // NÍVEL 3: Fogueira Viva Alta (Toras cruzadas ardendo e labaredas volumosas)
-      // Toras
+      // NÍVEL 3: Fogueira Viva Alta (Toras ardendo e chamas volumosas)
+      // Toras centrais
       ctx.fillStyle = '#451a03';
-      ctx.fillRect(cx - 10, cy - 2, 20, 4);
-      ctx.fillRect(cx - 2, cy - 8, 4, 14);
+      ctx.fillRect(cx - 8, cy - 1, 16, 3);
+      ctx.fillRect(cx - 2, cy - 6, 3, 11);
 
-      // Labareda Externa (Vermelha)
+      // Labareda Externa (Vermelha viva)
       ctx.fillStyle = '#dc2626';
       ctx.beginPath();
-      ctx.moveTo(cx - 10, cy);
-      ctx.quadraticCurveTo(cx - 12, cy - 18, cx - 2, cy - 24);
-      ctx.quadraticCurveTo(cx + 4, cy - 20, cx, cy - 14);
-      ctx.quadraticCurveTo(cx + 10, cy - 18, cx + 10, cy);
+      ctx.moveTo(cx - 8, cy);
+      ctx.quadraticCurveTo(cx - 10, cy - 14, cx - 2, cy - 20);
+      ctx.quadraticCurveTo(cx + 3, cy - 16, cx, cy - 11);
+      ctx.quadraticCurveTo(cx + 8, cy - 14, cx + 8, cy);
       ctx.closePath();
       ctx.fill();
 
       // Labareda Média (Laranja intenso)
       ctx.fillStyle = '#ea580c';
       ctx.beginPath();
-      ctx.moveTo(cx - 6, cy);
-      ctx.quadraticCurveTo(cx - 8, cy - 14, cx - 1, cy - 19);
-      ctx.quadraticCurveTo(cx + 6, cy - 14, cx + 6, cy);
+      ctx.moveTo(cx - 5, cy);
+      ctx.quadraticCurveTo(cx - 6, cy - 11, cx - 1, cy - 15);
+      ctx.quadraticCurveTo(cx + 5, cy - 11, cx + 5, cy);
       ctx.closePath();
       ctx.fill();
 
       // Núcleo Incandescente (Amarelo Dourado / Branco)
       ctx.fillStyle = '#fef08a';
       ctx.beginPath();
-      ctx.moveTo(cx - 3, cy);
-      ctx.lineTo(cx, cy - 12);
-      ctx.lineTo(cx + 3, cy);
+      ctx.moveTo(cx - 2.5, cy);
+      ctx.lineTo(cx, cy - 9);
+      ctx.lineTo(cx + 2.5, cy);
       ctx.closePath();
       ctx.fill();
     }
@@ -705,10 +652,12 @@
           'fogueira_apagada', 'fogueira_brasa', 'fogueira_alta',
           'casa_nivel1', 'casa_nivel2', 'casa_nivel3',
           'curral', 'barco', 'arena', 'construcao_obras',
-          'arvore_pinheiro', 'arvore_carvalho'
+          'arvore_pinheiro', 'arvore_carvalho',
+          'palmeira', 'ponte_madeira', 'caverna_rocha', 'pier_madeira', 'moinho'
         ];
+        const SVG_VER = '20261108_2125';
         arqs.forEach(nome => {
-          cacheSvg[nome] = PIXI.Texture.from('/assets/sprites/' + nome + '.svg');
+          cacheSvg[nome] = PIXI.Texture.from('/assets/sprites/' + nome + '.svg?v=' + SVG_VER);
         });
       } catch (errSvg) {
         console.warn('⚠️ [SPRITES-ILHA] Aviso ao pré-carregar SVGs:', errSvg);
@@ -819,45 +768,86 @@
     },
 
     /**
-     * Atualiza os 3 canteiros da horta em tempo real no mapa conforme o ecossistema
+     * Atualiza os canteiros da horta em tempo real no mapa conforme o ecossistema.
+     * REGRA: Se NADA foi plantado pelos personagens, a área fica 100% LIMPA/APAGADA.
+     * O solo do mapa fica livre. Quando plantam, a horta surge e cresce acompanhando o cultivo.
      */
     atualizarHortaProps(container, eco, posFazenda, scale) {
       if (!this.carregado) this.inicializar();
       container.removeChildren();
 
       const horta = (eco && eco.horta) || {};
-      const totalPlantas = (horta.plantados || 0) + (horta.crescendo || 0) + (horta.maduros || 0);
+      const plantados = Number(horta.plantados) || 0;
+      const crescendo = Number(horta.crescendo) || 0;
+      const maduros = Number(horta.maduros) || 0;
+      const totalPlantas = plantados + crescendo + maduros;
 
-      // Determina o estágio agrícola (0: Terra arada, 1: Brotos, 2: Madura, 3: Colhida)
-      let estagioGeral = 0;
-      if (horta.plantadoPor && totalPlantas > 0) {
-        if ((horta.maduros || 0) > 0.4) estagioGeral = 2; // Madura pronta
-        else estagioGeral = 1; // Brotos crescendo
-      } else if (horta.ultimaColheitaCiclo) {
-        estagioGeral = 3; // Recém colhida
+      // Se ainda não houve plantio ou a horta está vazia, exibe 1 canteiro de terra arada
+      // delimitando a horta e indicando que o solo está pronto para receber sementes
+      if (!horta.plantadoPor || totalPlantas <= 0.05) {
+        const texArado = cacheSvg['canteiro_arado'] || cacheTexturas.hortaEstagios[0];
+        if (texArado) {
+          const spr = new PIXI.Sprite(texArado);
+          spr.anchor.set(0.5, 0.5);
+          spr.x = posFazenda.x;
+          spr.y = posFazenda.y;
+          spr.scale.set(0.72 * scale);
+          spr.alpha = 0.92;
+          container.addChild(spr);
+        }
+        return;
       }
 
-      // Renderiza 3 canteiros bem delimitados na fazenda
-      const canteirosOffsets = [
-        { dx: -28, dy: -14, est: estagioGeral },
-        { dx: 22,  dy: -10, est: Math.max(0, estagioGeral - 1) },
-        { dx: -4,  dy: 12,  est: estagioGeral === 2 ? 2 : Math.min(3, estagioGeral + 1) }
-      ];
+      // Estágio predominante das plantas:
+      // 0: recém-plantado (sulcos frescos com sementes/estacas)
+      // 1: brotos em crescimento ativo (folhinhas verdes crescendo)
+      // 2: maduras prontas para colheita (folhagem densa e legumes/frutos visíveis)
+      let estagioGeral = 0;
+      if (maduros > 0.4) {
+        estagioGeral = 2; // madura
+      } else if (crescendo > 0.2) {
+        estagioGeral = 1; // crescendo
+      } else {
+        estagioGeral = 0; // broto inicial
+      }
 
+      // A área se expande organicamente conforme a QUANTIDADE plantada:
+      // <= 3 plantas: 1 canteiro modesto concentrado
+      // 4 a 7 plantas: 2 canteiros orgânicos
+      // 8+ plantas: 3 canteiros orgânicos cheios
+      let canteirosOffsets = [{ dx: 0, dy: 0, est: estagioGeral }];
+      if (totalPlantas > 7) {
+        canteirosOffsets = [
+          { dx: -18, dy: -6, est: estagioGeral },
+          { dx: 14,  dy: -2, est: estagioGeral === 2 && crescendo > 1 ? 1 : estagioGeral },
+          { dx: -2,  dy: 10, est: estagioGeral }
+        ];
+      } else if (totalPlantas > 3) {
+        canteirosOffsets = [
+          { dx: -14, dy: -4, est: estagioGeral },
+          { dx: 12,  dy: 6,  est: estagioGeral }
+        ];
+      }
+
+      // Escala visual das plantas cresce de acordo com a maturação (plantas crescem em tamanho)
+      const fatorCrescimento = estagioGeral === 2 ? 0.75 : (estagioGeral === 1 ? 0.62 : 0.50);
       const chavesEstagios = ['canteiro_arado', 'canteiro_broto', 'canteiro_maduro', 'canteiro_colhido'];
+
       canteirosOffsets.forEach(c => {
         const tex = cacheSvg[chavesEstagios[c.est]] || cacheTexturas.hortaEstagios[c.est];
-        const spr = new PIXI.Sprite(tex);
-        spr.anchor.set(0.5, 0.5);
-        spr.x = posFazenda.x + c.dx * scale;
-        spr.y = posFazenda.y + c.dy * scale;
-        spr.scale.set(0.68 * scale);
-        container.addChild(spr);
+        if (tex) {
+          const spr = new PIXI.Sprite(tex);
+          spr.anchor.set(0.5, 0.5);
+          spr.x = posFazenda.x + c.dx * scale;
+          spr.y = posFazenda.y + c.dy * scale;
+          spr.scale.set(fatorCrescimento * scale);
+          container.addChild(spr);
+        }
       });
     },
 
     /**
-     * Atualiza a Fogueira nos 3 estados reais
+     * Atualiza a Fogueira nos 3 estados reais (integrada ao círculo de pedras do mapa)
      */
     atualizarFogueiraProps(container, lenha, clima, posFogueira, scale, tempo) {
       if (!this.carregado) this.inicializar();
@@ -868,85 +858,183 @@
       if (chuvoso && lenha < 10) nivel = 0; // Apagada na chuva sem lenha
       else if (lenha < 8) nivel = 1; // Brasas fracas
 
-      const chavesFogo = ['fogueira_apagada', 'fogueira_brasa', 'fogueira_alta'];
-      const tex = cacheSvg[chavesFogo[nivel]] || cacheTexturas.fogueiraEstagios[nivel];
-      const spr = new PIXI.Sprite(tex);
-      spr.anchor.set(0.5, 0.7);
-      spr.x = posFogueira.x;
-      spr.y = posFogueira.y;
-      spr.scale.set(0.95 * scale);
+      const tex = cacheTexturas.fogueiraEstagios[nivel] || cacheTexturas.fogueiraEstagios[2];
+      if (tex) {
+        const spr = new PIXI.Sprite(tex);
+        spr.anchor.set(0.5, 0.85);
+        spr.x = posFogueira.x;
+        spr.y = posFogueira.y + 4 * scale;
+        spr.scale.set(0.85 * scale);
 
-      // Leve pulsação térmica de chama
-      if (nivel === 2) {
-        spr.scale.y = (0.95 + Math.sin(tempo * 0.012) * 0.05) * scale;
+        // Leve pulsação térmica de chama
+        if (nivel === 2) {
+          spr.scale.y = (0.85 + Math.sin(tempo * 0.012) * 0.06) * scale;
+        }
+        container.addChild(spr);
       }
-      container.addChild(spr);
     },
 
     /**
-     * Renderiza e anima árvores com Wind Sway (balanço do vento)
+     * Árvores da Ilha: O mapa oficial já possui árvores profissionais pintadas à mão.
+     * Mantém o container limpo sem sobreposições artificiais redundantes.
      */
     atualizarArvoresProps(container, tempo, intensidadeVento, toScreen) {
       if (!this.carregado) this.inicializar();
       container.removeChildren();
-
-      // Conjunto de árvores interativas mapeadas
-      const florestaArvores = [
-        { x: 0.73, y: 0.28, tipo: 'pinheiro', cortada: false },
-        { x: 0.77, y: 0.25, tipo: 'pinheiro', cortada: false },
-        { x: 0.82, y: 0.32, tipo: 'carvalho', cortada: false },
-        { x: 0.30, y: 0.29, tipo: 'carvalho', cortada: false },
-        { x: 0.34, y: 0.33, tipo: 'carvalho', cortada: false },
-        { x: 0.26, y: 0.35, tipo: 'toco',     cortada: true } // Árvore cortada recentemente
-      ];
-
-      const sway = Math.sin(tempo * 0.003) * (0.04 + intensidadeVento * 0.08);
-
-      florestaArvores.forEach(arv => {
-        const pos = toScreen(arv.x, arv.y);
-        const tex = (cacheSvg['arvore_' + arv.tipo] || cacheTexturas.arvores[arv.tipo]) || cacheTexturas.arvores.carvalho;
-        const spr = new PIXI.Sprite(tex);
-        spr.anchor.set(0.5, 0.9);
-        spr.x = pos.x;
-        spr.y = pos.y;
-        spr.scale.set(0.78);
-        if (!arv.cortada) {
-          spr.skew.x = sway; // Wind Sway orgânico
-        }
-        container.addChild(spr);
-      });
     },
 
     /**
-     * Renderiza o ciclo de ondas do mar na areia e spray na cachoeira
+     * Renderiza a Camada Viva de Superfície da Água:
+     * - Cobertura translúcida do oceano tropical com profundidade
+     * - Cáusticas solares e reflexos móveis de luz
+     * - Rebentação com espuma dupla na praia do sul
+     * - Esteira hidrodinâmica em V (V-wake) e barbatana dorsal cortando a água sobre o tubarão
+     * - Spray e correnteza viva na cachoeira e foz do rio
      */
-    atualizarAguaViva(graphicsMar, graphicsCachoeira, tempo, box, toScreen) {
+    atualizarAguaViva(graphicsMar, graphicsCachoeira, tempo, box, toScreen, tubaraoSurface) {
       graphicsMar.clear();
       graphicsCachoeira.clear();
+      if (!box || !toScreen) return;
 
-      // 1. Espuma da praia na costa sul (maré avançando e recuando)
-      const ondaAvanco = Math.sin(tempo * 0.0025) * 6;
-      graphicsMar.lineStyle(2.5, 0xffffff, 0.55);
+      const sc = box.scale || 1;
 
+      // 1. Manto Translúcido do Oceano Sul (Profundidade e Tom Turquesa Caribenho)
+      // Cobre suavemente a área marítima ao sul e cantos para integrar o tubarão submerso
+      const marTop = box.y + box.h * 0.77;
+      const marH = box.h * 0.28;
+      
+      // Camada 1: Profundidade média translúcida
+      graphicsMar.beginFill(0x0284c7, 0.22);
+      graphicsMar.drawRect(box.x, marTop, box.w, marH);
+      graphicsMar.endFill();
+
+      // Camada 2: Abismo profundo na borda inferior
+      graphicsMar.beginFill(0x034a78, 0.18);
+      graphicsMar.drawRect(box.x, box.y + box.h * 0.89, box.w, box.h * 0.15);
+      graphicsMar.endFill();
+
+      // 2. Ondas e Cáusticas Solares Refletindo na Água Tropical (12 células de luz)
+      for (let i = 0; i < 12; i++) {
+        const u = 0.08 + (i * 0.076);
+        const v = 0.83 + ((i % 3) * 0.05);
+        const p = toScreen(u, v);
+        const fase = tempo * 0.0018 + i * 1.35;
+        const dx = Math.cos(fase) * 16 * sc;
+        const dy = Math.sin(fase * 1.3) * 5 * sc;
+        const alfaC = 0.12 + Math.sin(fase) * 0.08;
+
+        graphicsMar.lineStyle(1.8 * sc, 0xbae6fd, Math.max(0.04, alfaC));
+        graphicsMar.drawEllipse(p.x + dx, p.y + dy, (28 + Math.cos(fase)*6) * sc, (8 + Math.sin(fase)*3) * sc);
+      }
+
+      // 3. Rebentação Dupla da Costa Sul (Espuma Branca e Maré Viva)
+      const ondaAvanco = Math.sin(tempo * 0.0022) * (7 * sc);
       const shorePontos = [
-        [0.10, 0.84], [0.22, 0.88], [0.35, 0.90], [0.48, 0.89], [0.60, 0.86]
+        [0.06, 0.82], [0.16, 0.85], [0.28, 0.89], [0.44, 0.90], [0.58, 0.87], [0.70, 0.83]
       ];
 
+      // 3.1 Sub-espuma turquesa suave avançando na areia
+      graphicsMar.lineStyle(4.5 * sc, 0x7dd3fc, 0.35);
       for (let i = 0; i < shorePontos.length - 1; i++) {
         const p1 = toScreen(shorePontos[i][0], shorePontos[i][1]);
         const p2 = toScreen(shorePontos[i+1][0], shorePontos[i+1][1]);
-        graphicsMar.moveTo(p1.x, p1.y + ondaAvanco);
-        graphicsMar.quadraticCurveTo((p1.x + p2.x)/2, (p1.y + p2.y)/2 + ondaAvanco * 1.3, p2.x, p2.y + ondaAvanco);
+        const mx = (p1.x + p2.x) / 2;
+        const my = (p1.y + p2.y) / 2 + ondaAvanco * 1.15;
+        if (i === 0) graphicsMar.moveTo(p1.x, p1.y + ondaAvanco * 0.9);
+        graphicsMar.quadraticCurveTo(mx, my, p2.x, p2.y + ondaAvanco * 0.9);
       }
 
-      // 2. Spray e Névoa na Base da Cachoeira
+      // 3.2 Linha de Crista de Espuma Branca Quebrando
+      graphicsMar.lineStyle(2.8 * sc, 0xffffff, 0.72);
+      for (let i = 0; i < shorePontos.length - 1; i++) {
+        const p1 = toScreen(shorePontos[i][0], shorePontos[i][1]);
+        const p2 = toScreen(shorePontos[i+1][0], shorePontos[i+1][1]);
+        const mx = (p1.x + p2.x) / 2;
+        const my = (p1.y + p2.y) / 2 + ondaAvanco;
+        if (i === 0) graphicsMar.moveTo(p1.x, p1.y + ondaAvanco);
+        graphicsMar.quadraticCurveTo(mx, my, p2.x, p2.y + ondaAvanco);
+
+        // Bolhas de espuma espalhadas ao longo da crista
+        const oscB = Math.sin(tempo * 0.004 + i);
+        graphicsMar.beginFill(0xffffff, 0.65);
+        graphicsMar.drawCircle(mx + oscB * 4, my - 2, 2.2 * sc);
+        graphicsMar.drawCircle(p1.x + 8, p1.y + ondaAvanco - 3, 1.8 * sc);
+        graphicsMar.endFill();
+      }
+
+      // 4. Efeito de Superfície do Tubarão: Barbatana Cortando a Água e Esteira em V
+      if (tubaraoSurface && tubaraoSurface.ativo) {
+        const { x, y, heading } = tubaraoSurface;
+        
+        // Ponto onde a ponta da barbatana dorsal quebra a linha d'água
+        const finX = x;
+        const finY = y;
+
+        // V-Wake: dois braços de espuma que abrem para trás
+        const wakeLen = 38 * sc;
+        const angLeft = heading + Math.PI - 0.45;
+        const angRight = heading + Math.PI + 0.45;
+
+        const leftX = finX + Math.cos(angLeft) * wakeLen;
+        const leftY = finY + Math.sin(angLeft) * wakeLen;
+        const rightX = finX + Math.cos(angRight) * wakeLen;
+        const rightY = finY + Math.sin(angRight) * wakeLen;
+
+        // Ondulações concêntricas de água se propagando para trás
+        const ondOsc = (tempo * 0.005) % 1;
+        const r1 = (8 + ondOsc * 22) * sc;
+        const backCenterX = finX + Math.cos(heading + Math.PI) * (14 * sc);
+        const backCenterY = finY + Math.sin(heading + Math.PI) * (14 * sc);
+
+        graphicsMar.lineStyle(1.5 * sc, 0xbae6fd, (1 - ondOsc) * 0.55);
+        graphicsMar.drawEllipse(backCenterX, backCenterY, r1, r1 * 0.45);
+
+        // Braço Esquerdo do V
+        graphicsMar.lineStyle(2.4 * sc, 0xffffff, 0.75);
+        graphicsMar.moveTo(finX, finY);
+        graphicsMar.lineTo(leftX, leftY);
+
+        // Braço Direito do V
+        graphicsMar.lineStyle(2.4 * sc, 0xffffff, 0.75);
+        graphicsMar.moveTo(finX, finY);
+        graphicsMar.lineTo(rightX, rightY);
+
+        // Espuma turbilhonante na base da barbatana
+        graphicsMar.beginFill(0xffffff, 0.85);
+        graphicsMar.drawEllipse(finX, finY, 5 * sc, 2.5 * sc);
+        graphicsMar.endFill();
+
+        // Pontinha afiada da barbatana dorsal escura projetando-se da água
+        graphicsMar.beginFill(0x020617, 0.95);
+        graphicsMar.lineStyle(1 * sc, 0x38bdf8, 0.7);
+        const fTipX = finX + Math.cos(heading) * (4 * sc);
+        const fTipY = finY + Math.sin(heading) * (4 * sc) - (3 * sc);
+        const fBase1X = finX + Math.cos(heading + Math.PI * 0.7) * (5 * sc);
+        const fBase1Y = finY + Math.sin(heading + Math.PI * 0.7) * (5 * sc);
+        const fBase2X = finX + Math.cos(heading - Math.PI * 0.7) * (5 * sc);
+        const fBase2Y = finY + Math.sin(heading - Math.PI * 0.7) * (5 * sc);
+        graphicsMar.moveTo(fTipX, fTipY);
+        graphicsMar.lineTo(fBase1X, fBase1Y);
+        graphicsMar.lineTo(fBase2X, fBase2Y);
+        graphicsMar.closePath();
+        graphicsMar.endFill();
+      }
+
+      // 5. Spray e Névoa na Base da Cachoeira + Correnteza do Rio
       const pCach = toScreen(0.65, 0.16);
-      const sprayOsc = Math.sin(tempo * 0.015) * 3;
-      graphicsCachoeira.beginFill(0xffffff, 0.38);
-      graphicsCachoeira.drawCircle(pCach.x - 6, pCach.y + sprayOsc, 5);
-      graphicsCachoeira.drawCircle(pCach.x + 8, pCach.y - sprayOsc, 6);
-      graphicsCachoeira.drawCircle(pCach.x, pCach.y + 4, 8);
+      const sprayOsc = Math.sin(tempo * 0.015) * (3 * sc);
+      graphicsCachoeira.beginFill(0xffffff, 0.45);
+      graphicsCachoeira.drawCircle(pCach.x - 7 * sc, pCach.y + sprayOsc, 6 * sc);
+      graphicsCachoeira.drawCircle(pCach.x + 9 * sc, pCach.y - sprayOsc, 7 * sc);
+      graphicsCachoeira.drawCircle(pCach.x, pCach.y + 4 * sc, 9 * sc);
       graphicsCachoeira.endFill();
+
+      // Correnteza da Foz do Rio desembocando no mar
+      const pFoz = toScreen(0.48, 0.84);
+      const oscFoz = Math.sin(tempo * 0.005) * 4 * sc;
+      graphicsCachoeira.lineStyle(1.8 * sc, 0xe0f2fe, 0.5);
+      graphicsCachoeira.moveTo(pFoz.x - 12 * sc, pFoz.y + oscFoz);
+      graphicsCachoeira.lineTo(pFoz.x + 12 * sc, pFoz.y + oscFoz + 6 * sc);
     }
   };
 

@@ -32,7 +32,7 @@
     casa_lara:    { x: 0.240, y: 0.410, nome: 'Cabana da Lara' },
     casa_joao:    { x: 0.460, y: 0.240, nome: 'Abrigo do João' },
     casa_maria:   { x: 0.820, y: 0.580, nome: 'Cabana da Maria' },
-    fazenda:      { x: 0.880, y: 0.560, nome: 'Horta da Fazenda' },
+    fazenda:      { x: 0.796, y: 0.651, nome: 'Horta da Fazenda' },
     curral:       { x: 0.890, y: 0.670, nome: 'Curral de Animais' },
     barco:        { x: 0.480, y: 0.840, nome: 'Cais do Barco' },
     mar:          { x: 0.350, y: 0.880, nome: 'Praia do Sul' },
@@ -141,7 +141,11 @@
       this.groundContainer = new PIXI.Container();
       this.cameraContainer.addChild(this.groundContainer);
 
-      // 2. Ondas do Mar e Água Viva
+      // 1.5. Subaquático (Tubarão Submerso, Sombras Marinhas e Recifes)
+      this.underwaterContainer = new PIXI.Container();
+      this.cameraContainer.addChild(this.underwaterContainer);
+
+      // 2. Ondas do Mar e Água Viva de Superfície (Cáusticas, Manto Translúcido, Rebentações, V-Wake)
       this.waterContainer = new PIXI.Container();
       this.graphicsMar = new PIXI.Graphics();
       this.graphicsCachoeira = new PIXI.Graphics();
@@ -430,7 +434,8 @@
     }
 
     carregarMapa() {
-      const urls = ['/mapa-ilha-evertrail.png', '/mapa-ilha-evertrail.jpg', '/mapa-ilha-nova.png'];
+      const v = 'v=20261108_2125';
+      const urls = ['/mapa-ilha-evertrail.png?' + v, '/mapa-ilha-evertrail.jpg?' + v, '/mapa-ilha-nova.png?' + v];
       const tentar = idx => {
         if (idx >= urls.length) return;
         const img = new Image();
@@ -615,7 +620,7 @@
       }
     }
 
-    // Ondas do Mar e Água Animada (Tidal foam & waterfall spray)
+    // Ondas do Mar e Água Animada (Tidal foam, waterfall spray & shark wake)
     atualizarAgua(tempo) {
       if (typeof window !== 'undefined' && window.MotorSpritesIlha && this.graphicsMar && this.graphicsCachoeira) {
         window.MotorSpritesIlha.atualizarAguaViva(
@@ -623,7 +628,8 @@
           this.graphicsCachoeira,
           tempo,
           this.box,
-          (x, y) => this.toScreen(x, y)
+          (x, y) => this.toScreen(x, y),
+          this.tubaraoSurface
         );
       }
     }
@@ -911,7 +917,7 @@
         }
       }
 
-      // 2. Tubarão nos Recifes (Sprite Hidrodinâmico com Cauda Animada)
+      // 2. Tubarão nos Recifes (Submerso na Água com Barbatana e Esteira de Superfície)
       const tub = eco.tubarao;
       if (tub && tub.status === 'vivo') {
         let tCont = this.actorContainers['tubarao'];
@@ -933,19 +939,38 @@
           });
           tag.anchor.set(0.5, 1);
           tag.y = -22;
+          tag.alpha = 0.65;
           tCont.addChild(tag);
 
-          this.ySortContainer.addChild(tCont);
+          if (this.underwaterContainer) {
+            this.underwaterContainer.addChild(tCont);
+          } else {
+            this.ySortContainer.addChild(tCont);
+          }
           this.actorContainers['tubarao'] = tCont;
         }
 
-        this.tubaraoAngulo += 0.008;
-        const raioPatrulha = 55 * this.box.scale;
-        const centroMar = this.toScreen(0.40, 0.90);
+        this.tubaraoAngulo += 0.007;
+        const raioX = 64 * this.box.scale;
+        const raioY = 25 * this.box.scale;
+        const centroMar = this.toScreen(0.38, 0.91);
 
-        tCont.x = centroMar.x + Math.cos(this.tubaraoAngulo) * raioPatrulha;
-        tCont.y = centroMar.y + Math.sin(this.tubaraoAngulo) * (raioPatrulha * 0.4);
+        tCont.x = centroMar.x + Math.cos(this.tubaraoAngulo) * raioX;
+        tCont.y = centroMar.y + Math.sin(this.tubaraoAngulo) * raioY;
         tCont.zIndex = Math.round(tCont.y);
+
+        // Tangente matemática do trajeto elíptico (direção hidrodinâmica exata do nado)
+        const vx = -Math.sin(this.tubaraoAngulo) * raioX;
+        const vy = Math.cos(this.tubaraoAngulo) * raioY;
+        const heading = Math.atan2(vy, vx);
+
+        // Comunica à camada de superfície da água a posição e orientação para o efeito de corte e esteira em V
+        this.tubaraoSurface = {
+          ativo: true,
+          x: tCont.x,
+          y: tCont.y,
+          heading: heading
+        };
 
         let corpo = tCont.getChildByName('corpo');
         if (!corpo || !(corpo instanceof PIXI.Sprite)) {
@@ -959,11 +984,16 @@
           const tex = window.MotorSpritesIlha.obterTexturaTubarao(tempo);
           if (tex) {
             corpo.texture = tex;
-            const s = 0.72 * this.box.scale;
+            const s = 0.74 * this.box.scale;
             corpo.scale.set(s, s);
-            corpo.rotation = this.tubaraoAngulo + Math.PI / 2;
+            // Oscilação suave e elegante da cauda ao nadar
+            const waggle = Math.sin(tempo * 0.006) * 0.06;
+            corpo.rotation = heading + waggle;
+            corpo.alpha = 0.80; // Renderizado submerso sob a água cristalina
           }
         }
+      } else {
+        this.tubaraoSurface = { ativo: false };
       }
     }
 
