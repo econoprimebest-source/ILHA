@@ -13,6 +13,7 @@ const {perceber}=require('./percepcao-v2');
 const {acoes,executar}=require('./motor-v2');
 const {montarContexto,validarDecisao,cerebroDe}=require('./cerebro-personagem');
 const {statusDe}=require('./seres');
+const espaco=require('./espaco');
 const {aplicarMetabolismo}=require('./metab');
 const acontecimentos=require('./acontecimentos');
 const memoria=require('./memoria-personagem');
@@ -93,8 +94,14 @@ async function rodada(estado,opcoes={}){
 		d.i=Math.min(i+1,d.caminho.length-1);
 		const para=d.caminho[d.i];
 		ser.local=para;
+		const coord=espaco.nos[para];
+		if(coord){ ser.x=coord.x; ser.y=coord.y; }
 		const chegou=d.i>=d.caminho.length-1;
-		if(chegou)ser.deslocamento=null;
+		if(chegou){
+			ser.deslocamento=null;
+			ser.alvoX=null;
+			ser.alvoY=null;
+		}
 		marcarTempo(estado,{tipo:'deslocamento',fase:chegou?'chegada':'passo',serId:ser.id,nome:ser.nome,de,para,destino:d.destino,local:para});
 	}
 
@@ -147,7 +154,7 @@ async function rodada(estado,opcoes={}){
 		const ser=item.ser;
 		if(ser.status==='morto')continue;
 		const antes={local:ser.local,necessidades:{...ser.necessidades},inventario:{...ser.inventario}};
-		const con=executar(estado,ser,item.decisao.acao,undefined,{texto:item.decisao.texto,fala:item.decisao.fala,motivo:item.decisao.motivo});
+		const con=executar(estado,ser,item.decisao.acao,undefined,{...item.decisao,texto:item.decisao.texto,fala:item.decisao.fala,motivo:item.decisao.motivo});
 		// O QUE ESTE SER ESTÁ FAZENDO AGORO — espelho do mundo para o
 		// observador (o visualizador mostra a atividade real, não uma regra).
 		ser.acao=item.decisao.acao;

@@ -240,18 +240,41 @@ async function decidir(c,a,ser,extras={}){
 	try{return await decidirNoProvedor(c,a,ser,extras)}
 	catch(e){
 		const msg=String(e&&e.message||e);
-		const infra=/LLM indispon|DeepSeek HTTP (429|5\d\d)|timeout/i.test(msg);
-		if(!infra||extras&&extras.__fallback||provedor()==='ollama'||process.env.ILHA_SEM_FALLBACK==='1')throw e;
+		const infra=/LLM indispon|DeepSeek HTTP (429|5\d\d)|Groq HTTP (429|5\d\d)|timeout|rate limit/i.test(msg);
+		if(provedor()==='groq' && process.env.DEEPSEEK_API_KEY && !extras.__deepseekFb){
+			try {
+				return await decidirNoProvedor(c,a,ser,{...extras,__deepseekFb:true},'deepseek');
+			} catch(eDs){}
+		}
+		if(!infra||extras&&extras.__fallback||provedor()==='ollama'||process.env.ILHA_SEM_FALLBACK==='1'){
+			if(!process.env.ILHA_TESTE_ESTRITO && infra){
+				const segura = a.find(x => x.id === 'continuar') || a.find(x => x.id === 'observar') || a.find(x => x.id === 'descansar') || a[0];
+				if(segura){
+					console.warn('[EMERGENCIA-CEREBRO] APIs remotas indisponíveis ('+msg.slice(0,80)+'). Ação de emergência: '+segura.id);
+					return { acao: segura.id, motivo: 'Observa a ilha atentamente enquanto aguarda condições melhores.', origem: 'emergencia-resiliente' };
+				}
+			}
+			throw e;
+		}
 		try{
 			const r=await decidirNoProvedor(c,a,ser,{...extras,__fallback:true});
 			console.warn('[FALLBACK-OLLAMA] provedor remoto indisponivel ('+msg.slice(0,120)+'); decisao feita localmente com '+(process.env.ILHA_FALLBACK_MODEL||'qwen3:8b'));
 			return r;
-		}catch(e2){throw e}
+		}catch(e2){
+			if(!process.env.ILHA_TESTE_ESTRITO){
+				const segura = a.find(x => x.id === 'continuar') || a.find(x => x.id === 'observar') || a.find(x => x.id === 'descansar') || a[0];
+				if(segura){
+					console.warn('[EMERGENCIA-CEREBRO] Fallback Ollama falhou ('+String(e2&&e2.message||e2).slice(0,80)+'). Ação de emergência: '+segura.id);
+					return { acao: segura.id, motivo: 'Observa a ilha atentamente enquanto aguarda condições melhores.', origem: 'emergencia-resiliente' };
+				}
+			}
+			throw e;
+		}
 	}
 }
-async function decidirNoProvedor(c,a,ser,extras={}){
+async function decidirNoProvedor(c,a,ser,extras={},provedorForcado=null){
 	const fb=!!(extras&&extras.__fallback);
-	const p=fb?'ollama':provedor(),modelo=fb?(process.env.ILHA_FALLBACK_MODEL||'qwen3:8b'):modeloDe(p); // resolvido por chamada (runtime/testes)
+	const p=provedorForcado||(fb?'ollama':provedor()),modelo=provedorForcado==='deepseek'?(process.env.DEEPSEEK_MODEL||'deepseek-chat'):(fb?(process.env.ILHA_FALLBACK_MODEL||'qwen3:8b'):modeloDe(p)); // resolvido por chamada (runtime/testes)
 	// VISÃO (opt-in `ILHA_VISAO=1`) — lê o último frame (`ultimo-frame.json`),
 	// pergunta ao modelo VL e injeta a descrição no prompt. Assíncrono AQUI
 	// para que `montarPrompt` continue síncrona; sem a flag (ou sem frame)

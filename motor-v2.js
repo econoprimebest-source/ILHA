@@ -8,7 +8,10 @@ for(const no of espaco.locais()){if(no===s.local)continue;if(no===s.casa){base.p
 // o trajeto continua sendo trajeto (um trecho por ciclo), nunca teleporte.
 const rotaNo=espaco.rota(s.local,no);
 const porAgua=!!(rotaNo&&rotaNo.trechos.some(t=>t.agua));
-base.push(['ir_'+no,(porAgua?'Ir até ':'Caminhar até ')+espaco.nome(no)+(porAgua?' de barco':''),true])}
+base.push(['ir_'+no,(porAgua?'Ir até ':'Caminhar até ')+espaco.nome(no)+(porAgua?' de barco':''),true]);
+base.push(['ir_para_'+no,(porAgua?'Ir para ':'Caminhar para ')+espaco.nome(no)+(porAgua?' de barco':''),true]);
+}
+base.push(['ir_para','Caminhar para outro local',true]);
 const temOutro = Object.values(e.seres||{}).some(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);
 base.push(['esperar','Aguardar',true],['procurar_alguem','Procurar alguém (espera no local)',true],['conviver','Conversar com alguém',temOutro],['falar','Falar com alguém',temOutro],['brincar','Brincar/Relaxar',!temOutro],['confrontar','Confrontar alguém',temOutro],['desafiar_luta','Desafiar alguém para uma luta (Arena)',temOutro && s.local === 'arena']);
 // AÇÕES EXISTENCIAIS E SOCIAIS (Livre-arbítrio, Consciência e Alma Humana):
@@ -144,7 +147,33 @@ function executar(e,s,id,permitidas=acoes(e,s),extra={}){if(!permitidas.some(a=>
 // DESLOCAMENTO: 'ir_*' NUNCA teletransporta — inicia ou reroteia um trajeto
 // no grafo; o avanço físico é um trecho por ciclo (fase 0 da rodada).
 if(id==='continuar'){if(!s.deslocamento)throw Error('Ação inválida ou indisponível: continuar');r.deslocamento={estado:'emCurso',destino:s.deslocamento.destino};return r}
-if(id==='ir_casa'||id.startsWith('ir_')){const destino=id==='ir_casa'?s.casa:id.slice(3);const no=espaco.normalizar(destino);if(!no||no===s.local)throw Error('Ação inválida ou indisponível: '+id);const caminho=espaco.rota(s.local,no);if(!caminho)throw Error('Sem caminho até '+destino);s.deslocamento={destino:no,caminho:caminho.caminho,i:0,iniciadoNoCiclo:e.mundo.tempo.ciclo};r.deslocamento={estado:'partida',destino:no,trechos:caminho.caminho.length-1};return r}
+if(id==='ir_casa'||id==='ir_para'||id.startsWith('ir_para_')||id.startsWith('ir_')){
+  let destino;
+  if(id==='ir_casa'){
+    destino=s.casa||('casa_'+s.id);
+  }else if(id.startsWith('ir_para_')){
+    destino=id.slice(8);
+  }else if(id==='ir_para'){
+    destino=extra.destino||extra.local||extra.alvo||extra.para||(extra.decisao&&(extra.decisao.destino||extra.decisao.local));
+    if(!destino){
+      const viz=espaco.vizinhosDe(s.local);
+      destino=(viz&&viz[0])||'acampamento';
+    }
+  }else if(id.startsWith('ir_')){
+    destino=id.slice(3);
+  }
+  const no=espaco.normalizar(destino);
+  if(!no||no===s.local)throw Error('Ação inválida ou indisponível: '+id+(destino?' ('+destino+')':''));
+  const caminho=espaco.rota(s.local,no);
+  if(!caminho)throw Error('Sem caminho até '+destino);
+  s.deslocamento={destino:no,caminho:caminho.caminho,i:0,iniciadoNoCiclo:e.mundo.tempo.ciclo};
+  const coordAtual=espaco.nos[s.local];
+  if(coordAtual){s.x=coordAtual.x;s.y=coordAtual.y;}
+  const coordDest=espaco.nos[no];
+  if(coordDest){s.alvoX=coordDest.x;s.alvoY=coordDest.y;}
+  r.deslocamento={estado:'partida',destino:no,trechos:caminho.caminho.length-1};
+  return r;
+}
 // AÇÃO LOCAL: o ser assumiu o controle — qualquer ação no meio do caminho
 // cancela o trajeto (o mundo não puxa ninguém contra a própria decisão).
 if(s.deslocamento){r.deslocamento={estado:'abortado',destino:s.deslocamento.destino};s.deslocamento=null}

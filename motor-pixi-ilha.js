@@ -721,9 +721,27 @@
         this.actorContainers[id] = cont;
       }
 
-      // Alvo no mapa com roaming orgânico
-      const info = LOCAIS_MAPA[ser.local] || LOCAIS_MAPA.acampamento;
-      const alvo = this.toScreen(info.x, info.y);
+      // Alvo no mapa com roaming orgânico e suporte a x, y e deslocamento
+      let alvoX, alvoY;
+      if (typeof ser.x === 'number' && typeof ser.y === 'number') {
+        alvoX = ser.x;
+        alvoY = ser.y;
+      } else {
+        const info = LOCAIS_MAPA[ser.local] || LOCAIS_MAPA.acampamento;
+        alvoX = info.x;
+        alvoY = info.y;
+      }
+
+      // Se houver deslocamento ativo para outro destino, caminha em direção ao destino
+      if (ser.deslocamento && ser.deslocamento.destino && LOCAIS_MAPA[ser.deslocamento.destino]) {
+        const dest = LOCAIS_MAPA[ser.deslocamento.destino];
+        if (dest) {
+          alvoX = dest.x;
+          alvoY = dest.y;
+        }
+      }
+
+      const alvo = this.toScreen(alvoX, alvoY);
 
       // Movimentação suave
       if (cont.x === 0 && cont.y === 0) {
@@ -733,9 +751,9 @@
         const dx = alvo.x - cont.x;
         const dy = alvo.y - cont.y;
         const dist = Math.hypot(dx, dy);
-        if (dist > 2) {
-          cont.x += dx * 0.12;
-          cont.y += dy * 0.12;
+        if (dist > 1.5) {
+          cont.x += dx * 0.14;
+          cont.y += dy * 0.14;
           cont.scale.x = dx < 0 ? -1 : 1;
         } else {
           cont.x = alvo.x;

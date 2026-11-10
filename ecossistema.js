@@ -150,6 +150,12 @@ function preparar(estado) {
     ser.experiencia ||= [];
     ser.memoria ||= [];
     ser.local ||= 'acampamento';
+    const esp = require('./espaco');
+    const coord = esp.nos[ser.local];
+    if (coord) {
+      ser.x ??= coord.x;
+      ser.y ??= coord.y;
+    }
     ser.status ||= 'vivo';
     ser.vinculos ||= {};
     ser.casa ||= 'casa_'+ser.id;
