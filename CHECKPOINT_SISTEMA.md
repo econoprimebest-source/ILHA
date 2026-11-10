@@ -7,9 +7,9 @@
 ---
 
 ## 🕒 Última Atualização
-* **Data/Hora:** 2026-11-10 15:10 (Horário Local)
-* **Branch Git:** `visualizacao-ilha`
-* **Status do Servidor:** `node visualizador-ilha.js` rodando em `http://localhost:8810` (ou `http://0.0.0.0:8810`).
+* **Data/Hora:** 2026-11-10 18:10 (Horário Local)
+* **Branch Git:** `visualizacao-ilha` (Sincronizada no GitHub `origin/visualizacao-ilha`)
+* **Status:** Tudo commitado e enviado para o GitHub. A Ilha roda de forma autônoma no Z Fold (Termux) na porta 8810, com o PC desligado.
 
 ---
 
