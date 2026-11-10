@@ -1,0 +1,25 @@
+/* PALETA DE CORES DE A ILHA */
+.color-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.swatch {
+  border-radius: var(--ilh-radius-md);
+  padding: 12px;
+  font-family: var(--ilh-font-mono);
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 80px;
+  border: 1px solid var(--ilh-border-subtle);
+}
+
+.c-brand { background: var(--ilh-brand-primary); color: #fff; }
+.c-work { background: var(--ilh-dist-work); color: #fff; }
+.c-personal { background: var(--ilh-dist-personal); color: #fff; }
+.c-finance { background: var(--ilh-dist-finance); color: #000; }
+.c-sandbox { background: var(--ilh-dist-sandbox); color: #fff; }
+.c-expansion { background: var(--ilh-dist-expansion); color: #000; }

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tela E: Interior do Ambiente · A ILHA</title>
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tokens/tokens.css">
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tipografia/tipografia.css">
+  <link rel="stylesheet" href="../../05-PROTOTIPO/style.css">
+</head>
+<body style="padding: 24px; background: var(--ilh-bg-app); color: var(--ilh-text-title);">
+
+  <div style="max-width: 500px; margin: 0 auto; display:flex; flex-direction:column; gap:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h1 class="text-hero" style="font-size: 22px;">Trabalho &amp; Produção</h1>
+        <p class="text-subtitle">Neo-Metrópole Tecnológica</p>
+      </div>
+      <span class="badge badge-active">Ativo</span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="env-card" style="padding:12px;">
+        <span class="text-caption">Storage Ocupado</span>
+        <h3 class="text-title-1" style="color:var(--ilh-brand-primary);">8.4 GB</h3>
+      </div>
+      <div class="env-card" style="padding:12px;">
+        <span class="text-caption">Memória Alocada</span>
+        <h3 class="text-title-1" style="color:var(--ilh-status-active);">1.1 GB</h3>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-title-2" style="font-size:15px; margin-bottom:8px;">Aplicativos Isolados</h3>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <span class="app-chip">💬 Slack (v24.08)</span>
+        <span class="app-chip">📝 Notion</span>
+        <span class="app-chip">👥 MS Teams</span>
+        <span class="app-chip">✉️ Gmail Corp</span>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-title-2" style="font-size:15px; margin-bottom:8px;">Regras do Perfil</h3>
+      <div class="env-card" style="padding:12px;">
+        <div style="display:flex; justify-content:space-between;">
+          <strong>Isolamento de Contatos</strong>
+          <span class="badge badge-active">Ativo</span>
+        </div>
+        <p class="text-caption" style="margin-top:2px;">Contatos corporativos não se misturam aos pessoais.</p>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="btn btn-secondary" style="flex:1;">Pausar Ambiente</button>
+      <button class="btn btn-danger" style="flex:1;">Excluir Ambiente</button>
+    </div>
+  </div>
+
+</body>
+</html>

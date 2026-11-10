@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tela B: Dashboard / Visão Geral · A ILHA</title>
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tokens/tokens.css">
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tipografia/tipografia.css">
+  <link rel="stylesheet" href="../../05-PROTOTIPO/style.css">
+</head>
+<body style="padding: 24px; background: var(--ilh-bg-app); color: var(--ilh-text-title);">
+
+  <div style="max-width: 600px; margin: 0 auto; display:flex; flex-direction:column; gap:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h1 class="text-hero" style="font-size: 24px;">Painel Geral da Ilha</h1>
+        <p class="text-subtitle">Visão executiva e telemetria de contêineres</p>
+      </div>
+      <span class="badge badge-active">Blindagem 98%</span>
+    </div>
+
+    <!-- Grid de Métricas Principais -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
+      <div class="env-card" style="padding: 14px;">
+        <span class="text-caption">Espaços Ativos</span>
+        <h3 class="text-title-1" style="color: var(--ilh-brand-primary);">4 / 8</h3>
+      </div>
+      <div class="env-card" style="padding: 14px;">
+        <span class="text-caption">RAM Isolada</span>
+        <h3 class="text-title-1" style="color: var(--ilh-status-active);">3.2 GB</h3>
+      </div>
+      <div class="env-card" style="padding: 14px;">
+        <span class="text-caption">Storage Seguro</span>
+        <h3 class="text-title-1" style="color: var(--ilh-dist-finance);">24.8 GB</h3>
+      </div>
+    </div>
+
+    <!-- Atalho para A Ilha 3D Interativa -->
+    <div class="env-card" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(99, 102, 241, 0.15)); border-color: var(--ilh-brand-primary);">
+      <h3 class="text-title-2">Território Digital 3D Disponível</h3>
+      <p class="text-body" style="font-size:13px; margin: 6px 0 14px;">O mapa espacial interativo da Ilha permite gerenciar seus ambientes como distritos físicos independentes.</p>
+      <a href="../../05-PROTOTIPO/index.html?skipSplash=1" class="btn btn-primary" style="text-decoration:none; display:inline-flex;">
+        Abrir Ilha Tridimensional
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>

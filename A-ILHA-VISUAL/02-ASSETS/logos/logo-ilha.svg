@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 100" fill="none">
+  <defs>
+    <linearGradient id="ilh-grad-core" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff"/>
+      <stop offset="50%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="ilh-grad-plate-top" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <linearGradient id="ilh-grad-plate-side1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#071829"/>
+    </linearGradient>
+    <linearGradient id="ilh-grad-plate-side2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#075985"/>
+      <stop offset="100%" stop-color="#02213a"/>
+    </linearGradient>
+    <filter id="ilh-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Simbolo Isométrico da Ilha -->
+  <g transform="translate(10, 10)">
+    <!-- Base Flutuante Inferior -->
+    <path d="M 40 45 L 75 62 L 40 78 L 5 62 Z" fill="#031526" opacity="0.6"/>
+    <path d="M 5 62 L 40 78 L 40 85 L 5 68 Z" fill="#020b14"/>
+    <path d="M 40 78 L 75 62 L 75 68 L 40 85 Z" fill="#051c33"/>
+
+    <!-- Camada Intermediária Strata -->
+    <path d="M 40 32 L 75 49 L 40 65 L 5 49 Z" fill="url(#ilh-grad-plate-top)" opacity="0.95"/>
+    <path d="M 5 49 L 40 65 L 40 73 L 5 57 Z" fill="url(#ilh-grad-plate-side1)"/>
+    <path d="M 40 65 L 75 49 L 75 57 L 40 73 Z" fill="url(#ilh-grad-plate-side2)"/>
+
+    <!-- Núcleo de Dados Elevado -->
+    <path d="M 40 18 L 60 28 L 40 38 L 20 28 Z" fill="url(#ilh-grad-core)" filter="url(#ilh-glow)"/>
+    <path d="M 20 28 L 40 38 L 40 46 L 20 36 Z" fill="#0284c7"/>
+    <path d="M 40 38 L 60 28 L 60 36 L 40 46 Z" fill="#0369a1"/>
+
+    <!-- Pulso e Beacon Holográfico -->
+    <circle cx="40" cy="20" r="3.5" fill="#ffffff" filter="url(#ilh-glow)"/>
+    <line x1="40" y1="20" x2="40" y2="2" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.8"/>
+    <circle cx="40" cy="2" r="1.5" fill="#00f0ff"/>
+  </g>
+
+  <!-- Tipografia "A ILHA" -->
+  <g transform="translate(105, 58)">
+    <text font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="34" letter-spacing="1.5" fill="currentColor">
+      <tspan fill="#0ea5e9">A</tspan>
+      <tspan dx="10" fill="#f8fafc">ILHA</tspan>
+    </text>
+    <text y="22" font-family="'JetBrains Mono', Consolas, monospace" font-weight="600" font-size="10.5" letter-spacing="3.2" fill="#38bdf8" opacity="0.85">
+      WORKSPACE &amp; PROFILE ISOLATION
+    </text>
+  </g>
+</svg>

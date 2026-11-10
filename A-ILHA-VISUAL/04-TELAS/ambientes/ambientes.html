@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tela C: Meus Ambientes · A ILHA</title>
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tokens/tokens.css">
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tipografia/tipografia.css">
+  <link rel="stylesheet" href="../../05-PROTOTIPO/style.css">
+</head>
+<body style="padding: 24px; background: var(--ilh-bg-app); color: var(--ilh-text-title);">
+
+  <div style="max-width: 500px; margin: 0 auto; display:flex; flex-direction:column; gap:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h1 class="text-hero" style="font-size: 22px;">Meus Ambientes</h1>
+      <button class="btn btn-primary btn-sm">+ Novo</button>
+    </div>
+
+    <!-- Lista de Ambientes -->
+    <div class="env-card" style="--card-accent: #0284c7;">
+      <div class="env-card-top">
+        <div class="env-card-info">
+          <div class="env-icon-box">💼</div>
+          <div>
+            <h3 class="text-title-2">Trabalho &amp; Produção</h3>
+            <p class="text-caption">Neo-Metrópole · 8.4 GB</p>
+          </div>
+        </div>
+        <span class="badge badge-active">Ativo</span>
+      </div>
+      <div class="env-apps-row">
+        <span class="app-chip">💬 Slack</span>
+        <span class="app-chip">📝 Notion</span>
+        <span class="app-chip">👥 Teams</span>
+      </div>
+    </div>
+
+    <div class="env-card" style="--card-accent: #10b981;">
+      <div class="env-card-top">
+        <div class="env-card-info">
+          <div class="env-icon-box">🌿</div>
+          <div>
+            <h3 class="text-title-2">Pessoal &amp; Social</h3>
+            <p class="text-caption">Oásis Bioluminescente · 11.2 GB</p>
+          </div>
+        </div>
+        <span class="badge badge-active">Ativo</span>
+      </div>
+      <div class="env-apps-row">
+        <span class="app-chip">🟢 WhatsApp</span>
+        <span class="app-chip">📷 Instagram</span>
+        <span class="app-chip">🎵 Spotify</span>
+      </div>
+    </div>
+
+    <div class="env-card" style="--card-accent: #f59e0b;">
+      <div class="env-card-top">
+        <div class="env-card-info">
+          <div class="env-icon-box">🛡️</div>
+          <div>
+            <h3 class="text-title-2">Cofre Financeiro</h3>
+            <p class="text-caption">Cidadela Fortificada · 3.6 GB</p>
+          </div>
+        </div>
+        <span class="badge badge-active">Ativo</span>
+      </div>
+      <div class="env-apps-row">
+        <span class="app-chip">🟣 Nubank</span>
+        <span class="app-chip">🟠 Inter</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

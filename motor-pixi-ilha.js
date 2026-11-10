@@ -618,6 +618,11 @@
           this.structuresContainer.addChild(barraCont);
         });
       }
+
+      // 6. Ampliações de Moradias (Níveis 1 a 5, baús de toras/pedras e andaimes de obra)
+      if (typeof window !== 'undefined' && window.MotorCasasIlha && typeof window.MotorCasasIlha.desenhar === 'function') {
+        window.MotorCasasIlha.desenhar(this.structuresContainer, estado, (fx, fy) => this.toScreen(fx, fy), this.box.scale, tempo);
+      }
     }
 
     // Ondas do Mar e Água Animada (Tidal foam, waterfall spray & shark wake)

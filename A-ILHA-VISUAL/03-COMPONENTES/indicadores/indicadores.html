@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <title>Componentes: Indicadores e Badges · A ILHA</title>
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tokens/tokens.css">
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tipografia/tipografia.css">
+  <link rel="stylesheet" href="../../05-PROTOTIPO/style.css">
+</head>
+<body style="padding: 32px; background: var(--ilh-bg-app);">
+  <h1 class="text-hero" style="font-size: 22px; margin-bottom: 20px;">Badges, Chips e Indicadores</h1>
+
+  <div style="display: flex; flex-direction: column; gap: 16px; max-width: 400px;">
+    <div>
+      <span class="text-caption">Badges de Estado de Perfil</span><br>
+      <div style="display:flex; gap:10px; margin-top:6px;">
+        <span class="badge badge-active">● Ativo</span>
+        <span class="badge badge-paused">⏸ Pausado</span>
+        <span class="badge" style="background: rgba(99,102,241,0.16); color: #818cf8;">🛡️ Isolado</span>
+      </div>
+    </div>
+
+    <div>
+      <span class="text-caption">Beacon Pulsante (Status do Kernel)</span><br>
+      <div style="display:inline-flex; align-items:center; gap:8px; margin-top:6px; padding:6px 14px; background:var(--ilh-bg-glass); border:1px solid var(--ilh-border-subtle); border-radius:30px;">
+        <div class="status-beacon"></div>
+        <span class="text-caption" style="color:var(--ilh-text-title); font-weight:600;">Ecossistema Seguro</span>
+      </div>
+    </div>
+
+    <div>
+      <span class="text-caption">Chips de Aplicativos</span><br>
+      <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">
+        <span class="app-chip">💬 Slack (v24.08)</span>
+        <span class="app-chip">🟢 WhatsApp</span>
+        <span class="app-chip">🟣 Nubank</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

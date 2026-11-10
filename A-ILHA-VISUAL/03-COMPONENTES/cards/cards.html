@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <title>Componentes: Cards · A ILHA</title>
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tokens/tokens.css">
+  <link rel="stylesheet" href="../../01-DESIGN-SYSTEM/tipografia/tipografia.css">
+  <link rel="stylesheet" href="../../05-PROTOTIPO/style.css">
+</head>
+<body style="padding: 32px; background: var(--ilh-bg-app);">
+  <h1 class="text-hero" style="font-size: 22px; margin-bottom: 20px;">Cards de Ambientes e Métricas</h1>
+
+  <div style="display: flex; flex-direction: column; gap: 20px; max-width: 440px;">
+    <!-- Card de Ambiente Ativo -->
+    <div class="env-card" style="--card-accent: #0284c7; --card-bg: rgba(14, 165, 233, 0.15); --card-border: rgba(14, 165, 233, 0.3);">
+      <div class="env-card-top">
+        <div class="env-card-info">
+          <div class="env-icon-box">💬</div>
+          <div>
+            <h3 class="text-title-2">Trabalho &amp; Produção</h3>
+            <p class="text-caption">Neo-Metrópole · Acesso: Há 10 min</p>
+          </div>
+        </div>
+        <span class="badge badge-active">● Ativo</span>
+      </div>
+
+      <p class="text-body" style="font-size: 13px;">Ambiente blindado para ferramentas corporativas e comunicações.</p>
+
+      <div class="env-apps-row">
+        <span class="app-chip">💬 Slack</span>
+        <span class="app-chip">📝 Notion</span>
+        <span class="app-chip">👥 Teams</span>
+      </div>
+
+      <div class="env-card-actions">
+        <span class="text-caption">Armazenamento: <strong>8.4 GB</strong></span>
+        <button class="btn btn-primary btn-sm">Abrir Espaço</button>
+      </div>
+    </div>
+
+    <!-- Card de Métrica -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div style="background: var(--ilh-bg-input); padding: 14px; border-radius: var(--ilh-radius-md); border: 1px solid var(--ilh-border-subtle);">
+        <span class="text-caption">Espaços Ativos</span>
+        <h4 class="text-title-1" style="color: var(--ilh-brand-primary);">4 / 8</h4>
+      </div>
+      <div style="background: var(--ilh-bg-input); padding: 14px; border-radius: var(--ilh-radius-md); border: 1px solid var(--ilh-border-subtle);">
+        <span class="text-caption">Blindagem</span>
+        <h4 class="text-title-1" style="color: var(--ilh-status-active);">96%</h4>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

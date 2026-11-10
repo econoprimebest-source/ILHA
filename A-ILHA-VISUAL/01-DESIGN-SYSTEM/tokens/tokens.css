@@ -1,0 +1,125 @@
+/**
+ * A ILHA - DESIGN SYSTEM TOKENS
+ * Tokens universais para integração web, PWA ou webview Android
+ */
+
+:root {
+  /* Brand */
+  --ilh-brand-primary: #0ea5e9;
+  --ilh-brand-primary-glow: rgba(14, 165, 233, 0.35);
+  --ilh-brand-secondary: #6366f1;
+  --ilh-brand-accent: #00f0ff;
+  --ilh-brand-core: #38bdf8;
+
+  /* Distritos / Ambientes */
+  --ilh-dist-work: #0284c7;
+  --ilh-dist-work-glow: rgba(14, 165, 233, 0.45);
+  --ilh-dist-work-bg: rgba(14, 165, 233, 0.12);
+
+  --ilh-dist-personal: #10b981;
+  --ilh-dist-personal-glow: rgba(16, 185, 129, 0.45);
+  --ilh-dist-personal-bg: rgba(16, 185, 129, 0.12);
+
+  --ilh-dist-finance: #f59e0b;
+  --ilh-dist-finance-glow: rgba(245, 158, 11, 0.45);
+  --ilh-dist-finance-bg: rgba(245, 158, 11, 0.12);
+
+  --ilh-dist-sandbox: #8b5cf6;
+  --ilh-dist-sandbox-glow: rgba(139, 92, 246, 0.45);
+  --ilh-dist-sandbox-bg: rgba(139, 92, 246, 0.12);
+
+  --ilh-dist-expansion: #06b6d4;
+  --ilh-dist-expansion-glow: rgba(6, 182, 212, 0.45);
+  --ilh-dist-expansion-bg: rgba(6, 182, 212, 0.12);
+
+  /* Status */
+  --ilh-status-active: #10b981;
+  --ilh-status-active-bg: rgba(16, 185, 129, 0.16);
+  --ilh-status-paused: #f59e0b;
+  --ilh-status-paused-bg: rgba(245, 158, 11, 0.16);
+  --ilh-status-isolated: #6366f1;
+  --ilh-status-isolated-bg: rgba(99, 102, 241, 0.16);
+  --ilh-status-danger: #ef4444;
+  --ilh-status-danger-bg: rgba(239, 68, 68, 0.16);
+
+  /* Espaçamentos */
+  --ilh-sp-1: 4px;
+  --ilh-sp-2: 8px;
+  --ilh-sp-3: 12px;
+  --ilh-sp-4: 16px;
+  --ilh-sp-5: 20px;
+  --ilh-sp-6: 24px;
+  --ilh-sp-8: 32px;
+  --ilh-sp-10: 40px;
+  --ilh-sp-12: 48px;
+
+  /* Raios de borda */
+  --ilh-radius-xs: 4px;
+  --ilh-radius-sm: 8px;
+  --ilh-radius-md: 12px;
+  --ilh-radius-lg: 16px;
+  --ilh-radius-xl: 22px;
+  --ilh-radius-2xl: 30px;
+  --ilh-radius-full: 9999px;
+
+  /* Tipografia */
+  --ilh-font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --ilh-font-mono: 'JetBrains Mono', Consolas, monospace;
+
+  /* Transições & Curvas */
+  --ilh-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ilh-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ilh-dur-fast: 140ms;
+  --ilh-dur-normal: 260ms;
+  --ilh-dur-slow: 400ms;
+}
+
+/* Tema Escuro (Padrão) */
+[data-theme="dark"], :root {
+  --ilh-bg-app: #080c14;
+  --ilh-bg-ocean: #04070e;
+  --ilh-bg-elevated: #0e1524;
+  --ilh-bg-surface: #141f36;
+  --ilh-bg-card: rgba(18, 28, 48, 0.72);
+  --ilh-bg-glass: rgba(12, 19, 34, 0.82);
+  --ilh-bg-input: rgba(8, 13, 24, 0.7);
+
+  --ilh-border-subtle: rgba(255, 255, 255, 0.08);
+  --ilh-border-normal: rgba(255, 255, 255, 0.14);
+  --ilh-border-accent: rgba(56, 189, 248, 0.35);
+
+  --ilh-text-title: #f8fafc;
+  --ilh-text-body: #cbd5e1;
+  --ilh-text-muted: #64748b;
+  --ilh-text-dim: #475569;
+
+  --ilh-shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --ilh-shadow-floating: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --ilh-ocean-grid: rgba(56, 189, 248, 0.05);
+  --ilh-island-haze: radial-gradient(circle at center, rgba(14, 165, 233, 0.15) 0%, transparent 70%);
+}
+
+/* Tema Claro */
+[data-theme="light"] {
+  --ilh-bg-app: #f1f5f9;
+  --ilh-bg-ocean: #e2e8f0;
+  --ilh-bg-elevated: #ffffff;
+  --ilh-bg-surface: #f8fafc;
+  --ilh-bg-card: rgba(255, 255, 255, 0.88);
+  --ilh-bg-glass: rgba(255, 255, 255, 0.88);
+  --ilh-bg-input: rgba(241, 245, 249, 0.9);
+
+  --ilh-border-subtle: rgba(15, 23, 42, 0.08);
+  --ilh-border-normal: rgba(15, 23, 42, 0.14);
+  --ilh-border-accent: rgba(14, 165, 233, 0.45);
+
+  --ilh-text-title: #0f172a;
+  --ilh-text-body: #334155;
+  --ilh-text-muted: #64748b;
+  --ilh-text-dim: #94a3b8;
+
+  --ilh-shadow-card: 0 8px 30px rgba(15, 23, 42, 0.08);
+  --ilh-shadow-floating: 0 16px 36px rgba(15, 23, 42, 0.14);
+  --ilh-ocean-grid: rgba(14, 165, 233, 0.08);
+  --ilh-island-haze: radial-gradient(circle at center, rgba(14, 165, 233, 0.12) 0%, transparent 70%);
+}
