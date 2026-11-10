@@ -60,6 +60,8 @@ function montarContexto(estado,ser,possiveis,situacao=null){
 		.map(o=>({id:o.id,nome:o.nome||o.id}));
 	const contexto={
 		tempo:estado.mundo.tempo,
+		sensoDeTempo:(()=>{try{return require('./motor-v2').obterSensoDeTempo(estado,ser)}catch(_){return ''}})(),
+		ordemCriador:ser.ordemCriador||null,
 		clima:estado.mundo.clima,
 		climaDetalhado:estado.mundo.ecossistema.clima,
 		local:ser.local,

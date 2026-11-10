@@ -92,6 +92,9 @@ let ultimoMotivoPausa = '';
 
 function checarTravaBilocacao() {
   return new Promise((resolve) => {
+    if (process.env.ILHA_MODO_CONTINUO === '1' || process.env.ILHA_IGNORAR_JANELA === '1' || process.env.ILHA_CONTINUO === '1') {
+      return resolve({ autorizado: true, modo: 'continuo' });
+    }
     // 1. Tenta checar o arquivo local estado-presenca.json se estiver na mesma máquina
     const arqPresencaLocal = path.join(__dirname, '..', 'icaro-clean', 'estado-presenca.json');
     if (fs.existsSync(arqPresencaLocal)) {

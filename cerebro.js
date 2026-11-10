@@ -122,6 +122,16 @@ function montarPrompt(c,a,ser,extras){
 	if(c.inventario)partes.push('meu inventário carregado: água='+(Math.round((Number(c.inventario.agua)||0)*10)/10)+', alimento='+(Math.round((Number(c.inventario.alimento)||0)*10)/10)+', madeira='+(Math.round((Number(c.inventario.madeira)||0)*10)/10)+', pedra='+(Math.round((Number(c.inventario.pedra)||0)*10)/10));
 	if(c.minhaCasa){partes.push('[MINHA CASA E ESTOQUE]');partes.push(c.minhaCasa);}
 	if(c.sensacoes&&c.sensacoes.length)partes.push('sensações: '+c.sensacoes.join(', '));
+	if(c.ordemCriador || (extras && extras.ordemCriador)){
+		const ordem = c.ordemCriador || extras.ordemCriador;
+		partes.push('\n[ORDEM DIRETA DO CRIADOR — RAFAEL]\n' +
+			'Rafael (seu Criador) deu a seguinte ordem direta a você agora:\n' +
+			`"${ordem}"\n` +
+			'PRIORIDADE MÁXIMA ABSOLUTA: Esta ordem se sobrepõe a qualquer outro afazer. Você DEVE escolher a ação que melhor cumpre a ordem (ex: ir_casa, ir_<local>, etc.), obedecendo com lealdade, e mencionar a ordem no seu motivo e fala.');
+	}
+	if(c.sensoDeTempo){
+		partes.push(c.sensoDeTempo);
+	}
 	partes.push('[AGORA]');
 	const t=c.tempo||{};
 	partes.push('ciclo '+(t.ciclo!=null?t.ciclo:'—')+', dia '+(t.dia!=null?t.dia:'—')+', '+(t.periodo||'—')+', '+(t.estacao||'—')+' | clima: '+String(c.clima||'—')+' | local: '+c.local+' | estado: '+c.status);

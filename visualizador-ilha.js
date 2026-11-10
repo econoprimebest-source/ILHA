@@ -129,6 +129,31 @@ http.createServer((req,res)=>{
     const id=u.searchParams.get('ser')||'icaro';
     return json(res,lerCortexProfundo(id));
   }
+  // ROTA DE COMANDO DIRETO DO CRIADOR (RAFAEL)
+  if(u.pathname==='/api/comando'&&req.method==='POST'){
+    let body='';
+    req.on('data',c=>{body+=c;if(body.length>8192)req.destroy()});
+    req.on('end',()=>{
+      try{
+        const payload=JSON.parse(body||'{}');
+        const serId=String(payload.serId||payload.ser||payload.personagem||'elara').toLowerCase();
+        const comando=String(payload.comando||payload.ordem||payload.texto||'').trim();
+        const de=String(payload.de||payload.autor||'Rafael (Criador)').trim();
+        if(!comando)throw new Error('Comando vazio');
+        const cc=require('./comandos-criador');
+        const cmd=cc.registrarComando(serId,comando,de);
+        return json(res,{ok:true,mensagem:`Ordem enviada com sucesso para ${cmd.serId}: "${cmd.comando}"`,comando:cmd});
+      }catch(e){
+        res.writeHead(400,{'content-type':'application/json; charset=utf-8','access-control-allow-origin':'*'});
+        return res.end(JSON.stringify({ok:false,erro:e.message}));
+      }
+    });
+    return;
+  }
+  if(u.pathname==='/api/comandos'){
+    const cc=require('./comandos-criador');
+    return json(res,{ok:true,comandos:cc.listarComandos()});
+  }
   if(u.pathname==='/api/intervir'&&req.method==='POST'){
     let body='';
     req.on('data',c=>{body+=c;if(body.length>8192)req.destroy()});

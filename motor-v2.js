@@ -180,6 +180,25 @@ if(s.deslocamento){r.deslocamento={estado:'abortado',destino:s.deslocamento.dest
 // MORADIAS (casas.js): baú, ampliação em níveis e conforto do descanso.
 if(casas.IDS.includes(id))return casas.executar(e,s,id,r);
 if(id==='descansar')casas.bonusDescanso(e,s);
+
+// Senso biológico de tempo e timers de ação
+const cicloAtual = (e && e.mundo && e.mundo.tempo && e.mundo.tempo.ciclo) || 0;
+if (id === 'comer') s.ultimaRefeicaoCiclo = cicloAtual;
+if (id === 'beber') s.ultimaAguaCiclo = cicloAtual;
+if (id === 'descansar' || id === 'dormir') s.ultimoSonoCiclo = cicloAtual;
+
+const dur = DURACOES_ACOES[id];
+if (dur && dur > 1) {
+  s.acaoEmCurso = {
+    acao: id,
+    duracaoTotal: dur,
+    ciclosRestantes: dur - 1,
+    iniciadoNoCiclo: cicloAtual,
+    extra: { texto: extra.texto, fala: extra.fala, motivo: extra.motivo }
+  };
+} else {
+  s.acaoEmCurso = null;
+}
 switch(id){case'beber':s.inventario.agua--;s.necessidades.agua=0;r.quantidade=1;break;case'comer':s.inventario.alimento--;s.necessidades.alimento=0;r.quantidade=1;break;case'descansar':case'esperar':break;case'observar':r.pistas=perceber(e,s);break;case'banho':s.necessidades.higiene=Math.min(100,(s.necessidades.higiene??0)+60);r.quantidade=1;break;case'arrumar_casa':s.ultimoArrumarDia=e.mundo.tempo.dia;s.necessidades.frustracao=Math.max(0,(s.necessidades.frustracao??0)-15);s.necessidades.satisfacao=Math.min(100,(s.necessidades.satisfacao??50)+10);s.necessidades.higiene=Math.min(100,(s.necessidades.higiene??50)+25);r.quantidade=1;break;case'coletar_agua':{const temLago=x.agua.fontes?.lago&&x.agua.fontes.lago.nivel>0;const disp=Math.max(x.agua.nascente||0,temLago?3:0);r.quantidade=Math.min(3,disp>0?disp:2,Math.max(1.5,s.capacidades.coleta*3));if(x.agua.nascente>0)x.agua.nascente=Math.max(0,x.agua.nascente-r.quantidade);else if(temLago)x.agua.fontes.lago.nivel=Math.max(0,x.agua.fontes.lago.nivel-r.quantidade);s.inventario.agua+=r.quantidade;s.necessidades.agua=Math.max(0,(s.necessidades.agua||0)-60);break}case'pescar':{ s.habilidades = s.habilidades || {}; s.habilidades.caca = (s.habilidades.caca || 10) + 0.5; const p=x.peixes.rio,t=e.mundo.tempo,ch=Math.min(.95,Math.max(.65,p.populacao/p.capacidade)*Math.max(.65,s.capacidades.pesca*1.8)*(['manha','tarde'].includes(t.periodo)?1:.8)*(t.estacao==='chuvas'?1.25:t.estacao==='seca'?.9:1)),z=((t.ciclo*9301+17)%997)/997;if(p.populacao>0){const baseQ=Math.min(p.populacao,Math.max(1.5,s.capacidades.pesca*3.2*(0.45+0.55*(p.populacao/p.capacidade))));r.quantidade=z<ch?baseQ:Math.min(p.populacao,0.8);p.populacao-=r.quantidade;p.pescadosHoje=(p.ultimoDiaPesca===t.dia?(p.pescadosHoje||0):0)+1;p.ultimoDiaPesca=t.dia;s.inventario.alimento+=r.quantidade;s.necessidades.alimento=Math.max(0,(s.necessidades.alimento||0)-60)}r.chance=ch;break}case'colher_frutas':{let rem=Math.max(1.8,s.capacidades.coleta*2.8);for(const t of Object.values(x.arvores).filter(t=>t.local==='bosque').sort((a,b)=>b.frutos-a.frutos)){const q=Math.min(rem,t.frutos);t.frutos-=q;rem-=q;r.quantidade+=q;if(rem<=0)break}s.inventario.alimento+=r.quantidade;if(r.quantidade>0)s.necessidades.alimento=Math.max(0,(s.necessidades.alimento||0)-55);break}case'coletar_madeira':r.quantidade=Math.min(2,x.madeira.floresta,s.capacidades.forca*2);x.madeira.floresta-=r.quantidade;s.inventario.madeira+=r.quantidade;break;case'caçar':{ s.habilidades = s.habilidades || {}; s.habilidades.caca = (s.habilidades.caca || 10) + 1; 
         const faunas = Object.values(x.fauna||{}).filter(f=>f.local===s.local&&f.populacao>0);
         if(!faunas.length){ r.chance=0; break; }
@@ -745,4 +764,60 @@ case'conviver':{const outros=Object.values(e.seres||{}).filter(o=>o.id!==s.id&&o
 function ciclo(e,s,d){validar(e);if(!d||typeof d.acao!=='string'||!acoes(e,s).some(a=>a.id===d.acao))throw Error('Decisão inválida ou ação não permitida; ciclo não aplicado.');const antes={ciclo:e.mundo.tempo.ciclo,local:s.local,necessidades:{...s.necessidades}},pistas=perceber(e,s),con=executar(e,s,d.acao,undefined,{texto:d.texto,fala:d.fala,motivo:d.motivo});if(con.pistas?.length){for(const texto of con.pistas)if(!e.descobertas.includes(texto)){e.descobertas.push(texto);e.memorias.push({tipo:'observacao',texto,ciclo:e.mundo.tempo.ciclo})}}const ev=avancar(e.mundo);regenerar(e.mundo,ev);atualizar(s,e.mundo,d.acao);const evento={tipo:'ciclo',ciclo:e.mundo.tempo.ciclo,serId:s.id,antes,percepcao:pistas,decisao:{acao:d.acao,motivo:d.motivo||'',...(d.fala?{fala:d.fala}:{}),origem:d.origem||'decisor'},acao:{id:d.acao,quantidade:con.quantidade},consequencia:con,necessidades:{...s.necessidades},status:s.status,clima:e.mundo.clima};e.historico.eventos.push(evento);if(!Array.isArray(e.rastro))e.rastro=[];if(['ir_casa','melhorar_abrigo','conviver','falar','abrir_suprimento','investigar_artefato'].includes(d.acao)){e.rastro.push({ciclo:e.mundo.tempo.ciclo,serId:s.id,acao:d.acao,local:s.local,outro:con.com||null});if(e.rastro.length>200)e.rastro.shift();}e.historico.decisoes.push({ciclo:evento.ciclo,serId:s.id,...evento.decisao});validar(e);return evento}
 const cicloComAuditoria=ciclo;
 function cicloSeguro(e,s,d,opcoes={}){const eco=require('./ecossistema');eco.preparar(e);e.historico=e.historico||{eventos:[],decisoes:[]};e.historico.eventos=Array.isArray(e.historico.eventos)?e.historico.eventos:[];e.historico.decisoes=Array.isArray(e.historico.decisoes)?e.historico.decisoes:[];const estavaMorto=s.status==='morto',r=cicloComAuditoria(e,s,d),nascente=e.mundo.ecossistema.agua.fontes.nascente;if(estavaMorto)s.status='morto';if(d.acao==='coletar_agua')nascente.nivel=Math.max(0,nascente.nivel-(r.consequencia?.quantidade||0));eco.atualizarMundo(e,d.acao);r.agentes=[];if(!estavaMorto)eco.aprender(s,r.percepcao,e.mundo.tempo.ciclo);eco.validarCompleto(e);r.mundo={clima:e.mundo.clima,estacao:e.mundo.tempo.estacao,fauna:Object.fromEntries(Object.entries(e.mundo.ecossistema.fauna).map(([k,v])=>[k,v.populacao]))};return r}
-module.exports={acoes,executar,ciclo:cicloSeguro};
+// DURAÇÃO DE AÇÕES REALISTAS (Timers em Ciclos)
+const DURACOES_ACOES = {
+  dormir: 8,
+  pescar: 2,
+  comer: 1,
+  beber: 1,
+  coletar_madeira: 2,
+  coletar_pedra: 2,
+  colher_frutas: 1,
+  cuidar_horta: 2,
+  construir_casa: 4,
+  ampliar_moradia: 4,
+  arrumar_casa: 2,
+  tomar_banho: 1,
+  descansar: 2,
+  observar: 1,
+  meditar: 2,
+  explorar_trilha: 2
+};
+
+function calcularTempoSimulado(ciclo) {
+  const c = Math.max(0, Number(ciclo) || 0);
+  const minutosTotais = c * 10;
+  const horaTotal = Math.floor(minutosTotais / 60);
+  const horaDoDia = horaTotal % 24;
+  const minutoDoDia = minutosTotais % 60;
+  const dia = Math.floor(horaTotal / 24) + 1;
+  const horaFormatada = String(horaDoDia).padStart(2, '0') + ':' + String(minutoDoDia).padStart(2, '0');
+  let periodo = 'madrugada';
+  if (horaDoDia >= 6 && horaDoDia < 12) periodo = 'manhã';
+  else if (horaDoDia >= 12 && horaDoDia < 18) periodo = 'tarde';
+  else if (horaDoDia >= 18 && horaDoDia < 23) periodo = 'noite';
+  return { ciclo: c, dia, hora: horaFormatada, horaDoDia, minutoDoDia, periodo };
+}
+
+function obterSensoDeTempo(estado, ser) {
+  const ciclo = (estado && estado.mundo && estado.mundo.tempo && estado.mundo.tempo.ciclo) || 0;
+  const tSim = calcularTempoSimulado(ciclo);
+  const tMundo = (estado && estado.mundo && estado.mundo.tempo) || {};
+
+  const difRefeicao = (ser && ser.ultimaRefeicaoCiclo != null) ? (ciclo - ser.ultimaRefeicaoCiclo) : null;
+  const difSono = (ser && ser.ultimoSonoCiclo != null) ? (ciclo - ser.ultimoSonoCiclo) : null;
+  const difAgua = (ser && ser.ultimaAguaCiclo != null) ? (ciclo - ser.ultimaAguaCiclo) : null;
+
+  const fmtMin = (m) => m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? (m % 60) + 'min' : ''}` : `${m}min`;
+
+  let linhas = [
+    `[SENSO DE TEMPO]`,
+    `Hora na Ilha: ${tSim.hora} (${tSim.periodo}) | Dia ${tMundo.dia || tSim.dia}, Ciclo ${ciclo} | Estação: ${tMundo.estacao || 'transição'}`,
+    `Última refeição: ${difRefeicao != null ? `há ${difRefeicao} ciclos (~${fmtMin(difRefeicao * 10)} simulados)` : 'ainda não comeu hoje'}`,
+    `Último descanso/sono: ${difSono != null ? `há ${difSono} ciclos (~${fmtMin(difSono * 10)} simulados)` : 'vigília contínua'}`,
+    `Última água bebida: ${difAgua != null ? `há ${difAgua} ciclos (~${fmtMin(difAgua * 10)} simulados)` : 'ainda não bebeu hoje'}`
+  ];
+  return linhas.join('\n');
+}
+
+module.exports={acoes,executar,ciclo:cicloSeguro,DURACOES_ACOES,calcularTempoSimulado,obterSensoDeTempo};

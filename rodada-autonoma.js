@@ -17,6 +17,7 @@ const espaco=require('./espaco');
 const {aplicarMetabolismo}=require('./metab');
 const acontecimentos=require('./acontecimentos');
 const memoria=require('./memoria-personagem');
+const comandosCriador=require('./comandos-criador');
 
 // CAMPADA COGNITIVA (opt-in `ILHA_COG=1`) — require atrasado: a camada é
 // opcional e uma falha dela nunca derruba o ciclo do mundo.
@@ -122,13 +123,45 @@ async function rodada(estado,opcoes={}){
 	const decisoes=[];
 	for(const ser of vivos){
 		if(ser.status==='morto')continue;
+
+		// 1. CHECAGEM DE ORDEM DIRETA DO CRIADOR (Prioridade Máxima)
+		const cmdPendente = comandosCriador.obterComandoPendente(ser.id);
+		let ordemCriador = null;
+		if (cmdPendente) {
+			ordemCriador = cmdPendente.comando;
+			ser.ordemCriador = ordemCriador;
+			ser.acaoEmCurso = null; // Interrompe ação demorada
+			ser.deslocamento = null; // Interrompe deslocamento
+		} else if (ser.acaoEmCurso && ser.acaoEmCurso.ciclosRestantes > 0) {
+			// 2. AÇÃO EM CURSO (Timers de ação realista — pescar, dormir, etc.)
+			ser.acaoEmCurso.ciclosRestantes--;
+			const restam = ser.acaoEmCurso.ciclosRestantes;
+			const nomeAcao = ser.acaoEmCurso.acao;
+			decisoes.push({
+				ser,
+				decisao: {
+					acao: nomeAcao,
+					motivo: `Em andamento: ${nomeAcao} (restam ${restam} ciclos para concluir)`,
+					origem: 'duracao_acao',
+					...(ser.acaoEmCurso.extra || {})
+				},
+				percepcao: perceber(snapshotMundo, ser),
+				duracaoContinua: restam > 0
+			});
+			if (restam === 0) {
+				ser.acaoEmCurso = null;
+			}
+			continue;
+		}
+
 		const situacao=situacaoNoCaminho(snapshotMundo, ser);
-		if(ser.deslocamento&&!situacao){
+		if(!ordemCriador && ser.deslocamento && !situacao){
 			decisoes.push({ser,decisao:{acao:'continuar',motivo:'segue caminho para '+ser.deslocamento.destino,origem:'fisica'},percepcao:perceber(snapshotMundo, ser),fisica:true});
 			continue;
 		}
 		const possiveis=acoes(snapshotMundo,ser);
 		const contexto=montarContexto(snapshotMundo,ser,possiveis,situacao);
+		if(ordemCriador) contexto.ordemCriador = ordemCriador;
 		const decidir=cerebroDe(opcoes,ser);
 		// TRILHA CAUSAL (cognição): abre ANTES da decisão para registrar o que
 		// entrou no contexto; fecha depois com a consequência real do motor.
@@ -146,6 +179,15 @@ async function rodada(estado,opcoes={}){
 			if(trilha){const C2=cog();if(C2)try{C2.abortarTrilha(trilha,{ser,erro:err})}catch(e){}}
 			if(err&&typeof err==='object')err.decisao=true;throw err
 		}
+		if (cmdPendente) {
+			comandosCriador.marcarComandoExecutado(cmdPendente.id, { acao: d.acao, motivo: d.motivo, fala: d.fala });
+			ser.ordemCriador = null;
+			ser.memoria = Array.isArray(ser.memoria) ? ser.memoria : [];
+			ser.memoria.push({ tipo: 'ordem_criador', texto: `Recebi ordem de Rafael: "${cmdPendente.comando}" e atendi decidindo: ${d.acao} (${d.motivo})`, ciclo: estado.mundo.tempo.ciclo });
+			if(ser.cortex && Array.isArray(ser.cortex.diario)){
+				ser.cortex.diario.push(`[ORDEM DO CRIADOR] Atendi ao comando do Rafael: "${cmdPendente.comando}" -> decidi ${d.acao}`);
+			}
+		}
 		decisoes.push({ser,decisao:d,percepcao:contexto.percepcoes,situacao,trilha,itens});
 	}
 
@@ -153,6 +195,12 @@ async function rodada(estado,opcoes={}){
 	for(const item of decisoes){
 		const ser=item.ser;
 		if(ser.status==='morto')continue;
+		if(item.duracaoContinua){
+			ser.acao=item.decisao.acao;
+			ser.motivo=item.decisao.motivo||'';
+			marcarTempo(estado,{tipo:'ciclo',ciclo:estado.mundo.tempo.ciclo,serId:ser.id,acao:item.decisao.acao,duracaoContinua:true});
+			continue;
+		}
 		const antes={local:ser.local,necessidades:{...ser.necessidades},inventario:{...ser.inventario}};
 		const con=executar(estado,ser,item.decisao.acao,undefined,{...item.decisao,texto:item.decisao.texto,fala:item.decisao.fala,motivo:item.decisao.motivo});
 		// O QUE ESTE SER ESTÁ FAZENDO AGORO — espelho do mundo para o
