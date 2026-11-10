@@ -1,0 +1,122 @@
+{
+    "origem":  "cerebro-icaro/mecanismos",
+    "origem_repo":  "econoprimebest-source/ILHA.git",
+    "origem_branch":  "visualizacao-ilha",
+    "origem_commit":  "standalone",
+    "copiado_em":  "2026-10-18T10:13:38.1107253Z",
+    "somente_leitura":  true,
+    "modulos":  [
+                    {
+                        "arquivo":  "nucleo-aura.js",
+                        "sha256":  "64d5d25e89b4b8ecab8a9ac8b436a71d6adeb704c8884b4f1d493672300c522a",
+                        "origem_sha256":  "64d5d25e89b4b8ecab8a9ac8b436a71d6adeb704c8884b4f1d493672300c522a",
+                        "byte_identico":  true,
+                        "bytes":  16812
+                    },
+                    {
+                        "arquivo":  "nucleo-self-model.js",
+                        "sha256":  "856ea232a0daa80d6205c68aeea8845f07358515aa6ab4fd6a82590ee1e7ddfa",
+                        "origem_sha256":  "856ea232a0daa80d6205c68aeea8845f07358515aa6ab4fd6a82590ee1e7ddfa",
+                        "byte_identico":  true,
+                        "bytes":  22970
+                    },
+                    {
+                        "arquivo":  "extrator-crencas.js",
+                        "sha256":  "e6a608d3540caa10be7f8909a4b1ffa44030f1d1a2264f76e6fb94700184b2d4",
+                        "origem_sha256":  "e6a608d3540caa10be7f8909a4b1ffa44030f1d1a2264f76e6fb94700184b2d4",
+                        "byte_identico":  true,
+                        "bytes":  9202
+                    },
+                    {
+                        "arquivo":  "nucleo-topicos.js",
+                        "sha256":  "6075daa383bdeb4d8fb212f3fb759df38344ea0d0a167e3ab01456c9ea107fdf",
+                        "origem_sha256":  "6075daa383bdeb4d8fb212f3fb759df38344ea0d0a167e3ab01456c9ea107fdf",
+                        "byte_identico":  true,
+                        "bytes":  6325
+                    },
+                    {
+                        "arquivo":  "nucleo-tracos.js",
+                        "sha256":  "ec2e118900f393608d6128e1da536368883a0e817702bda53239cb89ced849ce",
+                        "origem_sha256":  "ec2e118900f393608d6128e1da536368883a0e817702bda53239cb89ced849ce",
+                        "byte_identico":  true,
+                        "bytes":  28819
+                    },
+                    {
+                        "arquivo":  "nucleo-correcao.js",
+                        "sha256":  "5e639412cb0850a117d129721581a6df63b739ccec082739399ee7143a5bcddc",
+                        "origem_sha256":  "5e639412cb0850a117d129721581a6df63b739ccec082739399ee7143a5bcddc",
+                        "byte_identico":  true,
+                        "bytes":  7719
+                    },
+                    {
+                        "arquivo":  "nucleo-proveniencia.js",
+                        "sha256":  "da5a384b7b84c2e119983c315f6e242683ffc31af2d1d38ed1a7eb7d180a5ea2",
+                        "origem_sha256":  "da5a384b7b84c2e119983c315f6e242683ffc31af2d1d38ed1a7eb7d180a5ea2",
+                        "byte_identico":  true,
+                        "bytes":  7668
+                    },
+                    {
+                        "arquivo":  "nucleo-prov-label.js",
+                        "sha256":  "9621c15fa9ad2a85d0866683bcc0bb7165de3a17bfed063f570d84d82c12ee07",
+                        "origem_sha256":  "9621c15fa9ad2a85d0866683bcc0bb7165de3a17bfed063f570d84d82c12ee07",
+                        "byte_identico":  true,
+                        "bytes":  5639
+                    },
+                    {
+                        "arquivo":  "nucleo-peso.js",
+                        "sha256":  "697280d49a3707b762f9ccce50b0c3ea9fcb1a9aa1d85c6040e6076b26e8fc60",
+                        "origem_sha256":  "697280d49a3707b762f9ccce50b0c3ea9fcb1a9aa1d85c6040e6076b26e8fc60",
+                        "byte_identico":  true,
+                        "bytes":  12647
+                    },
+                    {
+                        "arquivo":  "nucleo-selecao-contextual.js",
+                        "sha256":  "d113b3fb7f8ae410cb72b35e1f7d6ce0290f14b3b9f1465361d02cc842d01cc8",
+                        "origem_sha256":  "d113b3fb7f8ae410cb72b35e1f7d6ce0290f14b3b9f1465361d02cc842d01cc8",
+                        "byte_identico":  true,
+                        "bytes":  2345
+                    },
+                    {
+                        "arquivo":  "nucleo-memoria-v2.js",
+                        "sha256":  "388d09cf490ce0faad5a0437c23da17c6eee1d76c27d758f323c19f8f8e0d190",
+                        "origem_sha256":  "388d09cf490ce0faad5a0437c23da17c6eee1d76c27d758f323c19f8f8e0d190",
+                        "byte_identico":  true,
+                        "bytes":  5793
+                    },
+                    {
+                        "arquivo":  "nucleo-medo.js",
+                        "sha256":  "a5d2fcd5575a3c742d7a64426d868dbaa484802203bb837a8f0a081a40126c02",
+                        "origem_sha256":  "a5d2fcd5575a3c742d7a64426d868dbaa484802203bb837a8f0a081a40126c02",
+                        "byte_identico":  true,
+                        "bytes":  9124
+                    },
+                    {
+                        "arquivo":  "nucleo-cuidado.js",
+                        "sha256":  "9b6141182cff7343de3d3b49f2ea1dc6ab77ada270521d38eecfa5e779853e60",
+                        "origem_sha256":  "9b6141182cff7343de3d3b49f2ea1dc6ab77ada270521d38eecfa5e779853e60",
+                        "byte_identico":  true,
+                        "bytes":  14942
+                    },
+                    {
+                        "arquivo":  "nucleo-agencia.js",
+                        "sha256":  "4d7856bbf9696a8992238583be84f302572debd9294f2690bb3acd1add12df7f",
+                        "origem_sha256":  "4d7856bbf9696a8992238583be84f302572debd9294f2690bb3acd1add12df7f",
+                        "byte_identico":  true,
+                        "bytes":  15492
+                    },
+                    {
+                        "arquivo":  "nucleo-experiencias.js",
+                        "sha256":  "8693e6b947ae2ba160d37d487f4d5b2d77a07bcbb67288d062c4d655586345c9",
+                        "origem_sha256":  "8693e6b947ae2ba160d37d487f4d5b2d77a07bcbb67288d062c4d655586345c9",
+                        "byte_identico":  true,
+                        "bytes":  10979
+                    },
+                    {
+                        "arquivo":  "nucleo-trilha-causal.js",
+                        "sha256":  "19381a492afd4e617a9db5d214ac53cb0fcd482a7479345605e86c51e813b260",
+                        "origem_sha256":  "19381a492afd4e617a9db5d214ac53cb0fcd482a7479345605e86c51e813b260",
+                        "byte_identico":  true,
+                        "bytes":  4629
+                    }
+                ]
+}
