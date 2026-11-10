@@ -1,4 +1,14 @@
 const http=require('http'),fs=require('fs'),path=require('path');
+// Carrega automaticamente variáveis de .env local (se existir)
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    for (const l of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+      const m = l.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)?\s*$/);
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^['"](.*)['"]$/, '$1').trim();
+    }
+  }
+} catch (e) {}
 const espaco=require('./espaco');
 const eco=require('./ecossistema');
 const PORT=Number(process.env.ILHA_VIS_PORT||8810);
