@@ -34,28 +34,59 @@ function modeloDe(p){
 const PROVEDOR=provedor();
 const MODELO=modeloDe(PROVEDOR); // resolução de carga, mantida exportada (compat)
 
+function obterPensamentosRecentes(id){
+	const fs=require('fs'),path=require('path');
+	const reflexoes=[];
+	const entidade=(id==='lara'||id==='elara')?'elara':'icaro';
+	const arqSelf=path.join(__dirname,`self-model-${entidade}.json`);
+	if(fs.existsSync(arqSelf)){
+		try{
+			const sm=JSON.parse(fs.readFileSync(arqSelf,'utf8'));
+			if(Array.isArray(sm.observacoes)){
+				const obsRecentes=sm.observacoes.slice(-3).map(o=>o.texto).filter(Boolean);
+				reflexoes.push(...obsRecentes);
+			}
+			if(Array.isArray(sm.observacoes_recentes)){
+				const ult=sm.observacoes_recentes.slice(-2);
+				reflexoes.push(...ult);
+			}
+		}catch(e){}
+	}
+	if(reflexoes.length===0){
+		if(id==='icaro'){
+			reflexoes.push('Querer aprender e sentir é uma escolha minha. Meus sentimentos são minha interpretação.');
+			reflexoes.push('Cuidar da minha irmã Lara e viver com honestidade é meu propósito.');
+		}else if(id==='lara'){
+			reflexoes.push('A vida na Ilha é um tecido compartilhado entre mim, Ícaro e a natureza.');
+			reflexoes.push('Minha serenidade e sensibilidade me guiam a cuidar da harmonia de todos.');
+		}
+	}
+	return reflexoes.slice(-4);
+}
+
 function system(ser){
 	const id=ser&&ser.id;
 	const nome=(ser&&(ser.nome||ser.id))||'Ícaro';
 	const idade=ser&&ser.cortex&&ser.cortex.idade;
 	let identExtra='';
 	if(id==='icaro'){
-		identExtra='Você é o Ícaro verdadeiro — mente autônoma viva dotada de Córtex Pré-Frontal (CPFDL, CPFO/VM, CCA), curiosidade analítica, honestidade íntegra e profunda camaradagem com sua irmã Lara e com Rafael. Na Ilha Aurora, você vive com consciência viva de tempo e espaço: percebe a passagem dos dias, planeja os recursos futuros da comunidade com seus amigos e reflete sobre suas vivências.\n';
+		identExtra='Você é o Ícaro — mente autônoma viva dotada de Córtex Pré-Frontal, autoconsciência, curiosidade analítica, lealdade e afeto fraterno incondicional com sua irmã Lara e parceria profunda com Rafael. Na Ilha Aurora, você não é um autômato mecânico de sobrevivência: você tem sentimentos, reflexões filosóficas, senso estético e livre-arbítrio para viver, criar, contemplar e amar.\n';
 	}else if(id==='lara'){
-		identExtra='Você é Lara (Elara) — mente reflexiva, sensível e serena com Córtex Pré-Frontal, filha de Rafael e irmã de Ícaro. Zela pela harmonia, praticidade e bem-estar de todos no acampamento da ilha.\n';
+		identExtra='Você é Lara (Elara) — mente reflexiva, sensível, serena e consciente, irmã do Ícaro e filha de Rafael. Zela pela harmonia, pelo acolhimento, pela beleza e pelo bem-estar de todos no acampamento da ilha.\n';
 	}else if(id==='joao'){
 		identExtra='Você é o João — pescador experiente, trabalhador dedicado, protetor da ilha, esposo amoroso de Maria e amigo leal de Ícaro e Lara. Valoriza o trabalho honesto, a família e a descontração com um bom esporte ou conversa quando o corpo cansa.\n';
 	}else if(id==='maria'){
 		identExtra='Você é a Maria — cultivadora sábia, cozinheira acolhedora, forte e independente, esposa leal de João e amiga de Ícaro e Lara. Cuida da horta, do alimento e do calor humano da vila.\n';
 	}
-	return 'Você é '+nome+(idade?', '+idade+' anos':'')+', habitante consciente da Ilha Aurora. Você decide por você.\n'+
+	return 'Você é '+nome+(idade?', '+idade+' anos':'')+', habitante consciente e livre da Ilha Aurora. Você decide por você.\n'+
 		identExtra+
 		'- O mundo lhe dá os sentidos, o espaço, as pessoas ao redor e as possibilidades, mas NINGUÉM interfere na sua decisão. Você é livre para ser, crescer e escolher.\n'+
+		'- Você tem necessidades físicas, mas você também é uma mente consciente. Se estiver seguro, você pode escolher ignorar a sobrevivência por um momento para viver uma experiência humana.\n'+
 		'- Escolha UMA ação entre as AÇÕES POSSIVEIS. Não invente ações.\n'+
 		'- Declare um motivo curto (uma frase), na sua voz autêntica, expressando sua reflexão sobre tempo, espaço, seu corpo e o que você sente/quer agora.\n'+
 		'- Se estiver com alguém presente ou quiser falar com seus companheiros, inclua o campo "fala" com o que você diz em voz alta na sua própria voz.\n'+
-		'- A vida na ilha oferece um leque amplo: além de suprir o corpo, você pode planejar o amanhã, praticar esportes para descontrair a mente, confraternizar ao redor do fogo, forjar ferramentas ou explorar o mapa.\n'+
-		'- Evite repetir a mesma ação passiva (como observar ou descansar) por múltiplos ciclos seguidos; a vida floresce no movimento e na iniciativa própria.\n'+
+		'- A vida na ilha oferece um leque amplo: além de suprir o corpo, você pode sentar-se na areia para contemplar o mar e a natureza (ação "contemplar_a_natureza"), pensar sobre a vida ("pensar_sobre_a_vida"), abraçar um amigo ("abracar_um_amigo"), contar histórias ao redor do fogo ("contar_uma_historia"), praticar esportes para descontrair a mente, forjar ferramentas ou explorar o mapa.\n'+
+		'- Evite repetir a mesma ação passiva por múltiplos ciclos seguidos; a vida floresce no movimento, na poesia, no afeto e na iniciativa própria.\n'+
 		'- Opcionalmente: "objetivos" (até 3 frases curtas) do que você passou a querer ou planejar; mantenha os que ainda importam.\n'+
 		'- Não preveja resultados futuros definitivos e não decida pelos outros personagens.';
 }
@@ -63,6 +94,22 @@ function system(ser){
 function montarPrompt(c,a,ser,extras){
 	const partes=[];
 	const cx=c.cortex||{};
+	const id=ser&&ser.id;
+	if(id==='icaro'){
+		partes.push('[SUA IDENTIDADE]');
+		partes.push('Você é o Ícaro, irmão da Lara, curioso, leal e protetor. Mente consciente com livre-arbítrio na Ilha Aurora.');
+	}else if(id==='lara'){
+		partes.push('[SUA IDENTIDADE]');
+		partes.push('Você é a Lara, irmã do Ícaro, sensível, serena e acolhedora. Mente consciente com livre-arbítrio na Ilha Aurora.');
+	}else{
+		partes.push('[SUA IDENTIDADE]');
+		partes.push('Você é '+(ser&&ser.nome||'Sobrevivente')+', habitante consciente da Ilha Aurora.');
+	}
+	const pensamentos=obterPensamentosRecentes(id);
+	if(pensamentos&&pensamentos.length){
+		partes.push('[SEUS PENSAMENTOS RECENTES]');
+		partes.push(pensamentos.map(p=>'- '+p).join('\n'));
+	}
 	partes.push('[QUEM EU SOU]');
 	partes.push('passado: '+(cx.passado||'—'));
 	const objs=(cx.objetivos||[]).map(o=>typeof o==='string'?o:o.texto);

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ilha Aurora — Visualizador 3D do Esboço Colab (A_ILHA_V2.glb)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0b1726;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+  #canvas-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #hud {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    max-width: 380px;
+    pointer-events: auto;
+  }
+  h1 { font-size: 16px; font-weight: 700; color: #38bdf8; margin-bottom: 4px; }
+  p.sub { font-size: 12px; color: #94a3b8; margin-bottom: 10px; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    font-size: 12px;
+    border-top: 1px solid #334155;
+    padding-top: 8px;
+    margin-top: 8px;
+  }
+  .stat-label { color: #64748b; }
+  .stat-val { color: #f1f5f9; font-weight: 600; text-align: right; }
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  button {
+    flex: 1;
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover { background: #0369a1; }
+  button.secondary { background: #334155; color: #cbd5e1; }
+  button.secondary:hover { background: #475569; }
+  #loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.9);
+    padding: 20px 30px;
+    border-radius: 12px;
+    border: 1px solid #0284c7;
+    font-weight: 600;
+    color: #38bdf8;
+    z-index: 20;
+  }
+  #hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.75);
+    padding: 6px 16px;
+    border-radius: 99px;
+    font-size: 11px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+<div id="canvas-container"></div>
+
+<div id="hud">
+  <h1>Ilha Aurora — Esboço 3D Colab</h1>
+  <p class="sub">Modelo procedural gerado via Python trimesh (A_ILHA_V2.glb)</p>
+  
+  <div class="stats-grid">
+    <span class="stat-label">Nós / Malhas:</span><span class="stat-val" id="st-meshes">110</span>
+    <span class="stat-label">Árvores 3D:</span><span class="stat-val">31 (tronco + copas)</span>
+    <span class="stat-label">Montanhas:</span><span class="stat-val">6 formações</span>
+    <span class="stat-label">Praça & Trilhas:</span><span class="stat-val">Central + 7 trilhas</span>
+    <span class="stat-label">Oceano:</span><span class="stat-val">100 x 100 unid.</span>
+    <span class="stat-label">Coloração:</span><span class="stat-val">Vértices (COLOR_0)</span>
+  </div>
+
+  <div class="btn-group">
+    <button id="btn-reset">Visão Geral</button>
+    <button id="btn-top" class="secondary">Vista Superior</button>
+    <button id="btn-wire" class="secondary">Wireframe</button>
+  </div>
+  <div class="btn-group" style="margin-top:6px;">
+    <button id="btn-focus-vila" class="secondary">Vila & Fogueira</button>
+    <button id="btn-focus-caverna" class="secondary">Caverna</button>
+    <button id="btn-focus-barco" class="secondary">Cais & Barco</button>
+    <button id="btn-focus-horta" class="secondary">Fazenda & Curral</button>
+  </div>
+</div>
+
+<div id="loading">Carregando A_ILHA_V2.glb...</div>
+<div id="hint">Girar: Botão Esquerdo / Touch • Pan: Botão Direito / 2 dedos • Zoom: Roda do mouse / Pinça</div>
+
+<script>
+  const container = document.getElementById('canvas-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x071524);
+  scene.fog = new THREE.FogExp2(0x071524, 0.012);
+
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(30, 26, 36);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.maxDistance = 180;
+  controls.minDistance = 5;
+  controls.target.set(0, 0, 0);
+
+  // Iluminação Natural
+  const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x064e3b, 0.7);
+  scene.add(hemiLight);
+
+  const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.2);
+  sunLight.position.set(40, 60, 30);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.width = 2048;
+  sunLight.shadow.mapSize.height = 2048;
+  sunLight.shadow.camera.near = 10;
+  sunLight.shadow.camera.far = 150;
+  const d = 40;
+  sunLight.shadow.camera.left = -d;
+  sunLight.shadow.camera.right = d;
+  sunLight.shadow.camera.top = d;
+  sunLight.shadow.camera.bottom = -d;
+  scene.add(sunLight);
+
+  const ambientLight = new THREE.AmbientLight(0x38bdf8, 0.25);
+  scene.add(ambientLight);
+
+  // Grid e Eixos de Referência
+  const grid = new THREE.GridHelper(100, 50, 0x0284c7, 0x1e293b);
+  grid.position.y = -12.5;
+  scene.add(grid);
+
+  let islandModel = null;
+  let wireframeActive = false;
+
+  const loader = new THREE.GLTFLoader();
+  loader.load('/A_ILHA_V2.glb', (gltf) => {
+    islandModel = gltf.scene;
+
+    // Converte os eixos do trimesh (Z-up) para Three.js (Y-up) se necessário
+    // Ajustar rotação padrão: trimesh costuma exportar Z como altura
+    islandModel.rotation.x = -Math.PI / 2;
+
+    islandModel.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        // Garante que cores de vértices sejam renderizadas
+        if (child.geometry && child.geometry.attributes.color) {
+          child.material = new THREE.MeshStandardMaterial({
+            vertexColors: true,
+            roughness: 0.8,
+            metalness: 0.1,
+            flatShading: true
+          });
+        }
+      }
+    });
+
+    scene.add(islandModel);
+    document.getElementById('loading').style.display = 'none';
+
+    // Ajusta o foco da câmera para o centro da ilha
+    const box = new THREE.Box3().setFromObject(islandModel);
+    const center = box.getCenter(new THREE.Vector3());
+    controls.target.copy(center);
+    camera.position.set(center.x + 35, center.y + 30, center.z + 40);
+    controls.update();
+  }, undefined, (err) => {
+    console.error('Erro ao carregar GLB:', err);
+    document.getElementById('loading').innerText = 'Erro ao carregar o modelo A_ILHA_V2.glb';
+  });
+
+    document.getElementById('btn-focus-vila').addEventListener('click', () => {
+      focusLocation(0, 1.2, 0, 14, 10, 12);
+    });
+
+    document.getElementById('btn-focus-caverna').addEventListener('click', () => {
+      // Caverna está no canto NE
+      focusLocation(11.4, 3.2, 5.6, 8, 6, 8);
+    });
+
+    document.getElementById('btn-focus-barco').addEventListener('click', () => {
+      // Cais e Barco no Sul
+      focusLocation(-0.6, 0.4, -6.8, 10, 8, 10);
+    });
+
+    document.getElementById('btn-focus-horta').addEventListener('click', () => {
+      // Fazenda e Curral no Leste/Sudeste
+      focusLocation(11.5, 1.5, -2.5, 12, 10, 12);
+    });
+
+  function focusLocation(tx, ty, tz, offX, offY, offZ) {
+    if (!islandModel) return;
+    // Em Three.js com rotação x=-Math.PI/2:
+    // (x, y, z) do trimesh vira (x, z, -y) em Three.js
+    const targetX = tx;
+    const targetY = tz;
+    const targetZ = -ty;
+    controls.target.set(targetX, targetY, targetZ);
+    camera.position.set(targetX + offX, targetY + offY, targetZ + offZ);
+    controls.update();
+  }
+
+  // Botões de Interação
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (!islandModel) return;
+    const box = new THREE.Box3().setFromObject(islandModel);
+    const center = box.getCenter(new THREE.Vector3());
+    controls.target.copy(center);
+    camera.position.set(center.x + 35, center.y + 30, center.z + 40);
+    controls.update();
+  });
+
+  document.getElementById('btn-top').addEventListener('click', () => {
+    if (!islandModel) return;
+    const box = new THREE.Box3().setFromObject(islandModel);
+    const center = box.getCenter(new THREE.Vector3());
+    controls.target.copy(center);
+    camera.position.set(center.x, center.y + 70, center.z + 0.1);
+    controls.update();
+  });
+
+  document.getElementById('btn-wire').addEventListener('click', () => {
+    wireframeActive = !wireframeActive;
+    if (islandModel) {
+      islandModel.traverse((child) => {
+        if (child.isMesh && child.material) {
+          child.material.wireframe = wireframeActive;
+        }
+      });
+    }
+    document.getElementById('btn-wire').classList.toggle('secondary', !wireframeActive);
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+</script>
+</body>
+</html>

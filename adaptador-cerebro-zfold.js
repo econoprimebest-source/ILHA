@@ -133,7 +133,40 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
     };
   }
 
-  function notificarConsequencia(dados = {}) {
+  // FILA DE MEMÓRIAS PENDENTES: vivências de Ícaro/Elara na ilha que ainda não
+  // chegaram na Central S23. São reenviadas a cada nova notificação até serem
+  // entregues (máx 200 na fila para não crescer indefinidamente).
+  const filaMemoria = [];
+
+  function filaPush(registro){
+    filaMemoria.push(registro);
+    if(filaMemoria.length>200)filaMemoria.shift();
+  }
+
+  async function enviarFilaParaCentral(){
+    if(filaMemoria.length===0)return false;
+    const pendentes=[...filaMemoria];
+    filaMemoria.length=0;
+    const aindaPendentes=[];
+    for(const reg of pendentes){
+      let enviado=false;
+      for(const h of hostsTentativa){
+        try{
+          await requisicaoHttp({
+            host:h, porta, path:'/ilha/consolidar-aprendizado',
+            body:{ entidade:reg.entidade, limiteTurnos:1, ciclo:reg.ciclo, dados:reg },
+            timeoutMs:8000
+          });
+          enviado=true;break;
+        }catch(e){}
+      }
+      if(!enviado)aindaPendentes.push(reg);
+    }
+    if(aindaPendentes.length)filaMemoria.unshift(...aindaPendentes);
+    return aindaPendentes.length===0;
+  }
+
+  async function notificarConsequencia(dados = {}) {
     // DESTILAÇÃO EM JSONL ISOLADA: vivências da simulação são salvas localmente
     // Nenhuma sobrescrita concorrente em memoria-v2.json nem memoria-elara.json
     try {
@@ -153,22 +186,17 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
         antes: (typeof dados.antes === 'object' && dados.antes !== null) ? { ...dados.antes } : dados.antes
       };
 
+      // 1) Sempre grava localmente no Z Fold (não perde nada se a Central estiver offline)
       fs.appendFileSync(arqVivenciasLocal, JSON.stringify(registro) + '\n', 'utf8');
       fs.appendFileSync(arqVivenciasGeral, JSON.stringify(registro) + '\n', 'utf8');
-      console.log(`[ILHA:VIVENCIA-ISOLADA:${id}] Ciclo ${dados.ciclo != null ? dados.ciclo : '?'} gravado em vivencias-ilha-${entidade}.jsonl (Central S23 preservada).`);
+      console.log(`[ILHA:VIVENCIA-ISOLADA:${id}] Ciclo ${dados.ciclo != null ? dados.ciclo : '?'} gravado em vivencias-ilha-${entidade}.jsonl.`);
 
-      // A cada 5 ciclos, envia notificação de consolidação de aprendizado para a Central
-      if (dados.ciclo && (dados.ciclo % 5 === 0)) {
-        for (const h of hostsTentativa) {
-          requisicaoHttp({
-            host: h,
-            porta,
-            path: '/ilha/consolidar-aprendizado',
-            body: { entidade, limiteTurnos: 5 },
-            timeoutMs: 8000
-          }).catch(() => {});
-        }
-      }
+      // 2) Enfia para envio à Central S23 (memória de Ícaro e Elara no S23)
+      filaPush(registro);
+
+      // 3) Tenta entregar a fila imediatamente (S23 via Tailscale, ou PC failover)
+      try{ await enviarFilaParaCentral(); }catch(e){/* fila mantida para próxima tentativa */}
+
     } catch (eLocal) {
       console.warn(`[ILHA:VIVENCIA-ISOLADA:${id}] Falha ao gravar vivência local:`, eLocal.message);
     }

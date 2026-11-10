@@ -2,10 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Ilha Aurora — Observatório V9 (2.5D PixiJS)</title>
+<title>Ilha Aurora — Observatório V9 (2.5D PixiJS & 3D Real)</title>
 <script src="/pixi.min.js"></script>
-<script src="/motor-sprites-ilha.js?v=20261108_2125"></script>
-<script src="/motor-pixi-ilha.js?v=20261108_2125"></script>
+<script src="/motor-sprites-ilha.js?v=20261108_2155"></script>
+<script src="/motor-pixi-ilha.js?v=20261108_2155"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="/motor-three-ilha.js?v=20261110_1430"></script>
 <style>
   body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #071827; color: #fff; }
   canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
@@ -229,6 +233,7 @@
     </div>
     <canvas id="game" style="display:none;"></canvas>
     <canvas id="pixi-game"></canvas>
+    <div id="three-container" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; border-radius:18px; overflow:hidden;"></div>
     <div id="tension-vignette"></div>
     <div id="milagre-banner"></div>
     <div id="cinematic-caption"></div>
@@ -243,20 +248,22 @@
 
     <!-- BARRA DE CAMERA LIVRE & FOCO -->
     <div id="camera-toolbar">
+      <button type="button" class="cam-pill" id="btn-toggle-3d" onclick="toggleModo3D()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6); border-color:#a855f7; color:#fff; font-weight:800;" title="Alternar entre Visão 2.5D PixiJS e Ilha 3D Real (GLB)">🌐 Modo 3D</button>
+      <div class="cam-sep"></div>
       <span class="cam-label">FILMADORA:</span>
-      <button type="button" class="cam-btn" onclick="if(window.motorPixi)window.motorPixi.zoomIn()" title="Aproximar Visao (Zoom In)">+</button>
-      <button type="button" class="cam-btn" onclick="if(window.motorPixi)window.motorPixi.zoomOut()" title="Afastar Visao (Zoom Out)">-</button>
-      <button type="button" class="cam-btn" onclick="if(window.motorPixi)window.motorPixi.resetCamera()" title="Visao Geral 100%">100%</button>
+      <button type="button" class="cam-btn" onclick="zoomInCamera()" title="Aproximar Visao (Zoom In)">+</button>
+      <button type="button" class="cam-btn" onclick="zoomOutCamera()" title="Afastar Visao (Zoom Out)">-</button>
+      <button type="button" class="cam-btn" onclick="resetCameraGeral()" title="Visao Geral 100%">100%</button>
       <div class="cam-sep"></div>
       <button type="button" class="cam-pill" id="btn-cam-diretor" onclick="toggleModoDiretorUI()" style="border-color:#475569;background:#1e293b;color:#94a3b8;" title="Alternar Câmera Diretora Automática 2.5D">🎬 Diretora: OFF</button>
       <div class="cam-sep"></div>
-      <button type="button" class="cam-pill" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('icaro')">Icaro</button>
-      <button type="button" class="cam-pill" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('joao')">Joao</button>
-      <button type="button" class="cam-pill" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('maria')">Maria</button>
-      <button type="button" class="cam-pill" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('lara')">Lara</button>
-      <button type="button" class="cam-pill fera" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('pantera')">Pantera</button>
-      <button type="button" class="cam-pill mar" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('tubarao')">Tubarao</button>
-      <button type="button" class="cam-pill fogueira" onclick="if(window.motorPixi)window.motorPixi.focarAlvo('fogueira')">Fogueira</button>
+      <button type="button" class="cam-pill" onclick="focarCamera('icaro')">Icaro</button>
+      <button type="button" class="cam-pill" onclick="focarCamera('joao')">Joao</button>
+      <button type="button" class="cam-pill" onclick="focarCamera('maria')">Maria</button>
+      <button type="button" class="cam-pill" onclick="focarCamera('lara')">Lara</button>
+      <button type="button" class="cam-pill fera" onclick="focarCamera('pantera')">Pantera</button>
+      <button type="button" class="cam-pill mar" onclick="focarCamera('mar')">Praia</button>
+      <button type="button" class="cam-pill fogueira" onclick="focarCamera('fogueira')">Fogueira</button>
     </div>
 
     <!-- MARQUEE / TICKER NARRATIVO AO VIVO -->
@@ -660,8 +667,79 @@ async function fetchState(){
       eventsData = data.eventos.slice(-20).reverse();
       updateUI();
       renderPainelLocal();
+      if(modo3DAtivo && window.motorThreeIlha){
+        window.motorThreeIlha.atualizarEstado(stateData);
+      }
     }
   }catch(e){ console.error('Erro fetch:', e); }
+}
+
+let modo3DAtivo = false;
+function toggleModo3D(){
+  modo3DAtivo = !modo3DAtivo;
+  const threeCont = document.getElementById('three-container');
+  const pixiCanvas = document.getElementById('pixi-game');
+  const btn = document.getElementById('btn-toggle-3d');
+  
+  if (modo3DAtivo) {
+    if (pixiCanvas) pixiCanvas.style.display = 'none';
+    if (threeCont) threeCont.style.display = 'block';
+    if (btn) {
+      btn.innerText = '🗺️ Modo 2.5D';
+      btn.style.background = 'linear-gradient(135deg,#0284c7,#2563eb)';
+      btn.style.borderColor = '#38bdf8';
+    }
+    if (window.motorThreeIlha) {
+      window.motorThreeIlha.init(threeCont);
+      window.motorThreeIlha.start();
+      if (window.stateData) window.motorThreeIlha.atualizarEstado(window.stateData);
+    }
+  } else {
+    if (threeCont) threeCont.style.display = 'none';
+    if (pixiCanvas) pixiCanvas.style.display = 'block';
+    if (btn) {
+      btn.innerText = '🌐 Modo 3D';
+      btn.style.background = 'linear-gradient(135deg,#6366f1,#8b5cf6)';
+      btn.style.borderColor = '#a855f7';
+    }
+    if (window.motorThreeIlha) {
+      window.motorThreeIlha.stop();
+    }
+  }
+}
+
+function focarCamera(alvo){
+  if (modo3DAtivo && window.motorThreeIlha) {
+    window.motorThreeIlha.focarAlvo(alvo);
+  } else if (window.motorPixi) {
+    window.motorPixi.focarAlvo(alvo);
+  }
+}
+
+function zoomInCamera(){
+  if (modo3DAtivo && window.motorThreeIlha && window.motorThreeIlha.camera) {
+    window.motorThreeIlha.camera.position.multiplyScalar(0.85);
+    window.motorThreeIlha.controls.update();
+  } else if (window.motorPixi) {
+    window.motorPixi.zoomIn();
+  }
+}
+
+function zoomOutCamera(){
+  if (modo3DAtivo && window.motorThreeIlha && window.motorThreeIlha.camera) {
+    window.motorThreeIlha.camera.position.multiplyScalar(1.15);
+    window.motorThreeIlha.controls.update();
+  } else if (window.motorPixi) {
+    window.motorPixi.zoomOut();
+  }
+}
+
+function resetCameraGeral(){
+  if (modo3DAtivo && window.motorThreeIlha) {
+    window.motorThreeIlha.resetCamera();
+  } else if (window.motorPixi) {
+    window.motorPixi.resetCamera();
+  }
 }
 function seres(){ return stateData ? Object.values(stateData.seres) : []; }
 function vivos(){ return seres().filter(s => s.status !== 'morto'); }

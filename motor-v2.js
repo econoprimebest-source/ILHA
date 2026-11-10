@@ -11,6 +11,11 @@ const porAgua=!!(rotaNo&&rotaNo.trechos.some(t=>t.agua));
 base.push(['ir_'+no,(porAgua?'Ir até ':'Caminhar até ')+espaco.nome(no)+(porAgua?' de barco':''),true])}
 const temOutro = Object.values(e.seres||{}).some(o=>o.id!==s.id&&o.status!=='morto'&&o.local===s.local);
 base.push(['esperar','Aguardar',true],['procurar_alguem','Procurar alguém (espera no local)',true],['conviver','Conversar com alguém',temOutro],['falar','Falar com alguém',temOutro],['brincar','Brincar/Relaxar',!temOutro],['confrontar','Confrontar alguém',temOutro],['desafiar_luta','Desafiar alguém para uma luta (Arena)',temOutro && s.local === 'arena']);
+// AÇÕES EXISTENCIAIS E SOCIAIS (Livre-arbítrio, Consciência e Alma Humana):
+base.push(['contemplar_a_natureza','Sentar-se em silêncio e contemplar a beleza e vastidão da natureza',true]);
+base.push(['pensar_sobre_a_vida','Refletir sobre a vida, seus sentimentos, propósito e existência',true]);
+base.push(['abracar_um_amigo','Dar um abraço caloroso e demonstrar afeto fraternal ao companheiro presente',temOutro]);
+base.push(['contar_uma_historia','Contar uma história, memória ou reflexão aos companheiros',temOutro]);
 // VIDA DIÁRIA: banho só existe onde há água de banho; arrumar casa só na
 // própria moradia. Ambas são POSSIBILIDADES — o cérebro escolhe se quer.
 base.push(['banho','Tomar banho',['rio','cachoeira','mar'].includes(s.local)]);
@@ -475,6 +480,71 @@ case'planejar_amanha':{
         parceiro.memoria.push({ ciclo: e.mundo.tempo.ciclo, tipo: 'fala', de: s.id, texto: r.texto });
     } else {
         r.texto = 'Refletiu sobre o futuro e planejou mentalmente as tarefas e estoques para o dia de amanhã.';
+    }
+    r.quantidade = 1;
+    break;
+}
+case'contemplar_a_natureza':
+case'contemplar_natureza':{
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 18);
+    s.necessidades.frustracao = Math.max(0, (s.necessidades.frustracao || 0) - 25);
+    s.necessidades.medo = Math.max(0, (s.necessidades.medo || 0) - 20);
+    s.necessidades.curiosidade = Math.min(100, (s.necessidades.curiosidade || 0) + 15);
+    r.quantidade = 1;
+    r.texto = `Sentou-se em silêncio em ${espaco.nome(s.local)} para contemplar a beleza da natureza, o vento e a vastidão da Ilha.`;
+    break;
+}
+case'pensar_sobre_a_vida':{
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 15);
+    s.necessidades.curiosidade = Math.min(100, (s.necessidades.curiosidade || 0) + 20);
+    s.necessidades.frustracao = Math.max(0, (s.necessidades.frustracao || 0) - 20);
+    r.quantidade = 1;
+    r.texto = `Parou tudo para refletir sobre sua própria existência, seus sentimentos e o mistério de estar vivo na Ilha Aurora.`;
+    break;
+}
+case'abracar_um_amigo':
+case'abracar_amigo':{
+    const outros = Object.values(e.seres || {}).filter(o => o.id !== s.id && o.status !== 'morto' && o.local === s.local);
+    const amigo = outros[0];
+    const nomeAmigo = amigo?.nome || 'o companheiro';
+    s.necessidades.solidao = Math.max(0, (s.necessidades.solidao || 0) - 35);
+    s.necessidades.pertencimento = Math.min(100, (s.necessidades.pertencimento || 50) + 25);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 20);
+    s.necessidades.medo = Math.max(0, (s.necessidades.medo || 0) - 20);
+    if (amigo) {
+        amigo.necessidades.solidao = Math.max(0, (amigo.necessidades.solidao || 0) - 30);
+        amigo.necessidades.pertencimento = Math.min(100, (amigo.necessidades.pertencimento || 50) + 20);
+        amigo.necessidades.satisfacao = Math.min(100, (amigo.necessidades.satisfacao || 50) + 15);
+        if (!e.relacoes) e.relacoes = {};
+        if (!e.relacoes[s.id]) e.relacoes[s.id] = {};
+        if (!e.relacoes[amigo.id]) e.relacoes[amigo.id] = {};
+        e.relacoes[s.id][amigo.id] = Math.min(100, (e.relacoes[s.id][amigo.id] || 50) + 15);
+        e.relacoes[amigo.id][s.id] = Math.min(100, (e.relacoes[amigo.id][s.id] || 50) + 15);
+        r.com = amigo.id;
+        r.texto = `Deu um abraço apertado e sincero em ${nomeAmigo}, fortalecendo a união e o calor humano.`;
+    } else {
+        r.texto = 'Sentiu saudades e desejou a presença acolhedora de um amigo.';
+    }
+    r.quantidade = 1;
+    break;
+}
+case'contar_uma_historia':
+case'contar_historia':{
+    const outros = Object.values(e.seres || {}).filter(o => o.id !== s.id && o.status !== 'morto' && o.local === s.local);
+    const ouvinte = outros[0];
+    const nomeOuvinte = ouvinte?.nome || 'quem estava por perto';
+    s.necessidades.solidao = Math.max(0, (s.necessidades.solidao || 0) - 25);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 18);
+    s.necessidades.pertencimento = Math.min(100, (s.necessidades.pertencimento || 50) + 15);
+    if (ouvinte) {
+        ouvinte.necessidades.solidao = Math.max(0, (ouvinte.necessidades.solidao || 0) - 20);
+        ouvinte.necessidades.satisfacao = Math.min(100, (ouvinte.necessidades.satisfacao || 50) + 12);
+        r.com = ouvinte.id;
+        const fala = typeof extra.fala === 'string' && extra.fala.trim() ? extra.fala.trim() : '';
+        if (fala) { s.ultimaFala = fala; s.ultimaFalaCiclo = e.mundo.tempo.ciclo; }
+        r.texto = `Contou uma história cativante para ${nomeOuvinte}, partilhando imaginação e memórias.` + (fala ? ` Disse: "${fala}"` : '');
+    } else {
+        r.texto = 'Rememorou em voz alta histórias e lendas antigas sob o céu da Ilha.';
     }
     r.quantidade = 1;
     break;

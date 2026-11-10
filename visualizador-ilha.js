@@ -336,6 +336,18 @@ http.createServer((req,res)=>{
       return res.end(image);
     } catch(e) { res.writeHead(404); return res.end('Imagem do mapa nova não encontrada'); }
   }
+  if(u.pathname.endsWith('.glb')){
+    try {
+      const fileName = path.basename(decodeURIComponent(u.pathname));
+      const p = fs.existsSync(path.join(ROOT, fileName)) ? path.join(ROOT, fileName) : path.join('C:\\Users\\Rafael\\Downloads', fileName);
+      if(fs.existsSync(p)){
+        const glb = fs.readFileSync(p);
+        res.writeHead(200, {'content-type':'model/gltf-binary', 'cache-control':'public, max-age=86400', 'access-control-allow-origin':'*'});
+        return res.end(glb);
+      }
+      res.writeHead(404); return res.end('GLB nao encontrado');
+    } catch(e) { res.writeHead(404); return res.end('Erro ao servir GLB: '+e.message); }
+  }
   if(u.pathname==='/pixi.min.js'){
     try {
       const js=fs.readFileSync(path.join(ROOT,'pixi.min.js'));
@@ -356,6 +368,13 @@ http.createServer((req,res)=>{
       res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store'});
       return res.end(js);
     } catch(e) { res.writeHead(404); return res.end('motor-pixi-ilha.js nao encontrado'); }
+  }
+  if(u.pathname==='/motor-three-ilha.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'motor-three-ilha.js'));
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('motor-three-ilha.js nao encontrado'); }
   }
   if(u.pathname==='/motor-assets-ilha.js'){
     try {
