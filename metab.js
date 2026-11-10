@@ -13,8 +13,14 @@ function aplicarMetabolismo(ser, acao, clima) {
     case 'ir_floresta': case 'coletar_madeira': n.energia = Math.max(0, (n.energia ?? 100) - 4); n.curiosidade = Math.min(100, (n.curiosidade ?? 0) + 5); break;
     case 'pescar': n.energia = Math.max(0, (n.energia ?? 100) - 4); break;
   }
-  if (clima === 'chuva') { n.temperatura = Math.max(0, (n.temperatura ?? 50) - 2); n.medo = Math.min(100, (n.medo ?? 0) + 1); }
+  if (clima === 'chuva') { n.temperatura = Math.max(0, (n.temperatura ?? 50) - 2); n.medo = Math.min(100, (n.medo ?? 0) + 0.5); }
   else if (clima === 'sol') { n.temperatura = Math.min(100, (n.temperatura ?? 50) + 2); }
+  // Alívio natural do medo e relaxamento mental (impede paralisia eterna de medo):
+  if (['contemplar_a_natureza','pensar_sobre_a_vida','descansar','falar','conviver','abracar_um_amigo','contar_uma_historia','praticar_esporte'].includes(acao)) {
+    n.medo = Math.max(0, (n.medo ?? 0) - 18);
+  } else {
+    n.medo = Math.max(0, (n.medo ?? 0) - 2);
+  }
   const recSaude = (acao === 'descansar' || acao === 'comer' || acao === 'beber' || acao === 'colher_horta') ? 4.0 : 1.2;
   n.saude = Math.max(0, Math.min(100, (n.saude ?? 100) + (n.agua > 75 ? -3 : n.alimento > 85 ? -1.5 : recSaude)));
 }

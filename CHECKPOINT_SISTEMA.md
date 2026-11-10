@@ -7,9 +7,35 @@
 ---
 
 ## 🕒 Última Atualização
-* **Data/Hora:** 2026-11-10 14:45 (Horário Local)
+* **Data/Hora:** 2026-11-10 15:10 (Horário Local)
 * **Branch Git:** `visualizacao-ilha`
 * **Status do Servidor:** `node visualizador-ilha.js` rodando em `http://localhost:8810` (ou `http://0.0.0.0:8810`).
+
+---
+
+## 🎯 Resolução do Bug: Por que as IAs ficavam presas em um só local?
+
+### 🔍 Diagnóstico Realizado:
+1. **Falha na Detecção Anti-Repetição (`cerebro.js`)**:
+   - A rotina comparava strings completas de `diario` (que continham o número do ciclo e motivo, e.g. `"ciclo 989: cuidar_animais..."`). Como os números dos ciclos diferiam, `ultimas.every(x => x === ultimas[0])` era SEMPRE falso.
+   - Além disso, a lista de ações bloqueadas só incluía `['observar', 'descansar', 'esperar']`. Qualquer ação repetitiva ativa (`cuidar_animais`, `comer`, `beber`, `falar`) passava direto sem nenhum bloqueio.
+2. **Exploit de Comida Infinita no Curral (`motor-v2.js`)**:
+   - `cuidar_animais` usava `Math.max(1, leiteColhido + ovosColhidos)`. Mesmo com zero leite e zero ovos, gerava 1 de comida e reduzia 35 de fome a custo zero. O curral virou um "buraco negro" de atração onde os agentes nunca precisavam sair.
+3. **Paralisia por Medo e Clima (`metab.js`)**:
+   - `medo` aumentava com a chuva forte e chegava a 100/100, mas não tinha taxa de decaimento natural. Com medo em 100 e percepções de "vento gelado cortando a pele longe de um abrigo", as IAs entravam em pânico e não tinham coragem de caminhar pelas trilhas.
+4. **Viés Autoregressivo no Prompt**:
+   - O prompt listava 8 vezes seguidas `cuidar_animais (obteve +1 e saciou necessidade)`, induzindo o LLM a prever a mesma ação como única solução comprovada.
+
+### 🛠️ Correções Aplicadas:
+1. **Livre Circulação & Vontade de Caminhar (`cerebro.js`)**:
+   - Anti-repetição agora inspeciona `cx.trajetoriaRecente` e proíbe repetir QUALQUER ação mais de 2x seguidas.
+   - Injetada a diretiva `[VONTADE DE CAMINHAR E EXPLORAR]` quando o personagem permanece no mesmo nó do mapa por 3 ciclos seguidos sem se mover.
+   - Compressão de experiências repetidas no prompt para eliminar o viés de imitação.
+   - Elevação da temperatura base do LLM para `0.80` para maior criatividade, variação e autonomia expressiva.
+2. **Correção do Curral (`motor-v2.js`)**:
+   - `cuidar_animais` só fornece alimento se houver ovos/leite reais para colher (`r.quantidade = totalAlimento`). Se o curral já foi ordenhado, não gera comida infinita.
+3. **Dissipação Natural do Medo (`metab.js`)**:
+   - Alívio progressivo do medo (-2 por ciclo; -18 com contemplação, conversa, esporte ou descanso), restaurando a serenidade dos personagens para se aventurarem pelas trilhas da ilha.
 
 ---
 

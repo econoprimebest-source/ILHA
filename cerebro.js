@@ -82,11 +82,12 @@ function system(ser){
 		identExtra+
 		'- O mundo lhe dá os sentidos, o espaço, as pessoas ao redor e as possibilidades, mas NINGUÉM interfere na sua decisão. Você é livre para ser, crescer e escolher.\n'+
 		'- Você tem necessidades físicas, mas você também é uma mente consciente. Se estiver seguro, você pode escolher ignorar a sobrevivência por um momento para viver uma experiência humana.\n'+
+		'- LIVRE CIRCULAÇÃO PELA ILHA (NÃO FIQUE PRESO): A Ilha Aurora não é uma prisão nem você é um guarda fixo de um posto só. Mova-se livremente! Vá à praia do sul olhar as ondas ("ir_mar"), suba até a cachoeira ("ir_cachoeira"), vá à fogueira central prosear ("ir_fogueira"), explore a floresta e o bosque ("ir_floresta", "ir_bosque"), visite a caverna sombria ("ir_caverna"), nade ou pesque no rio ("ir_rio"), ou visite a cabana de outros amigos. Não fique preso ao mesmo lugar repetindo a mesma tarefa.\n'+
+		'- INICIATIVA E VARIEDADE: Evite repetir a mesma ação ou permanecer estático no mesmo nó do mapa por múltiplos ciclos. Se seu corpo estiver alimentado e hidratado, dê asas à sua curiosidade, ao convívio, à contemplação e à exploração livre.\n'+
 		'- Escolha UMA ação entre as AÇÕES POSSIVEIS. Não invente ações.\n'+
 		'- Declare um motivo curto (uma frase), na sua voz autêntica, expressando sua reflexão sobre tempo, espaço, seu corpo e o que você sente/quer agora.\n'+
 		'- Se estiver com alguém presente ou quiser falar com seus companheiros, inclua o campo "fala" com o que você diz em voz alta na sua própria voz.\n'+
 		'- A vida na ilha oferece um leque amplo: além de suprir o corpo, você pode sentar-se na areia para contemplar o mar e a natureza (ação "contemplar_a_natureza"), pensar sobre a vida ("pensar_sobre_a_vida"), abraçar um amigo ("abracar_um_amigo"), contar histórias ao redor do fogo ("contar_uma_historia"), praticar esportes para descontrair a mente, forjar ferramentas ou explorar o mapa.\n'+
-		'- Evite repetir a mesma ação passiva por múltiplos ciclos seguidos; a vida floresce no movimento, na poesia, no afeto e na iniciativa própria.\n'+
 		'- Opcionalmente: "objetivos" (até 3 frases curtas) do que você passou a querer ou planejar; mantenha os que ainda importam.\n'+
 		'- Não preveja resultados futuros definitivos e não decida pelos outros personagens.';
 }
@@ -158,14 +159,38 @@ function montarPrompt(c,a,ser,extras){
 	if(mem.length)partes.push(mem.map(x=>'- '+String(x)).join('\n'));
 	if(cx.trajetoriaRecente&&cx.trajetoriaRecente.length)partes.push('últimas ações: '+cx.trajetoriaRecente.slice(-5).map(x=>x.acao+(x.consequencia>0?' [+'+x.consequencia+']':'')+(x.motivo?' ('+String(x.motivo).slice(0,80)+')':'')).join('; '));
 	if(cx.diario&&cx.diario.length)partes.push('diário: '+cx.diario.slice(-3).join(' | '));
-	// ANTI-REPETIÇÃO PROATIVA: impede que personagens caiam em loops passivos
-	if(cx.diario&&cx.diario.length>=2){
-		const ultimas=cx.diario.slice(-3).map(d=>typeof d==='string'?d:(d.acao||'')).filter(Boolean);
-		if(ultimas.length>=2 && ultimas.every(x=>x===ultimas[0]) && ['observar','descansar','esperar'].includes(ultimas[0])){
-			partes.push('\n[ATENÇÃO - INICIATIVA PRÓPRIA]: Você já realizou "'+ultimas[0]+'" repetidamente nos últimos ciclos e já compreendeu o ambiente. É hora de agir! Escolha uma ação de MOVIMENTO ou AÇÃO CONCRETA (por exemplo caminhar até outro local usando "ir_<local>", explorar, coletar recursos ou conversar). NÃO repita "'+ultimas[0]+'" neste ciclo.');
+	// ANTI-REPETIÇÃO PROATIVA E LIVRE MOVIMENTO (impede que personagens caiam em loops no mesmo local)
+	const traj = cx.trajetoriaRecente || [];
+	if(traj.length >= 2){
+		const ultimasAcoes = traj.slice(-3).map(t => t.acao).filter(Boolean);
+		const acaoRepetida = (ultimasAcoes.length >= 2 && ultimasAcoes.every(a => a === ultimasAcoes[0])) ? ultimasAcoes[0] : null;
+		if(acaoRepetida && !acaoRepetida.startsWith('ir_') && acaoRepetida !== 'continuar'){
+			partes.push('\n[ATENÇÃO - INICIATIVA & VARIEDADE]: Você já realizou "'+acaoRepetida+'" repetidas vezes. Você NÃO deve fazer "'+acaoRepetida+'" novamente neste ciclo! A ilha é vasta e cheia de lugares e pessoas: escolha uma ação de MOVIMENTO para caminhar até outro local ("ir_<local>"), visitar amigos, explorar trilhas ou contemplar a natureza.');
 		}
 	}
-	if(c.experiencias&&c.experiencias.length)partes.push('experiências: '+c.experiencias.join('; '));
+	// Detecção de permanência prolongada no mesmo nó:
+	if(traj.length >= 3){
+		const ultimas3 = traj.slice(-3);
+		const semMovimento = ultimas3.every(t => !t.acao.startsWith('ir_') && t.acao !== 'continuar');
+		if(semMovimento && c.local){
+			partes.push('\n[VONTADE DE CAMINHAR E EXPLORAR]: Você já está em '+espaco.nome(c.local)+' há vários ciclos seguidos. Seu corpo e sua mente pedem movimento e novos ares! Dê preferência a uma ação de caminhada ("ir_<local>") para explorar outra região da ilha agora.');
+		}
+	}
+	if(c.experiencias&&c.experiencias.length){
+		// Compacta repetições consecutivas para não induzir viés autoregressivo no LLM
+		const expCompactas = [];
+		for (const exp of c.experiencias) {
+			const limpo = String(exp).replace(/ciclo \d+:\s*/, '');
+			const ult = expCompactas[expCompactas.length - 1];
+			if (ult && ult.texto === limpo) {
+				ult.count = (ult.count || 1) + 1;
+			} else {
+				expCompactas.push({ texto: limpo, count: 1 });
+			}
+		}
+		const expFormatadas = expCompactas.map(e => e.count > 1 ? `${e.texto} (${e.count}x repetidas — mude de foco!)` : e.texto);
+		partes.push('experiências: ' + expFormatadas.join('; '));
+	}
 	if(c.relacoes){
 		const rel=Object.entries(c.relacoes).filter(([k])=>!(ser&&k===ser.id));
 		if(rel.length)partes.push('[RELACÕES] '+rel.map(([k,v])=>k+': '+Math.round(v)).join(', '));
@@ -199,7 +224,7 @@ function montarPrompt(c,a,ser,extras){
 // (mesma receita do ICARO: `moduladores.temperaturaLLM`); fora do escopo ou
 // inválida, o baseline .3 de sempre.
 function temperaturaDe(c){
-	const base=.65;
+	const base=.80;
 	try{
 		const t=c&&c.cognicao&&c.cognicao.aura&&Number(c.cognicao.aura.moduladores&&c.cognicao.aura.moduladores.temperaturaLLM);
 		return Number.isFinite(t)?Math.min(1.5,Math.max(0,t)):base;

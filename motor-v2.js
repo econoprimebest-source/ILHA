@@ -320,12 +320,18 @@ case'cuidar_animais':{
     const ovosColhidos = Math.min(3, cur.ovos || 0);
     cur.leite = Math.max(0, (cur.leite || 0) - leiteColhido);
     cur.ovos = Math.max(0, (cur.ovos || 0) - ovosColhidos);
-    const totalAlimento = Math.max(1, leiteColhido + ovosColhidos);
-    s.inventario.alimento = (s.inventario.alimento || 0) + totalAlimento;
-    s.necessidades.alimento = Math.max(0, (s.necessidades.alimento || 0) - 35);
-    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 15);
-    r.quantidade = totalAlimento;
-    r.texto = 'Cuidou dos animais no curral e colheu ' + ovosColhidos + ' ovos e ' + leiteColhido + ' leite fresco!';
+    const totalAlimento = leiteColhido + ovosColhidos;
+    if (totalAlimento > 0) {
+      s.inventario.alimento = (s.inventario.alimento || 0) + totalAlimento;
+      s.necessidades.alimento = Math.max(0, (s.necessidades.alimento || 0) - (totalAlimento * 20));
+      s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 12);
+      r.quantidade = totalAlimento;
+      r.texto = 'Cuidou dos animais no curral e colheu ' + ovosColhidos + ' ovos e ' + leiteColhido + ' leite fresco!';
+    } else {
+      s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 4);
+      r.quantidade = 0;
+      r.texto = 'Cuidou e alimentou os animais com carinho. Eles já foram ordenhados e estão repousando tranquilamente.';
+    }
     break;
 }
 case'pescar_cais':
