@@ -331,6 +331,32 @@
 
 <script>
 'use strict';
+
+// Toast discreto no canto inferior direito (sem pop-ups bloqueantes)
+window.mostrarToast = function(msg, duracao = 3000) {
+  let toast = document.getElementById('ilha-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'ilha-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:rgba(15,23,42,0.92);color:#e2e8f0;padding:12px 18px;border-radius:10px;border:1px solid #38bdf8;box-shadow:0 10px 25px rgba(0,0,0,0.5);font-family:system-ui,sans-serif;font-size:13px;z-index:99999;pointer-events:none;transition:opacity 0.3s ease,transform 0.3s ease;transform:translateY(10px);opacity:0;backdrop-filter:blur(8px);display:flex;align-items:center;gap:8px;';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = '✨ ' + (msg || 'A mente deles está descansando por um instante...');
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateY(0)';
+  if (window._toastTimeout) clearTimeout(window._toastTimeout);
+  window._toastTimeout = setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+  }, duracao);
+};
+
+// Remove pop-ups bloqueantes substituindo window.alert
+window.alert = function(msg) {
+  console.warn("LLM indisponível:", msg);
+  window.mostrarToast("A mente deles está descansando por um instante...");
+};
+
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const tooltip = document.getElementById('tooltip');
@@ -1357,10 +1383,12 @@ document.getElementById('dir-enviar').addEventListener('click', async () => {
       await fetchState();
       setTimeout(() => { dirPanel.hidden = true; if(fb) fb.textContent = ''; }, 700);
     } else {
-      alert('Erro na intervenção: ' + (j.erro || 'desconhecido'));
+      console.warn("LLM indisponível:", j.erro || 'desconhecido');
+      window.mostrarToast("A mente deles está descansando por um instante...");
     }
   }catch(e){
-    alert('Falha de rede: ' + e.message);
+    console.warn("LLM indisponível:", e.message);
+    window.mostrarToast("A mente deles está descansando por um instante...");
   }finally{
     btn.disabled = false;
     btn.textContent = '⚡ Disparar Evento no Mundo';
@@ -1403,12 +1431,14 @@ if (btnOnDemand) {
           btnOnDemand.innerHTML = '&#9654; Ciclo On-Demand';
         }, 2200);
       } else {
-        alert('Aviso: ' + (j.erro || 'Falha ao executar ciclo'));
+        console.warn("LLM indisponível:", j.erro || 'Falha ao executar ciclo');
+        window.mostrarToast("A mente deles está descansando por um instante...");
         btnOnDemand.disabled = false;
         btnOnDemand.innerHTML = '&#9654; Ciclo On-Demand';
       }
     } catch (e) {
-      alert('Erro ao acionar ciclo on-demand: ' + e.message);
+      console.warn("LLM indisponível:", e.message);
+      window.mostrarToast("A mente deles está descansando por um instante...");
       btnOnDemand.disabled = false;
       btnOnDemand.innerHTML = '&#9654; Ciclo On-Demand';
     }
@@ -1466,8 +1496,14 @@ document.getElementById('btn-reiniciar').addEventListener('click', async () => {
     const r = await fetch('/api/reiniciar', { method: 'POST' });
     const j = await r.json();
     if(j.ok) location.reload();
-    else alert('Falha ao reiniciar: ' + (j.erro || 'erro desconhecido'));
-  } catch(e) { alert('Falha ao reiniciar: ' + e.message); }
+    else {
+      console.warn("Falha ao reiniciar:", j.erro || 'erro desconhecido');
+      window.mostrarToast("Não foi possível reiniciar o mundo agora.");
+    }
+  } catch(e) {
+    console.warn("Falha ao reiniciar:", e.message);
+    window.mostrarToast("Falha de rede ao reiniciar.");
+  }
 });
 
 /* ---------- decoracao deterministica ---------- */
@@ -3480,11 +3516,15 @@ canvas.addEventListener('click', e => {
         body: JSON.stringify({ id: personagemClicado.id, texto: msg.trim() })
       }).then(r => r.json()).then(data => {
         if (data.ok) {
-          alert('Mensagem entregue! O ' + personagemClicado.nome + ' respondeu.');
+          window.mostrarToast('Mensagem entregue! O ' + personagemClicado.nome + ' ouviu você.');
         } else {
-          alert('Mensagem guardada, mas o cérebro não respondeu agora: ' + (data.erro||'erro desconhecido'));
+          console.warn("LLM indisponível:", data.erro || 'sem resposta');
+          window.mostrarToast("A mente deles está descansando por um instante...");
         }
-      }).catch(e => alert('Erro ao enviar: ' + e.message));
+      }).catch(e => {
+        console.warn("LLM indisponível:", e.message);
+        window.mostrarToast("A mente deles está descansando por um instante...");
+      });
     }
     return;
   }
