@@ -655,7 +655,7 @@
           'arvore_pinheiro', 'arvore_carvalho',
           'palmeira', 'ponte_madeira', 'caverna_rocha', 'pier_madeira', 'moinho'
         ];
-        const SVG_VER = '20261108_2125';
+        const SVG_VER = '20261108_2155';
         arqs.forEach(nome => {
           cacheSvg[nome] = PIXI.Texture.from('/assets/sprites/' + nome + '.svg?v=' + SVG_VER);
         });
@@ -782,8 +782,8 @@
       const maduros = Number(horta.maduros) || 0;
       const totalPlantas = plantados + crescendo + maduros;
 
-      // Se ainda não houve plantio ou a horta está vazia, exibe 1 canteiro de terra arada
-      // delimitando a horta e indicando que o solo está pronto para receber sementes
+      // Se ainda não houve plantio ou a horta está vazia, exibe o canteiro de terra arada rústica
+      // delimitando a horta na área cercada e indicando que o solo está pronto para receber sementes
       if (!horta.plantadoPor || totalPlantas <= 0.05) {
         const texArado = cacheSvg['canteiro_arado'] || cacheTexturas.hortaEstagios[0];
         if (texArado) {
@@ -791,8 +791,8 @@
           spr.anchor.set(0.5, 0.5);
           spr.x = posFazenda.x;
           spr.y = posFazenda.y;
-          spr.scale.set(0.72 * scale);
-          spr.alpha = 0.92;
+          spr.scale.set(0.95 * scale);
+          spr.alpha = 1.0;
           container.addChild(spr);
         }
         return;
@@ -927,86 +927,31 @@
         graphicsMar.drawEllipse(p.x + dx, p.y + dy, (28 + Math.cos(fase)*6) * sc, (8 + Math.sin(fase)*3) * sc);
       }
 
-      // 3. Rebentação Dupla da Costa Sul (Espuma Branca e Maré Viva)
-      const ondaAvanco = Math.sin(tempo * 0.0022) * (7 * sc);
-      const shorePontos = [
-        [0.06, 0.82], [0.16, 0.85], [0.28, 0.89], [0.44, 0.90], [0.58, 0.87], [0.70, 0.83]
-      ];
-
-      // 3.1 Sub-espuma turquesa suave avançando na areia
-      graphicsMar.lineStyle(4.5 * sc, 0x7dd3fc, 0.35);
-      for (let i = 0; i < shorePontos.length - 1; i++) {
-        const p1 = toScreen(shorePontos[i][0], shorePontos[i][1]);
-        const p2 = toScreen(shorePontos[i+1][0], shorePontos[i+1][1]);
-        const mx = (p1.x + p2.x) / 2;
-        const my = (p1.y + p2.y) / 2 + ondaAvanco * 1.15;
-        if (i === 0) graphicsMar.moveTo(p1.x, p1.y + ondaAvanco * 0.9);
-        graphicsMar.quadraticCurveTo(mx, my, p2.x, p2.y + ondaAvanco * 0.9);
-      }
-
-      // 3.2 Linha de Crista de Espuma Branca Quebrando
-      graphicsMar.lineStyle(2.8 * sc, 0xffffff, 0.72);
-      for (let i = 0; i < shorePontos.length - 1; i++) {
-        const p1 = toScreen(shorePontos[i][0], shorePontos[i][1]);
-        const p2 = toScreen(shorePontos[i+1][0], shorePontos[i+1][1]);
-        const mx = (p1.x + p2.x) / 2;
-        const my = (p1.y + p2.y) / 2 + ondaAvanco;
-        if (i === 0) graphicsMar.moveTo(p1.x, p1.y + ondaAvanco);
-        graphicsMar.quadraticCurveTo(mx, my, p2.x, p2.y + ondaAvanco);
-
-        // Bolhas de espuma espalhadas ao longo da crista
-        const oscB = Math.sin(tempo * 0.004 + i);
-        graphicsMar.beginFill(0xffffff, 0.65);
-        graphicsMar.drawCircle(mx + oscB * 4, my - 2, 2.2 * sc);
-        graphicsMar.drawCircle(p1.x + 8, p1.y + ondaAvanco - 3, 1.8 * sc);
-        graphicsMar.endFill();
-      }
-
-      // 4. Efeito de Superfície do Tubarão: Barbatana Cortando a Água e Esteira em V
+      // 3. Efeito de Superfície do Tubarão: Barbatana e Ondulações Suaves na Água
       if (tubaraoSurface && tubaraoSurface.ativo) {
         const { x, y, heading } = tubaraoSurface;
         
-        // Ponto onde a ponta da barbatana dorsal quebra a linha d'água
         const finX = x;
         const finY = y;
 
-        // V-Wake: dois braços de espuma que abrem para trás
-        const wakeLen = 38 * sc;
-        const angLeft = heading + Math.PI - 0.45;
-        const angRight = heading + Math.PI + 0.45;
+        // Ondulações concêntricas de água se propagando suavemente (sem linhas rígidas na tela)
+        const ondOsc = (tempo * 0.004) % 1;
+        const r1 = (6 + ondOsc * 20) * sc;
+        const backCenterX = finX + Math.cos(heading + Math.PI) * (10 * sc);
+        const backCenterY = finY + Math.sin(heading + Math.PI) * (10 * sc);
 
-        const leftX = finX + Math.cos(angLeft) * wakeLen;
-        const leftY = finY + Math.sin(angLeft) * wakeLen;
-        const rightX = finX + Math.cos(angRight) * wakeLen;
-        const rightY = finY + Math.sin(angRight) * wakeLen;
-
-        // Ondulações concêntricas de água se propagando para trás
-        const ondOsc = (tempo * 0.005) % 1;
-        const r1 = (8 + ondOsc * 22) * sc;
-        const backCenterX = finX + Math.cos(heading + Math.PI) * (14 * sc);
-        const backCenterY = finY + Math.sin(heading + Math.PI) * (14 * sc);
-
-        graphicsMar.lineStyle(1.5 * sc, 0xbae6fd, (1 - ondOsc) * 0.55);
+        graphicsMar.lineStyle(1.4 * sc, 0x38bdf8, (1 - ondOsc) * 0.40);
         graphicsMar.drawEllipse(backCenterX, backCenterY, r1, r1 * 0.45);
 
-        // Braço Esquerdo do V
-        graphicsMar.lineStyle(2.4 * sc, 0xffffff, 0.75);
-        graphicsMar.moveTo(finX, finY);
-        graphicsMar.lineTo(leftX, leftY);
-
-        // Braço Direito do V
-        graphicsMar.lineStyle(2.4 * sc, 0xffffff, 0.75);
-        graphicsMar.moveTo(finX, finY);
-        graphicsMar.lineTo(rightX, rightY);
-
-        // Espuma turbilhonante na base da barbatana
-        graphicsMar.beginFill(0xffffff, 0.85);
+        // Espuma sutil na base da barbatana
+        graphicsMar.lineStyle(0);
+        graphicsMar.beginFill(0xe0f2fe, 0.45);
         graphicsMar.drawEllipse(finX, finY, 5 * sc, 2.5 * sc);
         graphicsMar.endFill();
 
-        // Pontinha afiada da barbatana dorsal escura projetando-se da água
+        // Pontinha afiada da barbatana dorsal cortando a lâmina d'água
         graphicsMar.beginFill(0x020617, 0.95);
-        graphicsMar.lineStyle(1 * sc, 0x38bdf8, 0.7);
+        graphicsMar.lineStyle(0.8 * sc, 0x38bdf8, 0.6);
         const fTipX = finX + Math.cos(heading) * (4 * sc);
         const fTipY = finY + Math.sin(heading) * (4 * sc) - (3 * sc);
         const fBase1X = finX + Math.cos(heading + Math.PI * 0.7) * (5 * sc);
@@ -1020,7 +965,7 @@
         graphicsMar.endFill();
       }
 
-      // 5. Spray e Névoa na Base da Cachoeira + Correnteza do Rio
+      // 4. Spray e Névoa na Base da Cachoeira
       const pCach = toScreen(0.65, 0.16);
       const sprayOsc = Math.sin(tempo * 0.015) * (3 * sc);
       graphicsCachoeira.beginFill(0xffffff, 0.45);
@@ -1028,13 +973,6 @@
       graphicsCachoeira.drawCircle(pCach.x + 9 * sc, pCach.y - sprayOsc, 7 * sc);
       graphicsCachoeira.drawCircle(pCach.x, pCach.y + 4 * sc, 9 * sc);
       graphicsCachoeira.endFill();
-
-      // Correnteza da Foz do Rio desembocando no mar
-      const pFoz = toScreen(0.48, 0.84);
-      const oscFoz = Math.sin(tempo * 0.005) * 4 * sc;
-      graphicsCachoeira.lineStyle(1.8 * sc, 0xe0f2fe, 0.5);
-      graphicsCachoeira.moveTo(pFoz.x - 12 * sc, pFoz.y + oscFoz);
-      graphicsCachoeira.lineTo(pFoz.x + 12 * sc, pFoz.y + oscFoz + 6 * sc);
     }
   };
 

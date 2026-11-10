@@ -32,7 +32,7 @@
     casa_lara:    { x: 0.240, y: 0.410, nome: 'Cabana da Lara' },
     casa_joao:    { x: 0.460, y: 0.240, nome: 'Abrigo do João' },
     casa_maria:   { x: 0.820, y: 0.580, nome: 'Cabana da Maria' },
-    fazenda:      { x: 0.796, y: 0.651, nome: 'Horta da Fazenda' },
+    fazenda:      { x: 0.880, y: 0.560, nome: 'Horta da Fazenda' },
     curral:       { x: 0.890, y: 0.670, nome: 'Curral de Animais' },
     barco:        { x: 0.480, y: 0.840, nome: 'Cais do Barco' },
     mar:          { x: 0.350, y: 0.880, nome: 'Praia do Sul' },
@@ -434,7 +434,7 @@
     }
 
     carregarMapa() {
-      const v = 'v=20261108_2125';
+      const v = 'v=20261108_2155';
       const urls = ['/mapa-ilha-evertrail.png?' + v, '/mapa-ilha-evertrail.jpg?' + v, '/mapa-ilha-nova.png?' + v];
       const tentar = idx => {
         if (idx >= urls.length) return;
@@ -649,29 +649,9 @@
       }
     }
 
-    // Pássaros sobrevoando a Ilha
+    // Pássaros sobrevoando a Ilha (desativado para manter o visual limpo sem linhas na tela)
     atualizarPassaros(tempo) {
       this.birdsContainer.removeChildren();
-      const g = new PIXI.Graphics();
-
-      this.passaros.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x > 1.1 || p.y < -0.1) {
-          p.x = -0.05;
-          p.y = 0.8 + Math.random() * 0.15;
-        }
-
-        const tela = this.toScreen(p.x, p.y);
-        const flap = Math.sin(tempo * 0.015 + p.asa) * 4;
-
-        g.lineStyle(1.6, 0xffffff, 0.85);
-        g.moveTo(tela.x - 5, tela.y + flap);
-        g.lineTo(tela.x, tela.y);
-        g.lineTo(tela.x + 5, tela.y + flap);
-      });
-
-      this.birdsContainer.addChild(g);
     }
 
     // Personagens e Atores na Ilha

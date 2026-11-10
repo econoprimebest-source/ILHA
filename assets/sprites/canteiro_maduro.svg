@@ -1,41 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 65" width="110" height="65">
   <defs>
-    <radialGradient id="terraOrganicaM" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#382012" stop-opacity="0.9"/>
-      <stop offset="70%" stop-color="#2a160a" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#1c0e06" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="terraRicaM" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a2511"/>
+      <stop offset="50%" stop-color="#33180a"/>
+      <stop offset="100%" stop-color="#241005"/>
+    </linearGradient>
+    <linearGradient id="toraMadeiraM" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#854d0e"/>
+      <stop offset="60%" stop-color="#713f12"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
   </defs>
-  <!-- Montículo de terra orgânica -->
-  <ellipse cx="50" cy="25" rx="46" ry="21" fill="url(#terraOrganicaM)"/>
-  <!-- Cenouras/Raízes Laranjas maduras apontando para fora da terra -->
-  <g>
-    <ellipse cx="24" cy="19" rx="3.5" ry="2.5" fill="#ea580c"/>
-    <ellipse cx="44" cy="18" rx="4" ry="3" fill="#f97316"/>
-    <ellipse cx="64" cy="19" rx="3.5" ry="2.5" fill="#ea580c"/>
-    <ellipse cx="30" cy="25" rx="4" ry="3" fill="#f97316"/>
-    <ellipse cx="50" cy="24" rx="4.5" ry="3" fill="#ea580c"/>
-    <ellipse cx="70" cy="25" rx="4" ry="3" fill="#f97316"/>
-    <ellipse cx="36" cy="31" rx="3.5" ry="2.5" fill="#ea580c"/>
-    <ellipse cx="56" cy="30" rx="4" ry="3" fill="#f97316"/>
-  </g>
-  <!-- Folhagem viçosa densa e exuberante -->
-  <g fill="#16a34a" stroke="#14532d" stroke-width="0.8">
-    <circle cx="24" cy="15" r="4.5"/>
-    <circle cx="44" cy="14" r="5"/>
-    <circle cx="64" cy="15" r="4.5"/>
-    <circle cx="30" cy="21" r="5.2"/>
-    <circle cx="50" cy="20" r="5.5"/>
-    <circle cx="70" cy="21" r="5.2"/>
-    <circle cx="36" cy="27" r="4.8"/>
-    <circle cx="56" cy="26" r="5"/>
-  </g>
-  <g fill="#22c55e" opacity="0.85">
-    <circle cx="23" cy="14" r="3"/>
-    <circle cx="43" cy="13" r="3.2"/>
-    <circle cx="63" cy="14" r="3"/>
-    <circle cx="29" cy="20" r="3.5"/>
-    <circle cx="49" cy="19" r="3.6"/>
-    <circle cx="69" cy="20" r="3.5"/>
-  </g>
+
+  <!-- 1. Sombra -->
+  <ellipse cx="55" cy="38" rx="50" ry="22" fill="#000000" opacity="0.35"/>
+
+  <!-- 2. Moldura de Toras Rústicas -->
+  <polygon points="10,32 55,56 100,32 94,27 55,49 16,27" fill="#451a03"/>
+  <polygon points="16,27 55,49 94,27 94,22 55,44 16,22" fill="url(#toraMadeiraM)"/>
+  <polygon points="16,22 55,3 94,22 100,17 55,-1 10,17" fill="#582e0e"/>
+
+  <!-- 3. Solo de Terra Arada -->
+  <polygon points="18,24 55,45 92,24 55,5" fill="url(#terraRicaM)"/>
+
+  <!-- 4. Estacas -->
+  <rect x="14" y="14" width="4" height="15" rx="1.5" fill="#a16207"/>
+  <rect x="92" y="14" width="4" height="15" rx="1.5" fill="#a16207"/>
+  <rect x="53" y="-1" width="4" height="12" rx="1.5" fill="#713f12"/>
+  <rect x="53" y="42" width="4" height="14" rx="1.5" fill="#a16207"/>
+
+  <!-- 5. Plantação Madura: Folhagem volumosa densa e Cenouras Laranjas visíveis -->
+  <!-- Cenoura 1 -->
+  <polygon points="36,17 40,17 38,23" fill="#ea580c"/>
+  <circle cx="38" cy="13" r="5.5" fill="#15803d"/>
+  <circle cx="36" cy="11" r="4" fill="#22c55e"/>
+
+  <!-- Cenoura 2 -->
+  <polygon points="53,21 57,21 55,27" fill="#ea580c"/>
+  <circle cx="55" cy="17" r="6" fill="#15803d"/>
+  <circle cx="53" cy="15" r="4.5" fill="#22c55e"/>
+
+  <!-- Cenoura 3 -->
+  <polygon points="70,17 74,17 72,23" fill="#ea580c"/>
+  <circle cx="72" cy="13" r="5.5" fill="#15803d"/>
+  <circle cx="70" cy="11" r="4" fill="#22c55e"/>
+
+  <!-- Cenoura 4 (meio esquerda) -->
+  <polygon points="30,24 35,24 32.5,31" fill="#f97316"/>
+  <circle cx="32.5" cy="20" r="6.5" fill="#166534"/>
+  <circle cx="30" cy="18" r="5" fill="#22c55e"/>
+
+  <!-- Cenoura 5 (centro) -->
+  <polygon points="46,30 51,30 48.5,37" fill="#f97316"/>
+  <circle cx="48.5" cy="25" r="7" fill="#166534"/>
+  <circle cx="46" cy="23" r="5.5" fill="#4ade80"/>
+
+  <!-- Cenoura 6 (centro direita) -->
+  <polygon points="62,30 67,30 64.5,37" fill="#f97316"/>
+  <circle cx="64.5" cy="25" r="7" fill="#166534"/>
+  <circle cx="62" cy="23" r="5.5" fill="#4ade80"/>
+
+  <!-- Cenoura 7 (direita) -->
+  <polygon points="77,24 82,24 79.5,31" fill="#f97316"/>
+  <circle cx="79.5" cy="20" r="6.5" fill="#166534"/>
+  <circle cx="77" cy="18" r="5" fill="#22c55e"/>
+
+  <!-- Cenoura 8 (frente esquerda) -->
+  <polygon points="38,36 43,36 40.5,43" fill="#fb923c"/>
+  <circle cx="40.5" cy="31" r="7" fill="#15803d"/>
+  <circle cx="38" cy="29" r="5.5" fill="#4ade80"/>
+
+  <!-- Cenoura 9 (frente centro) -->
+  <polygon points="53,41 58,41 55.5,48" fill="#fb923c"/>
+  <circle cx="55.5" cy="36" r="7.5" fill="#15803d"/>
+  <circle cx="53" cy="34" r="6" fill="#4ade80"/>
+
+  <!-- Cenoura 10 (frente direita) -->
+  <polygon points="68,36 73,36 70.5,43" fill="#fb923c"/>
+  <circle cx="70.5" cy="31" r="7" fill="#15803d"/>
+  <circle cx="68" cy="29" r="5.5" fill="#4ade80"/>
+
+  <!-- Plaquinha com Cenoura -->
+  <rect x="8" y="2" width="3" height="24" fill="#5c2e0b"/>
+  <rect x="0" y="2" width="22" height="14" rx="2" fill="#ea580c" stroke="#78350f" stroke-width="1"/>
+  <polygon points="10,5 14,5 12,12" fill="#fdba74"/>
+  <circle cx="12" cy="5" r="2.5" fill="#22c55e"/>
 </svg>

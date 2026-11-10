@@ -1,19 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 65" width="110" height="65">
   <defs>
-    <radialGradient id="terraOrganica" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#382012" stop-opacity="0.85"/>
-      <stop offset="70%" stop-color="#2a160a" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#1c0e06" stop-opacity="0"/>
-    </radialGradient>
+    <!-- Gradiente da terra arada rica e fértil -->
+    <linearGradient id="terraRica" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a2511"/>
+      <stop offset="50%" stop-color="#33180a"/>
+      <stop offset="100%" stop-color="#241005"/>
+    </linearGradient>
+    <!-- Madeira das toras rústicas -->
+    <linearGradient id="toraMadeira" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#854d0e"/>
+      <stop offset="60%" stop-color="#713f12"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
   </defs>
-  <!-- Montículo de terra fértil escavada (sem moldura de madeira) -->
-  <ellipse cx="50" cy="25" rx="44" ry="20" fill="url(#terraOrganica)"/>
-  <!-- Sulcos suaves na terra -->
-  <path d="M18,20 Q50,16 82,20" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M14,26 Q50,22 86,26" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M20,32 Q50,28 80,32" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <!-- Estacas rústicas de galho -->
-  <line x1="14" y1="14" x2="14" y2="28" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
-  <line x1="86" y1="14" x2="86" y2="28" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
-  <line x1="14" y1="17" x2="86" y2="17" stroke="#fef3c7" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- 1. Sombra suave sob o canteiro no solo -->
+  <ellipse cx="55" cy="38" rx="50" ry="22" fill="#000000" opacity="0.35"/>
+
+  <!-- 2. Moldura de Toras Rústicas Isométrica -->
+  <!-- Base inferior da moldura -->
+  <polygon points="10,32 55,56 100,32 94,27 55,49 16,27" fill="#451a03"/>
+  <polygon points="16,27 55,49 94,27 94,22 55,44 16,22" fill="url(#toraMadeira)"/>
+
+  <!-- Moldura superior traseira -->
+  <polygon points="16,22 55,3 94,22 100,17 55,-1 10,17" fill="#582e0e"/>
+
+  <!-- 3. Solo de Terra Arada no Interior do Canteiro -->
+  <polygon points="18,24 55,45 92,24 55,5" fill="url(#terraRica)"/>
+
+  <!-- 4. Sulcos Agrícolas Perfeitamente Alinhados -->
+  <!-- Sulco 1 (fundo) -->
+  <path d="M28,19 Q55,32 82,19" stroke="#1c0b03" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M28,18 Q55,31 82,18" stroke="#5a2d15" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+  <!-- Sulco 2 (meio) -->
+  <path d="M22,26 Q55,40 88,26" stroke="#1c0b03" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+  <path d="M22,25 Q55,39 88,25" stroke="#5a2d15" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+  <!-- Sulco 3 (frente) -->
+  <path d="M28,34 Q55,48 82,34" stroke="#1c0b03" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M28,33 Q55,47 82,33" stroke="#5a2d15" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+  <!-- 5. Estacas de Madeira nos Cantos com Barbante de Alinhamento -->
+  <rect x="14" y="14" width="4" height="15" rx="1.5" fill="#a16207"/>
+  <rect x="92" y="14" width="4" height="15" rx="1.5" fill="#a16207"/>
+  <rect x="53" y="-1" width="4" height="12" rx="1.5" fill="#713f12"/>
+  <rect x="53" y="42" width="4" height="14" rx="1.5" fill="#a16207"/>
+
+  <!-- Barbante sutil esticado entre estacas -->
+  <path d="M16,18 L55,5 L94,18 L55,45 Z" stroke="#fef3c7" stroke-width="1" stroke-dasharray="3,2" fill="none" opacity="0.6"/>
+
+  <!-- 6. Pequena Plaquinha Rústica "🌱 Horta" fincada no canto -->
+  <rect x="8" y="2" width="3" height="24" fill="#5c2e0b"/>
+  <rect x="0" y="2" width="22" height="14" rx="2" fill="#d97706" stroke="#78350f" stroke-width="1"/>
+  <!-- Ícone de broto na plaquinha -->
+  <path d="M11,12 C11,9 7,8 7,5 C10,5 12,8 11,12 Z" fill="#22c55e"/>
+  <path d="M11,12 C11,9 15,8 15,5 C12,5 10,8 11,12 Z" fill="#4ade80"/>
 </svg>

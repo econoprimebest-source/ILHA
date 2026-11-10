@@ -1,25 +1,75 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 65" width="110" height="65">
   <defs>
-    <radialGradient id="terraOrganicaB" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#382012" stop-opacity="0.85"/>
-      <stop offset="70%" stop-color="#2a160a" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#1c0e06" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="terraRicaB" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a2511"/>
+      <stop offset="50%" stop-color="#33180a"/>
+      <stop offset="100%" stop-color="#241005"/>
+    </linearGradient>
+    <linearGradient id="toraMadeiraB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#854d0e"/>
+      <stop offset="60%" stop-color="#713f12"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
   </defs>
-  <!-- Montículo de terra orgânica -->
-  <ellipse cx="50" cy="25" rx="44" ry="20" fill="url(#terraOrganicaB)"/>
-  <path d="M18,20 Q50,16 82,20" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M14,26 Q50,22 86,26" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M20,32 Q50,28 80,32" stroke="#1c0e06" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <!-- Brotos verdes nascendo da terra -->
-  <g fill="#4ade80" stroke="#15803d" stroke-width="0.8">
-    <path d="M24,18 Q22,13 18,15 Q21,19 24,18 Q27,13 30,15 Q27,19 24,18 Z"/>
-    <path d="M44,17 Q42,12 38,14 Q41,18 44,17 Q47,12 50,14 Q47,18 44,17 Z"/>
-    <path d="M64,18 Q62,13 58,15 Q61,19 64,18 Q67,13 70,15 Q67,19 64,18 Z"/>
-    <path d="M30,24 Q28,19 24,21 Q27,25 30,24 Q33,19 36,21 Q33,25 30,24 Z"/>
-    <path d="M50,23 Q48,18 44,20 Q47,24 50,23 Q53,18 56,20 Q53,24 50,23 Z"/>
-    <path d="M70,24 Q68,19 64,21 Q67,25 70,24 Q73,19 76,21 Q73,25 70,24 Z"/>
-    <path d="M36,30 Q34,25 30,27 Q33,31 36,30 Q39,25 42,27 Q39,31 36,30 Z"/>
-    <path d="M56,29 Q54,24 50,26 Q53,30 56,29 Q59,24 62,26 Q59,30 56,29 Z"/>
+
+  <!-- 1. Sombra -->
+  <ellipse cx="55" cy="38" rx="50" ry="22" fill="#000000" opacity="0.35"/>
+
+  <!-- 2. Moldura de Toras Rústicas -->
+  <polygon points="10,32 55,56 100,32 94,27 55,49 16,27" fill="#451a03"/>
+  <polygon points="16,27 55,49 94,27 94,22 55,44 16,22" fill="url(#toraMadeiraB)"/>
+  <polygon points="16,22 55,3 94,22 100,17 55,-1 10,17" fill="#582e0e"/>
+
+  <!-- 3. Solo de Terra Arada -->
+  <polygon points="18,24 55,45 92,24 55,5" fill="url(#terraRicaB)"/>
+
+  <!-- Sulcos -->
+  <path d="M28,19 Q55,32 82,19" stroke="#1c0b03" stroke-width="2.5" fill="none"/>
+  <path d="M22,26 Q55,40 88,26" stroke="#1c0b03" stroke-width="2.5" fill="none"/>
+  <path d="M28,34 Q55,48 82,34" stroke="#1c0b03" stroke-width="2.5" fill="none"/>
+
+  <!-- 4. Estacas -->
+  <rect x="14" y="14" width="4" height="15" rx="1.5" fill="#a16207"/>
+  <rect x="92" y="14" width="4" height="15" rx="1.5" fill="#a16207"/>
+  <rect x="53" y="-1" width="4" height="12" rx="1.5" fill="#713f12"/>
+  <rect x="53" y="42" width="4" height="14" rx="1.5" fill="#a16207"/>
+
+  <!-- 5. Brotos Verdes em Fileiras Nascendo Vigorosos -->
+  <!-- Linha 1 (fundo) -->
+  <g fill="#22c55e" stroke="#15803d" stroke-width="0.6">
+    <path d="M38,18 C38,14 34,13 34,10 C37,10 39,13 38,18 Z"/>
+    <path d="M38,18 C38,14 42,13 42,10 C39,10 37,13 38,18 Z" fill="#4ade80"/>
+    <path d="M55,23 C55,19 51,18 51,15 C54,15 56,18 55,23 Z"/>
+    <path d="M55,23 C55,19 59,18 59,15 C56,15 54,18 55,23 Z" fill="#4ade80"/>
+    <path d="M72,18 C72,14 68,13 68,10 C71,10 73,13 72,18 Z"/>
+    <path d="M72,18 C72,14 76,13 76,10 C73,10 71,13 72,18 Z" fill="#4ade80"/>
   </g>
+
+  <!-- Linha 2 (meio) -->
+  <g fill="#22c55e" stroke="#15803d" stroke-width="0.7">
+    <path d="M32,25 C32,20 27,19 27,15 C31,15 33,19 32,25 Z"/>
+    <path d="M32,25 C32,20 37,19 37,15 C33,15 31,19 32,25 Z" fill="#4ade80"/>
+    <path d="M48,31 C48,26 43,25 43,21 C47,21 49,25 48,31 Z"/>
+    <path d="M48,31 C48,26 53,25 53,21 C49,21 47,25 48,31 Z" fill="#4ade80"/>
+    <path d="M64,31 C64,26 59,25 59,21 C63,21 65,25 64,31 Z"/>
+    <path d="M64,31 C64,26 69,25 69,21 C65,21 63,25 64,31 Z" fill="#4ade80"/>
+    <path d="M79,25 C79,20 74,19 74,15 C78,15 80,19 79,25 Z"/>
+    <path d="M79,25 C79,20 84,19 84,15 C80,15 78,19 79,25 Z" fill="#4ade80"/>
+  </g>
+
+  <!-- Linha 3 (frente) -->
+  <g fill="#22c55e" stroke="#15803d" stroke-width="0.8">
+    <path d="M40,36 C40,30 35,29 35,24 C39,24 41,29 40,36 Z"/>
+    <path d="M40,36 C40,30 45,29 45,24 C41,24 39,29 40,36 Z" fill="#4ade80"/>
+    <path d="M55,42 C55,36 50,35 50,30 C54,30 56,35 55,42 Z"/>
+    <path d="M55,42 C55,36 60,35 60,30 C56,30 54,35 55,42 Z" fill="#4ade80"/>
+    <path d="M70,36 C70,30 65,29 65,24 C69,24 71,29 70,36 Z"/>
+    <path d="M70,36 C70,30 75,29 75,24 C71,24 69,29 70,36 Z" fill="#4ade80"/>
+  </g>
+
+  <!-- Plaquinha -->
+  <rect x="8" y="2" width="3" height="24" fill="#5c2e0b"/>
+  <rect x="0" y="2" width="22" height="14" rx="2" fill="#d97706" stroke="#78350f" stroke-width="1"/>
+  <path d="M11,12 C11,9 7,8 7,5 C10,5 12,8 11,12 Z" fill="#22c55e"/>
+  <path d="M11,12 C11,9 15,8 15,5 C12,5 10,8 11,12 Z" fill="#4ade80"/>
 </svg>

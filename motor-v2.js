@@ -69,9 +69,10 @@ if(Array.isArray(x.projetos)){
     a.push({id:'trabalhar_construcao',descricao:`Trabalhar na obra: ${projLocal.nome} (${projLocal.progresso}% concluído)`});
   }
 }
-// MERGULHO NO MAR (COM RISCO DE TUBARÃO):
-if(s.local==='mar'){
-  a.push({id:'mergulhar_mar',descricao:'Mergulhar nos recifes do sul para pegar crustáceos e ostras (cuidado com tubarões!)'});
+// MERGULHO E PESCA NO MAR (COM RISCO DE TUBARÃO):
+if(s.local==='mar'||s.local==='barco'){
+  a.push({id:'pescar_mar',descricao:'Lançar a linha de pesca no mar para pescar'});
+  if(s.local==='mar') a.push({id:'mergulhar_mar',descricao:'Mergulhar nos recifes do sul para pegar crustáceos e ostras (cuidado com tubarões!)'});
 }
 // TROCA / COOPERAÇÃO COM VIZINHO:
 if(temOutro){
@@ -327,7 +328,8 @@ case'cuidar_animais':{
     r.texto = 'Cuidou dos animais no curral e colheu ' + ovosColhidos + ' ovos e ' + leiteColhido + ' leite fresco!';
     break;
 }
-case'pescar_cais':{
+case'pescar_cais':
+case'pescar_mar':{
     const sorte = Math.random();
     if (sorte > 0.3) {
         const qtd = Math.floor(Math.random() * 3) + 1;
