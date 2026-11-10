@@ -177,6 +177,8 @@ function preparar(estado) {
   // identidade na memória (chat do ICAROOVO isolado). Inerte fora dos testes
   // e fora da produção: só roda com o adaptador ativo.
   require('./memoria-personagem').semearSeres(estado);
+  // MORADIAS: baú de estoque e nível de cada casa (idempotente).
+  require('./casas').preparar(estado);
   return validarCompleto(estado);
 }
 

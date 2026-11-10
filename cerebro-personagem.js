@@ -64,6 +64,7 @@ function montarContexto(estado,ser,possiveis,situacao=null){
 		climaDetalhado:estado.mundo.ecossistema.clima,
 		local:ser.local,
 		casa:ser.casa,
+		minhaCasa:(()=>{try{return require('./casas').resumo(estado,ser)}catch(_){return null}})(),
 		acontecimentos:situacao&&Array.isArray(situacao.pistas)?[...situacao.pistas]:[],
 		pessoasPorPerto,
 		deslocamento:ser.deslocamento?{destino:ser.deslocamento.destino,trecho:ser.deslocamento.i,trechos:ser.deslocamento.caminho.length-1,caminho:[...ser.deslocamento.caminho]}:null,

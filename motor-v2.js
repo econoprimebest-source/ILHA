@@ -1,5 +1,5 @@
 'use strict';
-const {avancar,regenerar,validar}=require('./estado-v2');const {atualizar}=require('./seres');const {perceber}=require('./percepcao-v2');const espaco=require('./espaco');
+const {avancar,regenerar,validar}=require('./estado-v2');const {atualizar}=require('./seres');const {perceber}=require('./percepcao-v2');const espaco=require('./espaco');const casas=require('./casas');
 function acoes(e,s){const x=e.mundo.ecossistema;const base=[['beber','Beber água',s.inventario.agua>=1],['comer','Comer alimento',s.inventario.alimento>=1],['descansar','Descansar',true],['observar','Observar local',true]];
 // ESPAÇO: o grafo do mundo conecta os locais por trilhas — escolher para onde
 // ir é decisão do personagem; aqui só aparece o caminho possível.
@@ -137,6 +137,8 @@ if(['fogueira','acampamento','cachoeira'].includes(s.local)||s.local.startsWith(
 
 // EM TRAJETO: o cérebro pode continuar, rerotear (ir_*) ou agir localmente.
 if(s.deslocamento)a.unshift({id:'continuar',descricao:'Continuar a caminhada para '+espaco.nome(s.deslocamento.destino)});
+// MORADIAS: guardar/pegar do baú e ampliar a casa (só dentro da própria casa).
+for(const ac of casas.acoes(e,s))a.push(ac);
 return a}
 function executar(e,s,id,permitidas=acoes(e,s),extra={}){if(!permitidas.some(a=>a.id===id))throw Error('Ação inválida ou indisponível: '+id);const x=e.mundo.ecossistema,r={acao:id,quantidade:0};
 // DESLOCAMENTO: 'ir_*' NUNCA teletransporta — inicia ou reroteia um trajeto
@@ -146,6 +148,9 @@ if(id==='ir_casa'||id.startsWith('ir_')){const destino=id==='ir_casa'?s.casa:id.
 // AÇÃO LOCAL: o ser assumiu o controle — qualquer ação no meio do caminho
 // cancela o trajeto (o mundo não puxa ninguém contra a própria decisão).
 if(s.deslocamento){r.deslocamento={estado:'abortado',destino:s.deslocamento.destino};s.deslocamento=null}
+// MORADIAS (casas.js): baú, ampliação em níveis e conforto do descanso.
+if(casas.IDS.includes(id))return casas.executar(e,s,id,r);
+if(id==='descansar')casas.bonusDescanso(e,s);
 switch(id){case'beber':s.inventario.agua--;s.necessidades.agua=0;r.quantidade=1;break;case'comer':s.inventario.alimento--;s.necessidades.alimento=0;r.quantidade=1;break;case'descansar':case'esperar':break;case'observar':r.pistas=perceber(e,s);break;case'banho':s.necessidades.higiene=Math.min(100,(s.necessidades.higiene??0)+60);r.quantidade=1;break;case'arrumar_casa':s.ultimoArrumarDia=e.mundo.tempo.dia;s.necessidades.frustracao=Math.max(0,(s.necessidades.frustracao??0)-15);s.necessidades.satisfacao=Math.min(100,(s.necessidades.satisfacao??50)+10);s.necessidades.higiene=Math.min(100,(s.necessidades.higiene??50)+25);r.quantidade=1;break;case'coletar_agua':{const temLago=x.agua.fontes?.lago&&x.agua.fontes.lago.nivel>0;const disp=Math.max(x.agua.nascente||0,temLago?3:0);r.quantidade=Math.min(3,disp>0?disp:2,Math.max(1.5,s.capacidades.coleta*3));if(x.agua.nascente>0)x.agua.nascente=Math.max(0,x.agua.nascente-r.quantidade);else if(temLago)x.agua.fontes.lago.nivel=Math.max(0,x.agua.fontes.lago.nivel-r.quantidade);s.inventario.agua+=r.quantidade;s.necessidades.agua=Math.max(0,(s.necessidades.agua||0)-60);break}case'pescar':{ s.habilidades = s.habilidades || {}; s.habilidades.caca = (s.habilidades.caca || 10) + 0.5; const p=x.peixes.rio,t=e.mundo.tempo,ch=Math.min(.95,Math.max(.65,p.populacao/p.capacidade)*Math.max(.65,s.capacidades.pesca*1.8)*(['manha','tarde'].includes(t.periodo)?1:.8)*(t.estacao==='chuvas'?1.25:t.estacao==='seca'?.9:1)),z=((t.ciclo*9301+17)%997)/997;if(p.populacao>0){const baseQ=Math.min(p.populacao,Math.max(1.5,s.capacidades.pesca*3.2*(0.45+0.55*(p.populacao/p.capacidade))));r.quantidade=z<ch?baseQ:Math.min(p.populacao,0.8);p.populacao-=r.quantidade;p.pescadosHoje=(p.ultimoDiaPesca===t.dia?(p.pescadosHoje||0):0)+1;p.ultimoDiaPesca=t.dia;s.inventario.alimento+=r.quantidade;s.necessidades.alimento=Math.max(0,(s.necessidades.alimento||0)-60)}r.chance=ch;break}case'colher_frutas':{let rem=Math.max(1.8,s.capacidades.coleta*2.8);for(const t of Object.values(x.arvores).filter(t=>t.local==='bosque').sort((a,b)=>b.frutos-a.frutos)){const q=Math.min(rem,t.frutos);t.frutos-=q;rem-=q;r.quantidade+=q;if(rem<=0)break}s.inventario.alimento+=r.quantidade;if(r.quantidade>0)s.necessidades.alimento=Math.max(0,(s.necessidades.alimento||0)-55);break}case'coletar_madeira':r.quantidade=Math.min(2,x.madeira.floresta,s.capacidades.forca*2);x.madeira.floresta-=r.quantidade;s.inventario.madeira+=r.quantidade;break;case'caçar':{ s.habilidades = s.habilidades || {}; s.habilidades.caca = (s.habilidades.caca || 10) + 1; 
         const faunas = Object.values(x.fauna||{}).filter(f=>f.local===s.local&&f.populacao>0);
         if(!faunas.length){ r.chance=0; break; }

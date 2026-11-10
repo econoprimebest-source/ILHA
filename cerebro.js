@@ -119,7 +119,8 @@ function montarPrompt(c,a,ser,extras){
 	const n=c.necessidades||{};
 	const rotulo={agua:'sede(falta_agua)',alimento:'fome(falta_alimento)',sono:'cansaco(falta_sono)'};
 	partes.push(Object.entries(n).map(([k,v])=>(rotulo[k]||k)+': '+(Math.round(Number(v)*10)/10)).join(', '));
-	if(c.inventario)partes.push('meu inventário carregado: água='+(Math.round((Number(c.inventario.agua)||0)*10)/10)+', alimento='+(Math.round((Number(c.inventario.alimento)||0)*10)/10)+', madeira='+(Math.round((Number(c.inventario.madeira)||0)*10)/10));
+	if(c.inventario)partes.push('meu inventário carregado: água='+(Math.round((Number(c.inventario.agua)||0)*10)/10)+', alimento='+(Math.round((Number(c.inventario.alimento)||0)*10)/10)+', madeira='+(Math.round((Number(c.inventario.madeira)||0)*10)/10)+', pedra='+(Math.round((Number(c.inventario.pedra)||0)*10)/10));
+	if(c.minhaCasa){partes.push('[MINHA CASA E ESTOQUE]');partes.push(c.minhaCasa);}
 	if(c.sensacoes&&c.sensacoes.length)partes.push('sensações: '+c.sensacoes.join(', '));
 	partes.push('[AGORA]');
 	const t=c.tempo||{};
