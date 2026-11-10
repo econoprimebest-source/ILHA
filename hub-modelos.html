@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hub de Modelos Experimentais — Ilha Aurora</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #071524; color: #f8fafc; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  
+  header { padding: 24px 32px; background: rgba(11, 23, 38, 0.95); border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand h1 { font-size: 20px; font-weight: 800; color: #38bdf8; letter-spacing: 0.05em; }
+  .badge-env { background: #0284c7; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; }
+  
+  main { max-width: 1300px; width: 100%; margin: 0 auto; padding: 36px 24px; flex: 1; }
+  
+  .intro-box { background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(30, 27, 75, 0.4)); border: 1px solid #0284c7; border-radius: 16px; padding: 24px; margin-bottom: 32px; }
+  .intro-box h2 { font-size: 18px; color: #38bdf8; margin-bottom: 8px; }
+  .intro-box p { font-size: 14px; line-height: 1.6; color: #cbd5e1; }
+  
+  .models-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; }
+  
+  .model-card { background: #0b1726; border: 1px solid #1e293b; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.25s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.35); position: relative; overflow: hidden; }
+  .model-card:hover { transform: translateY(-4px); border-color: #38bdf8; box-shadow: 0 10px 24px rgba(2, 132, 199, 0.2); }
+  
+  .card-tag { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; width: fit-content; }
+  .tag-original { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+  .tag-m1 { background: rgba(5, 150, 105, 0.2); color: #34d399; border: 1px solid #059669; }
+  .tag-m2 { background: rgba(79, 70, 229, 0.2); color: #a5b4fc; border: 1px solid #4f46e5; }
+  .tag-m3 { background: rgba(217, 119, 6, 0.2); color: #fde68a; border: 1px solid #d97706; }
+  
+  .card-title { font-size: 17px; font-weight: 800; color: #f8fafc; margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 16px; flex: 1; }
+  
+  .features-list { list-style: none; margin-bottom: 20px; font-size: 12.5px; color: #cbd5e1; display: flex; flex-direction: column; gap: 6px; }
+  .features-list li::before { content: "✓ "; color: #38bdf8; font-weight: bold; }
+  
+  .btn-open { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border-radius: 10px; text-decoration: none; font-size: 13.5px; font-weight: 700; transition: all 0.2s; border: none; cursor: pointer; }
+  .btn-open-original { background: #1e293b; color: #f1f5f9; border: 1px solid #475569; }
+  .btn-open-original:hover { background: #334155; }
+  .btn-open-m1 { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+  .btn-open-m1:hover { filter: brightness(1.1); }
+  .btn-open-m2 { background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff; }
+  .btn-open-m2:hover { filter: brightness(1.1); }
+  .btn-open-m3 { background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; }
+  .btn-open-m3:hover { filter: brightness(1.1); }
+  
+  footer { padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:26px;">🏝️</span>
+    <div>
+      <h1>Ilha Aurora — Observatório de Modelos Experimentais</h1>
+      <div style="font-size:12px; color:#94a3b8;">Porta 8810 · Ambiente Comparativo de Simulação</div>
+    </div>
+  </div>
+  <span class="badge-env">Localhost 8810</span>
+</header>
+
+<main>
+  <div class="intro-box">
+    <h2>🎯 Comparador de Modelos e Filosofias de Jogo</h2>
+    <p>
+      Para que você possa comparar com calma e ver qual experiência fica melhor antes de consolidar na ilha definitiva,
+      cada modelo foi estruturado de forma isolada, com motor cognitivo próprio e visualizador 3D dedicado.
+      Clique em qualquer modelo abaixo para abrir o seu visualizador interativo em tempo real.
+    </p>
+  </div>
+
+  <div class="models-grid">
+    <!-- ORIGINAL -->
+    <div class="model-card">
+      <div>
+        <span class="card-tag tag-original">Base Canônica</span>
+        <h3 class="card-title">Ilha Original (Contínua)</h3>
+        <p class="card-desc">
+          O motor canônico da Ilha com visualizador isométrico 2.5D Pixi.js e suporte 3D Three.js.
+          Simulação viva com ciclo dia/noite e seres autônomos.
+        </p>
+        <ul class="features-list">
+          <li>Visual Isométrico clássico Evertrail</li>
+          <li>Suporte ao modelo 3D GLB completo</li>
+          <li>Ciclo contínuo dia/noite e clima vivo</li>
+          <li>Memórias canônicas e vivências salvas</li>
+        </ul>
+      </div>
+      <a href="/visualizador-ilha.html" class="btn-open btn-open-original">Abrir Ilha Original →</a>
+    </div>
+
+    <!-- MODELO 1 -->
+    <div class="model-card">
+      <div>
+        <span class="card-tag tag-m1">Modelo 1</span>
+        <h3 class="card-title">Estoque, Despensa & Ócio</h3>
+        <p class="card-desc">
+          Transição da sobrevivência bruta para a sociedade do lazer. Comida com rendimento
+          de porções duradouras acumulada em despensas comunitárias.
+        </p>
+        <ul class="features-list">
+          <li>Despensa comunitária com dias de comida</li>
+          <li>Rendimento de refeições (peixe, frutas, arroz)</li>
+          <li>Ócio humano: quando abastecidos, não caçam</li>
+          <li>Tempo livre para filosofar e contemplar</li>
+        </ul>
+      </div>
+      <a href="/visualizador-modelo1.html" class="btn-open btn-open-m1">Abrir Modelo 1 (Estoque) →</a>
+    </div>
+
+    <!-- MODELO 2 -->
+    <div class="model-card">
+      <div>
+        <span class="card-tag tag-m2">Modelo 2</span>
+        <h3 class="card-title">Affordances & AI Town</h3>
+        <p class="card-desc">
+          Inspirado em Generative Agents e AI Town. Estações de ofício especializadas,
+          mural de recados escrito e plano diário dos habitantes.
+        </p>
+        <ul class="features-list">
+          <li>5 Estações: Bancada, Mural, Curral, Altar, Forja</li>
+          <li>Plano do Dia reflexivo (Manhã, Tarde, Noite)</li>
+          <li>Mural de recados interativo com bilhetes</li>
+          <li>Livre-arbítrio visceral com risco de recusa</li>
+        </ul>
+      </div>
+      <a href="/visualizador-modelo2.html" class="btn-open btn-open-m2">Abrir Modelo 2 (Affordances) →</a>
+    </div>
+
+    <!-- MODELO 3 -->
+    <div class="model-card">
+      <div>
+        <span class="card-tag tag-m3">Modelo 3</span>
+        <h3 class="card-title">RPG RTS & Expansão de Vila</h3>
+        <p class="card-desc">
+          Inspirado em RTS e Colony Sims. Economia de 4 recursos (Madeira, Pedra, Ferro, Ouro),
+          obras estruturais dinâmicas e câmera tática com WASD/QE.
+        </p>
+        <ul class="features-list">
+          <li>Câmera tática RTS com controle WASD + Q/E</li>
+          <li>Economia de 4 recursos: Madeira, Pedra, Ferro, Ouro</li>
+          <li>Construção de cabanas, torres de vigia e muralhas</li>
+          <li>Missões do mural cívico com recompensas</li>
+        </ul>
+      </div>
+      <a href="/visualizador-modelo3.html" class="btn-open btn-open-m3">Abrir Modelo 3 (RPG RTS) →</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Ilha Aurora · Desenvolvido com Three.js, Pixi.js e Arquitetura Cognitiva Multiagente.
+</footer>
+
+</body>
+</html>

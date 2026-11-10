@@ -1,4 +1,4 @@
-# 📍 CHECKPOINT DE DESENVOLVIMENTO — ILHA AURORA (Evertrail 2.5D)
+# 📍 CHECKPOINT DE DESENVOLVIMENTO — ILHA AURORA (Evertrail 2.5D & Modelos Experimentais 3D)
 
 > **PROPÓSITO DESTE ARQUIVO:**  
 > O PC reinicia com frequência. Qualquer nova sessão ou instância de IA **DEVE LER ESTE ARQUIVO PRIMEIRO** para saber imediatamente o estado da sessão anterior, o que estava sendo feito e quais os próximos passos.  
@@ -7,9 +7,43 @@
 ---
 
 ## 🕒 Última Atualização
-* **Data/Hora:** 2026-11-08 21:30 (Horário Local)
+* **Data/Hora:** 2026-11-10 14:45 (Horário Local)
 * **Branch Git:** `visualizacao-ilha`
 * **Status do Servidor:** `node visualizador-ilha.js` rodando em `http://localhost:8810` (ou `http://0.0.0.0:8810`).
+
+---
+
+## 🎯 O Que Foi Feito Recentemente: Os 3 Modelos Experimentais & Hub
+
+A pedido do usuário, foram criados 3 modelos experimentais independentes para teste e comparação lado a lado antes de aplicar na versão principal:
+
+### 🧩 Hub Comparador Geral
+* **URL:** `http://localhost:8810/hub-modelos.html` (ou `/hub`)
+* Central que apresenta e conecta todos os modelos com um clique.
+
+### 📦 Modelo 1 — Economia de Estoque, Despensa & Ócio Humano
+* **URL:** `http://localhost:8810/visualizador-modelo1.html`
+* **Arquivos:** `modelo1-estoque.js`, `cerebro-modelo1.js`, `visualizador-modelo1.html`, `estado-modelo1.json`
+* **Conceito:** A comida tem rendimento de múltiplas refeições (peixe x2, frutas x3, arroz x10). Quando a despensa comunitária está abastecida para dias, os seres ganham o privilégio do TEMPO LIVRE (ócio humano), deixando de pescar/caçar e focando em prosear, contemplar e expandir a vila.
+
+### 🧠 Modelo 2 — Affordances Ricas & Simulação Social (AI Town / Generative Agents)
+* **URL:** `http://localhost:8810/visualizador-modelo2.html`
+* **Arquivos:** `modelo2-affordances.js`, `cerebro-modelo2.js`, `visualizador-modelo2.html`, `estado-modelo2.json`
+* **Conceito:** 5 Estações interativas no mapa (Bancada de ferramentas, Mural de recados comunitário, Curral de animais, Altar do saber e Forja de ferro). Agentes possuem Plano do Dia reflexivo (Manhã, Tarde, Noite) e livre-arbítrio visceral.
+
+### 🏰 Modelo 3 — RPG RTS de Construção & Expansão de Vila (Colony Sim)
+* **URL:** `http://localhost:8810/visualizador-modelo3.html`
+* **Arquivos:** `modelo3-rpg.js`, `cerebro-modelo3.js`, `motor-three-rpg.js`, `visualizador-modelo3.html`, `estado-modelo3.json`
+* **Conceito:** Câmera tática expandida controlada com WASD + Q/E (FOV 60°), tesouro cívico com 4 recursos (Madeira, Pedra, Ferro, Moedas de Ouro), fila de obras modulares que adicionam construções 3D no mapa e missões cívicas de mural.
+
+---
+
+## 📂 Arquivos Integrados no Servidor (visualizador-ilha.js)
+* Rotas estáticas para `/hub`, `/visualizador-modelo1.html`, `/visualizador-modelo2.html`, `/visualizador-modelo3.html` e `/motor-three-rpg.js`.
+* Rotas de API completas:
+  - `GET /api/modelo1/snapshot` & `POST /api/modelo1/ciclo`, `/api/modelo1/visitante`, `/api/modelo1/construir`
+  - `GET /api/modelo2/snapshot` & `POST /api/modelo2/ciclo`, `/api/modelo2/recado`
+  - `GET /api/modelo3/snapshot` & `POST /api/modelo3/ciclo`, `/api/modelo3/construir`, `/api/modelo3/mercador`
 
 ---
 

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ilha Aurora — Modelo 1: Economia de Estoque & Tempo Livre</title>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="/motor-three-ilha.js?v=20261110_m1"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #071524; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; height: 100vh; }
+  #top-nav { height: 48px; background: rgba(11, 23, 38, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 100; position: relative; }
+  .nav-title { font-size: 14px; font-weight: 800; color: #38bdf8; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+  .nav-links { display: flex; gap: 8px; }
+  .nav-link { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; border: 1px solid #334155; color: #cbd5e1; background: #0f172a; transition: all 0.2s; }
+  .nav-link:hover, .nav-link.active { border-color: #38bdf8; background: #0284c7; color: #fff; }
+  
+  #main-layout { display: grid; grid-template-columns: 1fr 380px; height: calc(100vh - 48px); }
+  #stage-3d { position: relative; width: 100%; height: 100%; background: #040d1a; }
+  #sidebar { background: rgba(8, 20, 34, 0.96); border-left: 1px solid #334155; display: flex; flex-direction: column; overflow-y: auto; padding: 16px; gap: 14px; }
+  
+  .card { background: rgba(15, 23, 42, 0.85); border: 1px solid #1e293b; border-radius: 12px; padding: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+  .card-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #38bdf8; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-box { background: #0b1726; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; }
+  .stat-val { font-size: 16px; font-weight: 800; color: #f1f5f9; }
+  .stat-lbl { font-size: 11px; color: #94a3b8; }
+
+  .btn-action { width: 100%; padding: 10px; border-radius: 10px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
+  .btn-primary { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-secondary { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
+  .btn-secondary:hover { background: #334155; }
+  
+  .banner-ocio { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 78, 59, 0.3)); border: 1px solid #059669; border-radius: 10px; padding: 12px; font-size: 12.5px; line-height: 1.5; color: #a7f3d0; margin-top: 6px; }
+  .log-box { font-size: 12px; font-family: monospace; color: #94a3b8; background: #07111c; border-radius: 8px; padding: 10px; max-height: 140px; overflow-y: auto; line-height: 1.5; border: 1px solid #1e293b; }
+</style>
+</head>
+<body>
+
+<header id="top-nav">
+  <div class="nav-title">
+    <span>🏝️ Ilha Aurora</span>
+    <span style="font-weight:400;color:#94a3b8;">·</span>
+    <span style="color:#a7f3d0;">Modelo 1: Economia de Estoque & Tempo Livre</span>
+  </div>
+  <nav class="nav-links">
+    <a href="/visualizador-ilha.html" class="nav-link">Ilha Original (Porta 8810)</a>
+    <a href="/visualizador-modelo1.html" class="nav-link active">📦 Modelo 1 (Despensa)</a>
+    <a href="/visualizador-modelo2.html" class="nav-link">🧠 Modelo 2 (Affordances)</a>
+    <a href="/visualizador-modelo3.html" class="nav-link">🏰 Modelo 3 (RPG RTS)</a>
+    <a href="/hub-modelos.html" class="nav-link" style="border-color:#38bdf8;color:#38bdf8;">Comparador Geral</a>
+  </nav>
+</header>
+
+<main id="main-layout">
+  <section id="stage-3d">
+    <div id="three-container" style="width:100%; height:100%;"></div>
+    <div style="position:absolute; bottom:16px; left:16px; background:rgba(11,23,38,0.85); backdrop-filter:blur(8px); padding:8px 14px; border-radius:10px; border:1px solid #334155; font-size:12px; color:#cbd5e1;">
+      🎮 <b>Controles 3D:</b> Girar: Botão Esquerdo • Pan: Botão Direito • Zoom: Scroll
+    </div>
+  </section>
+
+  <aside id="sidebar">
+    <div class="card">
+      <div class="card-title">
+        <span>Controle do Ciclo M1</span>
+        <span id="st-ciclo" style="color:#fbbf24;">Ciclo: --</span>
+      </div>
+      <button class="btn-action btn-primary" id="btn-rodar-m1" onclick="rodarCicloM1()">
+        ▶️ Disparar 1 Ciclo com Estoque
+      </button>
+      <button class="btn-action btn-secondary" onclick="chegadaVisitanteM1()">
+        ⛵ Simular Chegada de Náufrago
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Despensa Comunitária & Baús</span>
+        <span id="st-status-dias" style="font-weight:700; color:#34d399;">3+ Dias de Comida</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-val" id="st-peixes">--</div>
+          <div class="stat-lbl">Peixes (x2 ref.)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="st-frutas">--</div>
+          <div class="stat-lbl">Frutas (x3 ref.)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="st-arroz">--</div>
+          <div class="stat-lbl">Sacos Arroz (x10 ref.)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="st-agua">-- L</div>
+          <div class="stat-lbl">Água Fresca</div>
+        </div>
+      </div>
+      <div class="banner-ocio" id="banner-ocio">
+        🌿 <b>Ócio Humano Ativo:</b> Como a despensa tem mantimentos garantidos, o cérebro do Ícaro e dos outros habitantes não prioriza caça nem pesca diária. Eles estão livres para apenas contemplar, prosear e expandir a vila.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Construções da Vila</div>
+      <div id="lista-construcoes" style="font-size:12.5px; line-height:1.6; color:#cbd5e1;">Carregando...</div>
+      <button class="btn-action btn-secondary" onclick="construirCabanaM1()" style="margin-top:10px;">
+        🏛️ Construir Nova Cabana (20 Mad, 10 Ped)
+      </button>
+    </div>
+
+    <div class="card" style="flex:1;">
+      <div class="card-title">Diário de Decisões e Ócio</div>
+      <div class="log-box" id="log-m1">Aguardando início do ciclo...</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+  let estadoM1 = null;
+
+  async function carregarEstado() {
+    try {
+      const res = await fetch('/api/modelo1/snapshot');
+      estadoM1 = await res.json();
+      atualizarUI();
+      if (window.motorThreeIlha) {
+        window.motorThreeIlha.atualizarEstado(estadoM1);
+      }
+    } catch (e) { console.error('Erro ao buscar estado M1:', e); }
+  }
+
+  function atualizarUI() {
+    if (!estadoM1) return;
+    const desp = estadoM1.mundo.despensaComunitaria || {};
+    document.getElementById('st-ciclo').innerText = 'Ciclo ' + (estadoM1.mundo.tempo.ciclo || 1);
+    document.getElementById('st-peixes').innerText = desp.peixe || 0;
+    document.getElementById('st-frutas').innerText = desp.frutas || 0;
+    document.getElementById('st-arroz').innerText = desp.arroz || 0;
+    document.getElementById('st-agua').innerText = desp.agua || 0;
+
+    const constr = estadoM1.mundo.construcoes || [];
+    document.getElementById('lista-construcoes').innerHTML = constr.map(c => `<div>🏡 <b>${c.nome}</b> (${c.local})</div>`).join('');
+  }
+
+  async function rodarCicloM1() {
+    const btn = document.getElementById('btn-rodar-m1');
+    btn.disabled = true;
+    btn.innerText = '⏳ Pensando e Vivendo...';
+    try {
+      const res = await fetch('/api/modelo1/ciclo', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        estadoM1 = data.estado;
+        atualizarUI();
+        if (window.motorThreeIlha) window.motorThreeIlha.atualizarEstado(estadoM1);
+        const logBox = document.getElementById('log-m1');
+        const novaEntrada = document.createElement('div');
+        novaEntrada.style.marginBottom = '6px';
+        novaEntrada.innerHTML = `<span style="color:#38bdf8;">[Ciclo ${estadoM1.mundo.tempo.ciclo}]</span> <b>${data.decisao.serNome}</b> escolheu: <span style="color:#a7f3d0;">${data.decisao.acao}</span><br><i style="color:#cbd5e1;">"${data.decisao.motivo}"</i>`;
+        logBox.prepend(novaEntrada);
+      }
+    } catch (e) { alert('Erro no ciclo: ' + e.message); }
+    finally {
+      btn.disabled = false;
+      btn.innerText = '▶️ Disparar 1 Ciclo com Estoque';
+    }
+  }
+
+  async function chegadaVisitanteM1() {
+    try {
+      const res = await fetch('/api/modelo1/visitante', { method: 'POST' });
+      const data = await res.json();
+      alert(`⛵ Chegada de Náufrago!\n${data.visitante.nome} chegou de canoa à praia.\nMotivo: "${data.visitante.motivo}"`);
+      carregarEstado();
+    } catch (e) { alert('Erro: ' + e.message); }
+  }
+
+  async function construirCabanaM1() {
+    try {
+      const res = await fetch('/api/modelo1/construir', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        alert(data.mensagem);
+        carregarEstado();
+      } else {
+        alert('Não foi possível construir: ' + data.erro);
+      }
+    } catch (e) { alert('Erro: ' + e.message); }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const cont = document.getElementById('three-container');
+    if (window.motorThreeIlha) {
+      window.motorThreeIlha.init(cont);
+      window.motorThreeIlha.start();
+    }
+    carregarEstado();
+    setInterval(carregarEstado, 3000);
+  });
+</script>
+</body>
+</html>

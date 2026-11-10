@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ilha Aurora — Modelo 2: Affordances Ricas & Simulação Social (AI Town)</title>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="/motor-three-ilha.js?v=20261110_m2"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #071524; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; height: 100vh; }
+  #top-nav { height: 48px; background: rgba(11, 23, 38, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 100; position: relative; }
+  .nav-title { font-size: 14px; font-weight: 800; color: #38bdf8; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+  .nav-links { display: flex; gap: 8px; }
+  .nav-link { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; border: 1px solid #334155; color: #cbd5e1; background: #0f172a; transition: all 0.2s; }
+  .nav-link:hover, .nav-link.active { border-color: #818cf8; background: #4f46e5; color: #fff; }
+  
+  #main-layout { display: grid; grid-template-columns: 1fr 400px; height: calc(100vh - 48px); }
+  #stage-3d { position: relative; width: 100%; height: 100%; background: #040d1a; }
+  #sidebar { background: rgba(8, 20, 34, 0.96); border-left: 1px solid #334155; display: flex; flex-direction: column; overflow-y: auto; padding: 16px; gap: 14px; }
+  
+  .card { background: rgba(15, 23, 42, 0.85); border: 1px solid #1e293b; border-radius: 12px; padding: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+  .card-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #818cf8; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  
+  .btn-action { width: 100%; padding: 10px; border-radius: 10px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
+  .btn-indigo { background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff; }
+  .btn-indigo:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-secondary { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
+  .btn-secondary:hover { background: #334155; }
+  
+  .station-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: #1e1b4b; color: #c7d2fe; border: 1px solid #3730a3; margin: 2px 2px 2px 0; }
+  .plan-box { background: rgba(30, 27, 75, 0.4); border: 1px solid #4338ca; border-radius: 10px; padding: 10px 12px; font-size: 12px; line-height: 1.5; color: #e0e7ff; margin-bottom: 8px; }
+  .mural-item { background: #091321; border-left: 3px solid #6366f1; border-radius: 0 8px 8px 0; padding: 8px 10px; margin-bottom: 6px; font-size: 12px; }
+  .log-box { font-size: 12px; font-family: monospace; color: #94a3b8; background: #07111c; border-radius: 8px; padding: 10px; max-height: 140px; overflow-y: auto; line-height: 1.5; border: 1px solid #1e293b; }
+  
+  .input-text { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155; background: #0b1726; color: #f8fafc; font-size: 12px; margin-bottom: 6px; }
+  .input-text:focus { outline: none; border-color: #6366f1; }
+</style>
+</head>
+<body>
+
+<header id="top-nav">
+  <div class="nav-title">
+    <span>🏝️ Ilha Aurora</span>
+    <span style="font-weight:400;color:#94a3b8;">·</span>
+    <span style="color:#c7d2fe;">Modelo 2: Affordances Ricas & AI Town</span>
+  </div>
+  <nav class="nav-links">
+    <a href="/visualizador-ilha.html" class="nav-link">Ilha Original (Porta 8810)</a>
+    <a href="/visualizador-modelo1.html" class="nav-link">📦 Modelo 1 (Despensa)</a>
+    <a href="/visualizador-modelo2.html" class="nav-link active">🧠 Modelo 2 (Affordances)</a>
+    <a href="/visualizador-modelo3.html" class="nav-link">🏰 Modelo 3 (RPG RTS)</a>
+    <a href="/hub-modelos.html" class="nav-link" style="border-color:#38bdf8;color:#38bdf8;">Comparador Geral</a>
+  </nav>
+</header>
+
+<main id="main-layout">
+  <section id="stage-3d">
+    <div id="three-container" style="width:100%; height:100%;"></div>
+    <div style="position:absolute; bottom:16px; left:16px; background:rgba(11,23,38,0.85); backdrop-filter:blur(8px); padding:8px 14px; border-radius:10px; border:1px solid #334155; font-size:12px; color:#cbd5e1;">
+      🎮 <b>Affordance 3D:</b> Girar: Botão Esquerdo • Pan: Botão Direito • Zoom: Scroll
+    </div>
+  </section>
+
+  <aside id="sidebar">
+    <div class="card">
+      <div class="card-title">
+        <span>Ciclo Reflexivo M2</span>
+        <span id="st-ciclo" style="color:#fbbf24;">Ciclo: --</span>
+      </div>
+      <button class="btn-action btn-indigo" id="btn-rodar-m2" onclick="rodarCicloM2()">
+        ▶️ Disparar 1 Ciclo com Affordance & Reflexão
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Plano do Dia (Generative Agents)</span>
+        <span style="font-size:11px; color:#a5b4fc;">Ícaro & Lara</span>
+      </div>
+      <div id="container-planos">
+        <div class="plan-box" id="plano-icaro">
+          <b>Ícaro:</b> <span id="meta-icaro">Carregando plano...</span><br>
+          <small style="color:#94a3b8;">Turno Atual: <span id="fase-icaro">Planejando</span></small>
+        </div>
+        <div class="plan-box" id="plano-elara">
+          <b>Lara:</b> <span id="meta-elara">Carregando plano...</span><br>
+          <small style="color:#94a3b8;">Turno Atual: <span id="fase-elara">Planejando</span></small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Estações Interativas & Affordances</div>
+      <div style="display:flex; flex-direction:column; gap:6px; font-size:12px;">
+        <div>🔨 <b>Acampamento:</b> <span class="station-badge">Bancada de Trabalho</span> (armadilhas, ferramentas)</div>
+        <div>📜 <b>Fogueira:</b> <span class="station-badge">Mural de Recados</span> (mensagens comunitárias)</div>
+        <div>🐐 <b>Fazenda:</b> <span class="station-badge">Curral de Animais</span> (leite, ovos, carinho)</div>
+        <div>🌿 <b>Bosque:</b> <span class="station-badge">Altar do Saber</span> (herbário, meditação)</div>
+        <div>🔥 <b>Arena:</b> <span class="station-badge">Forja de Brasas</span> (fundição de ferro)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Mural de Recados da Vila</span>
+        <span style="font-size:11px; color:#38bdf8;" id="num-recados">1 recado</span>
+      </div>
+      <div id="lista-mural" style="max-height:130px; overflow-y:auto; margin-bottom:8px;"></div>
+      <input type="text" id="input-recado" class="input-text" placeholder="Escreva um bilhete para os habitantes lerem...">
+      <button class="btn-action btn-secondary" onclick="enviarRecadoM2()">
+        📌 Fixar Bilhete no Mural
+      </button>
+    </div>
+
+    <div class="card" style="flex:1;">
+      <div class="card-title">Diário de Ações & Livre-Arbítrio</div>
+      <div class="log-box" id="log-m2">Aguardando início do ciclo...</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+  let estadoM2 = null;
+
+  async function carregarEstado() {
+    try {
+      const res = await fetch('/api/modelo2/snapshot');
+      estadoM2 = await res.json();
+      atualizarUI();
+      if (window.motorThreeIlha) {
+        window.motorThreeIlha.atualizarEstado(estadoM2);
+      }
+    } catch (e) { console.error('Erro ao buscar estado M2:', e); }
+  }
+
+  function atualizarUI() {
+    if (!estadoM2) return;
+    document.getElementById('st-ciclo').innerText = 'Ciclo ' + (estadoM2.mundo.tempo.ciclo || 1);
+
+    const seres = estadoM2.seres || {};
+    if (seres.icaro && seres.icaro.planoDoDia) {
+      document.getElementById('meta-icaro').innerText = `"${seres.icaro.planoDoDia.metaPrincipal || 'Viver com sabedoria'}"`;
+      document.getElementById('fase-icaro').innerText = seres.icaro.planoDoDia[estadoM2.mundo.tempo.periodo] || 'Agindo conscientemente';
+    }
+    if (seres.elara && seres.elara.planoDoDia) {
+      document.getElementById('meta-elara').innerText = `"${seres.elara.planoDoDia.metaPrincipal || 'Contribuir com a vila'}"`;
+      document.getElementById('fase-elara').innerText = seres.elara.planoDoDia[estadoM2.mundo.tempo.periodo] || 'Agindo conscientemente';
+    }
+
+    const mural = estadoM2.mundo.muralRecados || [];
+    document.getElementById('num-recados').innerText = mural.length + ' recados';
+    document.getElementById('lista-mural').innerHTML = mural.slice(-4).reverse().map(m => `
+      <div class="mural-item">
+        <b style="color:#a5b4fc;">${m.autor}</b> <small style="color:#64748b;">(Ciclo ${m.ciclo})</small>: ${m.texto}
+      </div>
+    `).join('');
+  }
+
+  async function rodarCicloM2() {
+    const btn = document.getElementById('btn-rodar-m2');
+    btn.disabled = true;
+    btn.innerText = '⏳ Refletindo e Agindo...';
+    try {
+      const res = await fetch('/api/modelo2/ciclo', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        estadoM2 = data.estado;
+        atualizarUI();
+        if (window.motorThreeIlha) window.motorThreeIlha.atualizarEstado(estadoM2);
+        const logBox = document.getElementById('log-m2');
+        const novaEntrada = document.createElement('div');
+        novaEntrada.style.marginBottom = '6px';
+        novaEntrada.innerHTML = `<span style="color:#818cf8;">[Ciclo ${estadoM2.mundo.tempo.ciclo}]</span> <b>${data.decisao.serNome}</b> escolheu: <span style="color:#a7f3d0;">${data.decisao.acao}</span><br><i style="color:#cbd5e1;">"${data.decisao.motivo}"</i>`;
+        logBox.prepend(novaEntrada);
+      }
+    } catch (e) { alert('Erro no ciclo: ' + e.message); }
+    finally {
+      btn.disabled = false;
+      btn.innerText = '▶️ Disparar 1 Ciclo com Affordance & Reflexão';
+    }
+  }
+
+  async function enviarRecadoM2() {
+    const input = document.getElementById('input-recado');
+    const texto = input.value.trim();
+    if (!texto) return;
+    try {
+      const res = await fetch('/api/modelo2/recado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autor: 'Observador', texto })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        input.value = '';
+        carregarEstado();
+      }
+    } catch (e) { alert('Erro: ' + e.message); }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const cont = document.getElementById('three-container');
+    if (window.motorThreeIlha) {
+      window.motorThreeIlha.init(cont);
+      window.motorThreeIlha.start();
+    }
+    carregarEstado();
+    setInterval(carregarEstado, 3000);
+  });
+</script>
+</body>
+</html>

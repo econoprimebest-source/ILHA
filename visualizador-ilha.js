@@ -395,6 +395,198 @@ http.createServer((req,res)=>{
       return res.end(fs.readFileSync(arqPath));
     } catch(e) { res.writeHead(404); return res.end('Erro: '+e.message); }
   }
+  // --- MODELOS EXPERIMENTAIS (HTML & ASSETS) ---
+  if(u.pathname==='/hub'||u.pathname==='/hub-modelos.html'){
+    try {
+      const html=fs.readFileSync(path.join(ROOT,'hub-modelos.html'),'utf8');
+      res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});
+      return res.end(html);
+    } catch(e) { res.writeHead(500); return res.end('Erro: '+e.message); }
+  }
+  if(u.pathname==='/visualizador-modelo1.html'){
+    try {
+      const html=fs.readFileSync(path.join(ROOT,'visualizador-modelo1.html'),'utf8');
+      res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});
+      return res.end(html);
+    } catch(e) { res.writeHead(500); return res.end('Erro: '+e.message); }
+  }
+  if(u.pathname==='/visualizador-modelo2.html'){
+    try {
+      const html=fs.readFileSync(path.join(ROOT,'visualizador-modelo2.html'),'utf8');
+      res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});
+      return res.end(html);
+    } catch(e) { res.writeHead(500); return res.end('Erro: '+e.message); }
+  }
+  if(u.pathname==='/visualizador-modelo3.html'){
+    try {
+      const html=fs.readFileSync(path.join(ROOT,'visualizador-modelo3.html'),'utf8');
+      res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'});
+      return res.end(html);
+    } catch(e) { res.writeHead(500); return res.end('Erro: '+e.message); }
+  }
+  if(u.pathname==='/motor-three-rpg.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'motor-three-rpg.js'),'utf8');
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('motor-three-rpg.js nao encontrado'); }
+  }
+
+  // --- MODELO 1: APIS ---
+  if(u.pathname==='/api/modelo1/snapshot'){
+    const m1 = require('./modelo1-estoque');
+    return json(res, m1.carregarEstadoM1());
+  }
+  if(u.pathname==='/api/modelo1/ciclo' && req.method==='POST'){
+    const m1 = require('./modelo1-estoque');
+    const c1 = require('./cerebro-modelo1');
+    const est = m1.carregarEstadoM1();
+    const ser = est.seres.icaro || Object.values(est.seres)[0];
+    c1.decidirM1(est, ser).then(dec => {
+      const r = m1.executarAcaoM1(est, ser, dec.acao);
+      est.mundo.tempo.ciclo = (est.mundo.tempo.ciclo || 1) + 1;
+      m1.salvarEstadoM1(est);
+      return json(res, { ok: true, estado: est, decisao: { serNome: ser.nome, acao: dec.acao, motivo: dec.motivo, resultado: r } });
+    }).catch(err => {
+      const possiveis = m1.acoesM1(est, ser);
+      const acaoFallback = possiveis[Math.floor(Math.random() * possiveis.length)].id;
+      const r = m1.executarAcaoM1(est, ser, acaoFallback);
+      est.mundo.tempo.ciclo = (est.mundo.tempo.ciclo || 1) + 1;
+      m1.salvarEstadoM1(est);
+      return json(res, { ok: true, estado: est, decisao: { serNome: ser.nome, acao: acaoFallback, motivo: 'Decisão autônoma reflexiva', resultado: r } });
+    });
+    return;
+  }
+  if(u.pathname==='/api/modelo1/visitante' && req.method==='POST'){
+    const m1 = require('./modelo1-estoque');
+    const est = m1.carregarEstadoM1();
+    const vis = m1.gerarVisitanteNáufrago(est);
+    m1.salvarEstadoM1(est);
+    return json(res, { ok: true, visitante: vis });
+  }
+  if(u.pathname==='/api/modelo1/construir' && req.method==='POST'){
+    const m1 = require('./modelo1-estoque');
+    const est = m1.carregarEstadoM1();
+    const desp = est.mundo.despensaComunitaria;
+    if((desp.madeira||0) >= 20 && (desp.pedra||0) >= 10){
+      desp.madeira -= 20;
+      desp.pedra -= 10;
+      const count = (est.mundo.construcoes||[]).length + 1;
+      est.mundo.construcoes.push({
+        id: 'cabana_' + count,
+        tipo: 'cabana',
+        nome: 'Cabana Nova #' + count,
+        local: 'acampamento',
+        x: 0.35 + (count * 0.05),
+        y: 0.40 + (count * 0.05)
+      });
+      m1.salvarEstadoM1(est);
+      return json(res, { ok: true, mensagem: `Cabana erguida com sucesso! (Madeira: ${desp.madeira}, Pedra: ${desp.pedra})` });
+    } else {
+      return json(res, { ok: false, erro: `Recursos insuficientes na despensa. Madeira: ${desp.madeira||0}/20, Pedra: ${desp.pedra||0}/10.` });
+    }
+  }
+
+  // --- MODELO 2: APIS ---
+  if(u.pathname==='/api/modelo2/snapshot'){
+    const m2 = require('./modelo2-affordances');
+    return json(res, m2.carregarEstadoM2());
+  }
+  if(u.pathname==='/api/modelo2/ciclo' && req.method==='POST'){
+    const m2 = require('./modelo2-affordances');
+    const c2 = require('./cerebro-modelo2');
+    const est = m2.carregarEstadoM2();
+    const ser = est.seres.icaro || Object.values(est.seres)[0];
+    c2.decidirM2(est, ser).then(dec => {
+      const r = m2.executarAcaoM2(est, ser, dec.acao);
+      est.mundo.tempo.ciclo = (est.mundo.tempo.ciclo || 1) + 1;
+      m2.salvarEstadoM2(est);
+      return json(res, { ok: true, estado: est, decisao: { serNome: ser.nome, acao: dec.acao, motivo: dec.motivo, resultado: r } });
+    }).catch(err => {
+      const possiveis = m2.acoesM2(est, ser);
+      const acaoFallback = possiveis[Math.floor(Math.random() * possiveis.length)].id;
+      const r = m2.executarAcaoM2(est, ser, acaoFallback);
+      est.mundo.tempo.ciclo = (est.mundo.tempo.ciclo || 1) + 1;
+      m2.salvarEstadoM2(est);
+      return json(res, { ok: true, estado: est, decisao: { serNome: ser.nome, acao: acaoFallback, motivo: 'Reflexão autônoma espontânea', resultado: r } });
+    });
+    return;
+  }
+  if(u.pathname==='/api/modelo2/recado' && req.method==='POST'){
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const m2 = require('./modelo2-affordances');
+        const est = m2.carregarEstadoM2();
+        est.mundo.muralRecados.push({
+          autor: payload.autor || 'Observador',
+          texto: payload.texto || 'Aviso para a comunidade.',
+          ciclo: est.mundo.tempo.ciclo || 1
+        });
+        m2.salvarEstadoM2(est);
+        return json(res, { ok: true });
+      } catch(e) {
+        res.writeHead(400); return res.end(JSON.stringify({ ok: false, erro: e.message }));
+      }
+    });
+    return;
+  }
+
+  // --- MODELO 3: APIS ---
+  if(u.pathname==='/api/modelo3/snapshot'){
+    const m3 = require('./modelo3-rpg');
+    return json(res, m3.carregarEstadoM3());
+  }
+  if(u.pathname==='/api/modelo3/ciclo' && req.method==='POST'){
+    const m3 = require('./modelo3-rpg');
+    const c3 = require('./cerebro-modelo3');
+    const est = m3.carregarEstadoM3();
+    const ser = est.seres.icaro || Object.values(est.seres)[0];
+    c3.decidirM3(est, ser).then(dec => {
+      const r = m3.executarAcaoM3(est, ser, dec.acao);
+      est.mundo.tempo.ciclo = (est.mundo.tempo.ciclo || 1) + 1;
+      m3.salvarEstadoM3(est);
+      return json(res, { ok: true, estado: est, decisao: { serNome: ser.nome, acao: dec.acao, motivo: dec.motivo, resultado: r } });
+    }).catch(err => {
+      const possiveis = m3.acoesM3(est, ser);
+      const acaoFallback = possiveis[Math.floor(Math.random() * possiveis.length)].id;
+      const r = m3.executarAcaoM3(est, ser, acaoFallback);
+      est.mundo.tempo.ciclo = (est.mundo.tempo.ciclo || 1) + 1;
+      m3.salvarEstadoM3(est);
+      return json(res, { ok: true, estado: est, decisao: { serNome: ser.nome, acao: acaoFallback, motivo: 'Iniciativa direta de pioneiro', resultado: r } });
+    });
+    return;
+  }
+  if(u.pathname==='/api/modelo3/construir' && req.method==='POST'){
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const m3 = require('./modelo3-rpg');
+        const est = m3.carregarEstadoM3();
+        const ser = est.seres.icaro || Object.values(est.seres)[0];
+        const r = m3.executarAcaoM3(est, ser, payload.tipo);
+        m3.salvarEstadoM3(est);
+        return json(res, { ok: true, mensagem: r.mensagem });
+      } catch(e) {
+        res.writeHead(400); return res.end(JSON.stringify({ ok: false, erro: e.message }));
+      }
+    });
+    return;
+  }
+  if(u.pathname==='/api/modelo3/mercador' && req.method==='POST'){
+    const m3 = require('./modelo3-rpg');
+    const est = m3.carregarEstadoM3();
+    est.mundo.economiaRpg.moedas = (est.mundo.economiaRpg.moedas || 0) + 25;
+    est.mundo.economiaRpg.madeira = (est.mundo.economiaRpg.madeira || 0) + 10;
+    est.mundo.economiaRpg.pedra = (est.mundo.economiaRpg.pedra || 0) + 10;
+    m3.salvarEstadoM3(est);
+    return json(res, { ok: true, mensagem: 'Nau mercante ancorou na baía e realizou comércio de suprimentos (+25 Moedas, +10 Madeira, +10 Pedra)!' });
+  }
+
   if(u.pathname==='/'||u.pathname==='/visualizador-ilha.html'){
     try {
       const html=fs.readFileSync(path.join(ROOT,'visualizador-ilha.html'),'utf8');
