@@ -174,15 +174,16 @@ async function rodada(estado,opcoes={}){
 	for(const ser of vivos){
 		if(ser.status==='morto')continue;
 
-		// 1. CHECAGEM DE ORDEM DIRETA DO CRIADOR (Prioridade Máxima)
+		// 1. CHECAGEM DE ORDEM DIRETA OU MENSAGEM DE CHAT DO CRIADOR
 		const cmdPendente = comandosCriador.obterComandoPendente(ser.id);
+		const msgChatPendente = chatCriador.obterMensagemPendente(ser.id);
 		let ordemCriador = null;
 		if (cmdPendente) {
 			ordemCriador = cmdPendente.comando;
 			ser.ordemCriador = ordemCriador;
 			ser.acaoEmCurso = null; // Interrompe ação demorada
 			ser.deslocamento = null; // Interrompe deslocamento
-		} else if (ser.acaoEmCurso && ser.acaoEmCurso.ciclosRestantes > 0) {
+		} else if (!msgChatPendente && ser.acaoEmCurso && ser.acaoEmCurso.ciclosRestantes > 0) {
 			// 2. AÇÃO EM CURSO (Timers de ação realista — pescar, dormir, etc.)
 			ser.acaoEmCurso.ciclosRestantes--;
 			const restam = ser.acaoEmCurso.ciclosRestantes;
@@ -205,7 +206,7 @@ async function rodada(estado,opcoes={}){
 		}
 
 		const situacao=situacaoNoCaminho(snapshotMundo, ser);
-		if(!ordemCriador && ser.deslocamento && !situacao){
+		if(!ordemCriador && !msgChatPendente && ser.deslocamento && !situacao){
 			decisoes.push({ser,decisao:{acao:'continuar',motivo:'segue caminho para '+ser.deslocamento.destino,origem:'fisica'},percepcao:perceber(snapshotMundo, ser),fisica:true});
 			continue;
 		}
@@ -213,7 +214,6 @@ async function rodada(estado,opcoes={}){
 		const contexto=montarContexto(snapshotMundo,ser,possiveis,situacao);
 		contexto.sensoDeTempo = gerarSensoDeTempo(snapshotMundo.mundo.tempo.ciclo, ser);
 		if(ordemCriador) contexto.ordemCriador = ordemCriador;
-		const msgChatPendente = chatCriador.obterMensagemPendente(ser.id);
 		if(msgChatPendente) contexto.mensagemChat = msgChatPendente;
 		const decidir=cerebroDe(opcoes,ser);
 		// TRILHA CAUSAL (cognição): abre ANTES da decisão para registrar o que

@@ -384,19 +384,22 @@
         body: JSON.stringify({
           serId: serSelecionado,
           mensagem: texto,
-          autor: 'Rafael (Criador)'
+          autor: 'Rafael (Criador)',
+          executar: true
         })
       });
       const data = await resp.json();
       if (data && data.ok) {
-        setTimeout(carregarHistorico, 1200);
+        if (data.historico && Array.isArray(data.historico)) {
+          renderizarMensagens(data.historico);
+        } else {
+          await carregarHistorico();
+        }
       }
     } catch (err) {
       console.warn('[CHAT] Erro ao enviar mensagem:', err);
     } finally {
-      setTimeout(() => {
-        if (typing) typing.style.display = 'none';
-      }, 3500);
+      if (typing) typing.style.display = 'none';
     }
   }
 

@@ -202,7 +202,7 @@ http.createServer((req,res)=>{
       const msg = u.searchParams.get('mensagem') || u.searchParams.get('msg') || u.searchParams.get('texto');
       const autor = u.searchParams.get('autor') || u.searchParams.get('de') || 'Rafael (Criador)';
       const limite = Number(u.searchParams.get('limite')) || 50;
-      const executar = u.searchParams.get('executar') === '1' || u.searchParams.get('onDemand') === '1';
+      const executar = u.searchParams.get('async') !== '1' && u.searchParams.get('executar') !== '0';
 
       if (msg) {
         const est = readState();
@@ -213,13 +213,13 @@ http.createServer((req,res)=>{
         if (executar) {
           (async () => {
             try {
-              const rodada = require('./rodada-autonoma');
+              const { rodada } = require('./rodada-autonoma');
               const { gravar } = require('./persistencia-v2');
               await rodada(est, { acontecimentos: true });
               gravar(STATE, est);
               const historico = chatCriador.listarMensagens(sId, 10);
               const ultResp = [...historico].reverse().find(m => m.tipo === 'personagem');
-              return json(res, { ok: true, mensagem: novaMsg, resposta: ultResp ? ultResp.texto : null, historico });
+              return json(res, { ok: true, mensagem: novaMsg, resposta: ultResp ? ultResp.texto : (est.seres && est.seres[sId] ? est.seres[sId].fala : null), historico });
             } catch (err) {
               return json(res, { ok: true, mensagem: novaMsg, erroCiclo: err.message });
             }
@@ -242,7 +242,7 @@ http.createServer((req,res)=>{
           let serId = String(payload.serId || payload.ser || payload.id || 'icaro').toLowerCase();
           let mensagem = String(payload.mensagem || payload.texto || payload.msg || '').trim();
           let autor = String(payload.autor || payload.de || 'Rafael (Criador)').trim();
-          let executar = Boolean(payload.executar || payload.onDemand || payload.esperarResposta);
+          let executar = payload.executar !== false && payload.onDemand !== false && payload.async !== true;
 
           if (!mensagem) {
             res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
@@ -255,13 +255,13 @@ http.createServer((req,res)=>{
 
           if (executar) {
             try {
-              const rodada = require('./rodada-autonoma');
+              const { rodada } = require('./rodada-autonoma');
               const { gravar } = require('./persistencia-v2');
               await rodada(est, { acontecimentos: true });
               gravar(STATE, est);
               const historico = chatCriador.listarMensagens(serId, 10);
               const ultResp = [...historico].reverse().find(m => m.tipo === 'personagem');
-              return json(res, { ok: true, mensagem: novaMsg, resposta: ultResp ? ultResp.texto : null, historico });
+              return json(res, { ok: true, mensagem: novaMsg, resposta: ultResp ? ultResp.texto : (est.seres && est.seres[serId] ? est.seres[serId].fala : null), historico });
             } catch (errCiclo) {
               return json(res, { ok: true, mensagem: novaMsg, erroCiclo: errCiclo.message, status: 'enviada' });
             }
