@@ -25,5 +25,33 @@
       "acao": "teste",
       "motivo": "teste concluido"
     }
+  },
+  {
+    "id": "cmd_mwbepjqd_d3ry",
+    "timestamp": "2026-11-11T00:54:39.397Z",
+    "serId": "lara",
+    "comando": "vá para casa",
+    "de": "Rafael (Criador)",
+    "status": "executado",
+    "executadoEm": "2026-11-11T00:55:19.067Z",
+    "resultado": {
+      "acao": "ir_casa",
+      "motivo": "A ordem do Rafael é clara e a presença da pantera nas sombras me faz buscar o abrigo seguro da casa imediatamente.",
+      "fala": "João, vou para casa agora. A ordem do Rafael é voltar e não vou me arriscar perto dessa fera."
+    }
+  },
+  {
+    "id": "cmd_mwbeuqr7_j78b",
+    "timestamp": "2026-11-11T00:58:41.779Z",
+    "serId": "lara",
+    "comando": "vá para casa",
+    "de": "Rafael (Criador)",
+    "status": "executado",
+    "executadoEm": "2026-11-11T00:59:16.529Z",
+    "resultado": {
+      "acao": "ir_casa",
+      "motivo": "A ordem de Rafael é clara e, com a pantera rondando estas matas, o abrigo da casa é o lugar certo agora.",
+      "fala": "Estou voltando para casa, Rafael — a floresta está perigosa esta madrugada."
+    }
   }
 ]
