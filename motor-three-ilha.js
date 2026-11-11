@@ -52,6 +52,7 @@
       this.clock = new THREE.Clock();
       this.hoveredSerId = null;
       this.mapaRpgIniciado = false;
+      this.estruturas3D = {}; // { [id]: { id, group, nameplate, dados } }
     }
 
     init(containerElement) {
@@ -399,6 +400,20 @@
         }
       }
 
+      // 4. Animação suave e rotação de nameplates das estruturas construídas
+      for (const id in this.estruturas3D) {
+        const estObj = this.estruturas3D[id];
+        if (estObj && estObj.group) {
+          if (estObj.group.scale.x < 1.0) {
+            const nextScale = Math.min(1.0, estObj.group.scale.x + delta * 2.8);
+            estObj.group.scale.set(nextScale, nextScale, nextScale);
+          }
+          if (estObj.nameplate) {
+            estObj.nameplate.quaternion.copy(this.camera.quaternion);
+          }
+        }
+      }
+
       this.renderer.render(this.scene, this.camera);
     }
 
@@ -637,6 +652,182 @@
         const actText = s.ultimaAcao || s.local || 'Existindo';
         this.atualizarNameplate(char, actText);
       });
+
+      // 2. Renderização de Estruturas Construídas na Vila (Cabana Nova, Muralha, Bancada)
+      const estruturasList = (stateData.mundo && Array.isArray(stateData.mundo.estruturas))
+        ? stateData.mundo.estruturas
+        : [];
+
+      // Também inclui novas casas do registro de moradias se ainda não estiverem na lista
+      if (stateData.mundo && stateData.mundo.casas) {
+        Object.values(stateData.mundo.casas).forEach(casa => {
+          if (casa && casa.id && casa.id.startsWith('est_') && !estruturasList.some(e => e.id === casa.id)) {
+            estruturasList.push({
+              id: casa.id,
+              tipo: 'casa_nova',
+              nome: casa.nome,
+              local: casa.local,
+              construtor: casa.construtor,
+              posicao: casa.posicao
+            });
+          }
+        });
+      }
+
+      estruturasList.forEach(est => {
+        if (!est || !est.id) return;
+        if (!this.estruturas3D[est.id]) {
+          this.estruturas3D[est.id] = this.criarModeloEstrutura3D(est);
+        }
+      });
+    }
+
+    criarModeloEstrutura3D(est) {
+      const g = new THREE.Group();
+      g.name = 'estrutura_' + (est.id || Math.random());
+      g.userData = { id: est.id, tipo: est.tipo, dados: est, isEstrutura3D: true };
+
+      const tipo = String(est.tipo || 'cabana').toLowerCase();
+
+      if (tipo.includes('casa') || tipo.includes('cabana')) {
+        // CABANA DE MADEIRA COM TELHADO RÚSTICO E TOCHA
+        // 1. Fundação
+        const baseGeo = new THREE.BoxGeometry(2.4, 0.25, 2.4);
+        const baseMat = new THREE.MeshStandardMaterial({
+          color: 0x5c3a21,
+          roughness: 0.85,
+          metalness: 0.1,
+          depthTest: true,
+          depthWrite: true
+        });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.y = 0.125;
+        base.castShadow = true;
+        base.receiveShadow = true;
+        g.add(base);
+
+        // 2. Paredes de toras de madeira
+        const paredesGeo = new THREE.BoxGeometry(2.0, 1.4, 2.0);
+        const paredesMat = new THREE.MeshStandardMaterial({
+          color: 0x8b5a2b,
+          roughness: 0.8,
+          metalness: 0.1,
+          depthTest: true,
+          depthWrite: true
+        });
+        const paredes = new THREE.Mesh(paredesGeo, paredesMat);
+        paredes.position.y = 0.95;
+        paredes.castShadow = true;
+        paredes.receiveShadow = true;
+        g.add(paredes);
+
+        // 3. Telhado de palha / terracota
+        const telhadoGeo = new THREE.ConeGeometry(1.9, 1.2, 4);
+        telhadoGeo.rotateY(Math.PI / 4);
+        const telhadoMat = new THREE.MeshStandardMaterial({
+          color: 0xb45309,
+          roughness: 0.7,
+          metalness: 0.05,
+          flatShading: true,
+          depthTest: true,
+          depthWrite: true
+        });
+        const telhado = new THREE.Mesh(telhadoGeo, telhadoMat);
+        telhado.position.y = 2.25;
+        telhado.castShadow = true;
+        g.add(telhado);
+
+        // 4. Porta de madeira escura
+        const portaGeo = new THREE.BoxGeometry(0.55, 0.9, 0.08);
+        const portaMat = new THREE.MeshStandardMaterial({ color: 0x2e1065, roughness: 0.9 });
+        const porta = new THREE.Mesh(portaGeo, portaMat);
+        porta.position.set(0, 0.7, 1.02);
+        g.add(porta);
+
+        // 5. Tocha acesa na porta com luz quente
+        const tochaGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.35, 6);
+        const tochaMat = new THREE.MeshStandardMaterial({ color: 0x451a03 });
+        const tocha = new THREE.Mesh(tochaGeo, tochaMat);
+        tocha.position.set(0.45, 1.0, 1.05);
+        g.add(tocha);
+
+        const fogoGeo = new THREE.SphereGeometry(0.08, 8, 8);
+        const fogoMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+        const fogo = new THREE.Mesh(fogoGeo, fogoMat);
+        fogo.position.set(0.45, 1.2, 1.05);
+        g.add(fogo);
+
+        const fogoLuz = new THREE.PointLight(0xfbbf24, 1.0, 5);
+        fogoLuz.position.set(0.45, 1.25, 1.1);
+        g.add(fogoLuz);
+      } else if (tipo.includes('muralha')) {
+        // MURALHA DEFENSIVA COM ESTACAS
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.85 });
+        const wallGeo = new THREE.BoxGeometry(3.2, 1.5, 0.6);
+        const wall = new THREE.Mesh(wallGeo, wallMat);
+        wall.position.y = 0.75;
+        wall.castShadow = true;
+        g.add(wall);
+
+        for (let i = -1.2; i <= 1.2; i += 0.6) {
+          const postGeo = new THREE.ConeGeometry(0.12, 0.5, 5);
+          const post = new THREE.Mesh(postGeo, wallMat);
+          post.position.set(i, 1.75, 0);
+          g.add(post);
+        }
+      } else {
+        // BANCADA DE OFÍCIO / FORJA
+        const mesaGeo = new THREE.BoxGeometry(1.6, 0.7, 0.9);
+        const mesaMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.8 });
+        const mesa = new THREE.Mesh(mesaGeo, mesaMat);
+        mesa.position.y = 0.35;
+        mesa.castShadow = true;
+        g.add(mesa);
+
+        const bigornaGeo = new THREE.BoxGeometry(0.4, 0.25, 0.3);
+        const bigornaMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.5, roughness: 0.3 });
+        const bigorna = new THREE.Mesh(bigornaGeo, bigornaMat);
+        bigorna.position.set(0.2, 0.82, 0);
+        g.add(bigorna);
+      }
+
+      // Nameplate 3D
+      const label = est.nome || 'Nova Construção';
+      const sub = `Por ${est.construtor || 'Habitante'}`;
+      const nameplate = this.criarNameplateSprite(label, sub);
+      nameplate.position.y = 3.1;
+      g.add(nameplate);
+
+      // Posição no mundo 3D
+      let wx = 0, wy = 0.8, wz = 0;
+      if (est.posicao && typeof est.posicao.x === 'number') {
+        wx = est.posicao.x;
+        wz = est.posicao.z || 0;
+        wy = est.posicao.y || 0.8;
+      } else if (typeof est.x === 'number' && typeof est.y === 'number') {
+        const v = this.coordenadaParaMundo(est.x, est.y);
+        wx = v.x; wy = v.y; wz = v.z;
+      } else if (est.local && NOS_DEFAULT[est.local]) {
+        const d = NOS_DEFAULT[est.local];
+        const v = this.coordenadaParaMundo(d.x, d.y);
+        wx = v.x; wy = v.y; wz = v.z;
+      }
+
+      // Ajusta altura no terreno via Raycast
+      if (this.islandModel) {
+        this.raycaster.set(new THREE.Vector3(wx, 40, wz), new THREE.Vector3(0, -1, 0));
+        const hits = this.raycaster.intersectObject(this.islandModel, true);
+        if (hits.length > 0) {
+          wy = hits[0].point.y;
+        }
+      }
+
+      g.position.set(wx, wy, wz);
+      g.scale.set(0.05, 0.05, 0.05); // Nasce pequeno e escala em render()
+
+      this.scene.add(g);
+      console.log(`[Motor 3D] Estrutura ${label} erguida na posição (${wx}, ${wy}, ${wz})`);
+      return { id: est.id, group: g, nameplate, dados: est };
     }
 
     onPointerMove(e) {

@@ -176,6 +176,25 @@
     g.lineStyle(1.4, COR.contorno, 1); g.beginFill(COR.porta); g.drawRect(x + w - 16, a.base - 16, 9, 16); g.endFill();
     telhadoDuasAguas(g, x, a.base - h, w, 22, 16, nivel >= 3 ? COR.telha : COR.palha, nivel >= 3 ? COR.telhaEsc : COR.palhaEsc);
   }
+
+  function oclusaoCasaPintada(g, a, noite) {
+    const w = a.right - a.left;
+    const h = a.base - a.top;
+    g.lineStyle(1.4, COR.contorno, 0.95);
+    g.beginFill(noite ? 0x27190f : COR.toraEsc, 0.95);
+    g.drawRect(a.left, a.top + h * 0.38, w, h * 0.62);
+    g.endFill();
+    g.beginFill(noite ? 0x45160d : COR.telha, 0.98);
+    g.drawPolygon([
+      a.left - 4, a.top + h * 0.42,
+      a.cx, a.top - 2,
+      a.right + 4, a.top + h * 0.42
+    ]);
+    g.endFill();
+    g.lineStyle(1.2, 0x1a0d05, 0.85);
+    g.moveTo(a.left - 4, a.top + h * 0.42);
+    g.lineTo(a.right + 4, a.top + h * 0.42);
+  }
   function andaime(g, a, nivelAlvo, progresso) {
     const x = a.right - 8, yb = a.base - 4, w = 48, h = 26 + nivelAlvo * 6;
     const fracH = h * Math.max(0.15, progresso / 100);
@@ -207,6 +226,7 @@
     const n = c.nivel || 1;
     const pontos = {};
     if (a.semPintura) cabanaPropria(g, a, n, noite);
+    else oclusaoCasaPintada(g, a, noite);
     if (n >= 5) pontos.bandeira = torre(g, a);
     if (n >= 2) deposito(g, a);
     if (n >= 2 && !a.semPintura) {
@@ -288,6 +308,7 @@
         const o = toScreen(0, 0);
         item.cont.x = o.x; item.cont.y = o.y;
         item.cont.scale.set(escala);
+        item.cont.zIndex = Math.round(o.y + a.base * escala);
         animar(item, tempo);
         container.addChild(item.cont);
       }

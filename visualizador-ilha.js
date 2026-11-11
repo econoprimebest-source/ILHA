@@ -187,6 +187,95 @@ http.createServer((req,res)=>{
     const cc=require('./comandos-criador');
     return json(res,{ok:true,comandos:cc.listarComandos()});
   }
+  // ROTA DE CHAT AO VIVO (BIDIRECIONAL) COM OS HABITANTES
+  if(u.pathname==='/api/chat'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type, authorization');
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      return res.end();
+    }
+    const chatCriador = require('./chat-criador');
+    if (req.method === 'GET') {
+      const serId = u.searchParams.get('serId') || u.searchParams.get('ser');
+      const msg = u.searchParams.get('mensagem') || u.searchParams.get('msg') || u.searchParams.get('texto');
+      const autor = u.searchParams.get('autor') || u.searchParams.get('de') || 'Rafael (Criador)';
+      const limite = Number(u.searchParams.get('limite')) || 50;
+      const executar = u.searchParams.get('executar') === '1' || u.searchParams.get('onDemand') === '1';
+
+      if (msg) {
+        const est = readState();
+        const ciclo = (est && est.mundo && est.mundo.tempo && est.mundo.tempo.ciclo) || null;
+        const sId = serId || 'icaro';
+        const novaMsg = chatCriador.enviarMensagem(sId, msg, autor, ciclo);
+
+        if (executar) {
+          (async () => {
+            try {
+              const rodada = require('./rodada-autonoma');
+              const { gravar } = require('./persistencia-v2');
+              await rodada(est, { acontecimentos: true });
+              gravar(STATE, est);
+              const historico = chatCriador.listarMensagens(sId, 10);
+              const ultResp = [...historico].reverse().find(m => m.tipo === 'personagem');
+              return json(res, { ok: true, mensagem: novaMsg, resposta: ultResp ? ultResp.texto : null, historico });
+            } catch (err) {
+              return json(res, { ok: true, mensagem: novaMsg, erroCiclo: err.message });
+            }
+          })();
+          return;
+        }
+
+        return json(res, { ok: true, mensagem: novaMsg, status: 'enviada_aguardando_ciclo' });
+      }
+
+      return json(res, { ok: true, serId: serId || null, historico: chatCriador.listarMensagens(serId, limite) });
+    }
+
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', c => { body += c; if (body.length > 8192) req.destroy(); });
+      req.on('end', async () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          let serId = String(payload.serId || payload.ser || payload.id || 'icaro').toLowerCase();
+          let mensagem = String(payload.mensagem || payload.texto || payload.msg || '').trim();
+          let autor = String(payload.autor || payload.de || 'Rafael (Criador)').trim();
+          let executar = Boolean(payload.executar || payload.onDemand || payload.esperarResposta);
+
+          if (!mensagem) {
+            res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify({ ok: false, erro: 'Campo "mensagem" é obrigatório' }));
+          }
+
+          const est = readState();
+          const ciclo = (est && est.mundo && est.mundo.tempo && est.mundo.tempo.ciclo) || null;
+          const novaMsg = chatCriador.enviarMensagem(serId, mensagem, autor, ciclo);
+
+          if (executar) {
+            try {
+              const rodada = require('./rodada-autonoma');
+              const { gravar } = require('./persistencia-v2');
+              await rodada(est, { acontecimentos: true });
+              gravar(STATE, est);
+              const historico = chatCriador.listarMensagens(serId, 10);
+              const ultResp = [...historico].reverse().find(m => m.tipo === 'personagem');
+              return json(res, { ok: true, mensagem: novaMsg, resposta: ultResp ? ultResp.texto : null, historico });
+            } catch (errCiclo) {
+              return json(res, { ok: true, mensagem: novaMsg, erroCiclo: errCiclo.message, status: 'enviada' });
+            }
+          }
+
+          return json(res, { ok: true, mensagem: novaMsg, status: 'enviada_aguardando_ciclo' });
+        } catch (e) {
+          res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
+          return res.end(JSON.stringify({ ok: false, erro: e.message }));
+        }
+      });
+      return;
+    }
+  }
   if(u.pathname==='/api/intervir'&&req.method==='POST'){
     let body='';
     req.on('data',c=>{body+=c;if(body.length>8192)req.destroy()});
@@ -512,6 +601,27 @@ http.createServer((req,res)=>{
       res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
       return res.end(js);
     } catch(e) { res.writeHead(404); return res.end('mapa-rpg.js nao encontrado'); }
+  }
+  if(u.pathname==='/mapa-rpg-tiled.json'){
+    try {
+      const jsonStr=fs.readFileSync(path.join(ROOT,'mapa-rpg-tiled.json'),'utf8');
+      res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
+      return res.end(jsonStr);
+    } catch(e) { res.writeHead(404); return res.end('mapa-rpg-tiled.json nao encontrado'); }
+  }
+  if(u.pathname==='/motor-rpg-tiled.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'motor-rpg-tiled.js'),'utf8');
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('motor-rpg-tiled.js nao encontrado'); }
+  }
+  if(u.pathname==='/chat-widget.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'chat-widget.js'),'utf8');
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('chat-widget.js nao encontrado'); }
   }
 
   // --- MODELO 1: APIS ---

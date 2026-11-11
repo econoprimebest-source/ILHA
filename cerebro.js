@@ -132,6 +132,19 @@ function montarPrompt(c,a,ser,extras){
 			`"${ordem}"\n` +
 			'PRIORIDADE MÁXIMA ABSOLUTA: Esta ordem se sobrepõe a qualquer outro afazer. Você DEVE escolher a ação que melhor cumpre a ordem (ex: ir_casa, ir_<local>, etc.), obedecendo com lealdade, e mencionar a ordem no seu motivo e fala.' + casaAlerta);
 	}
+	if(c.mensagemChat || (extras && extras.mensagemChat)){
+		const mChat = c.mensagemChat || extras.mensagemChat;
+		const txtChat = typeof mChat === 'string' ? mChat : (mChat.texto || '');
+		partes.push('\n[MENSAGEM DE RAFAEL NO CHAT]\n' +
+			`"${txtChat}"\n` +
+			'CONVERSA DIRETA (CHAT): Rafael está falando com você agora pelo comunicador da Ilha. ' +
+			'Você DEVE responder ao que ele falou preenchendo obrigatoriamente o campo "fala" na sua resposta JSON (esta fala será enviada de volta para o chat do Rafael e aparecerá no balão sobre você na tela). ' +
+			'REGRA: A menos que ele tenha dado uma ordem explícita, NÃO interrompa suas ações nem suas necessidades; continue vivendo e decidindo sua "acao" normalmente enquanto conversa com ele.');
+	}
+	if(c.historicoChat && c.historicoChat.length){
+		partes.push('\n[MEMÓRIA DO CHAT COM RAFAEL]\n' +
+			c.historicoChat.map(h => `- ${h.autor}: "${h.texto}"`).join('\n'));
+	}
 	if(c.sensoDeTempo){
 		partes.push(c.sensoDeTempo);
 	}
@@ -168,6 +181,28 @@ function montarPrompt(c,a,ser,extras){
 	if(extras&&extras.visao)partes.push('[SUA VISAO] '+extras.visao);
 	partes.push('[O QUE EU PERCEBO]');
 	partes.push(c.percepcoes&&c.percepcoes.length?c.percepcoes.join('\n'):'(nada chamou minha atenção)');
+
+	// RECURSOS & CRAFTING (Bug 3 - Expansão da Vila)
+	const inv = c.inventario || (ser && ser.inventario) || {};
+	const madeira = Number(inv.madeira || 0);
+	const pedra = Number(inv.pedra || 0);
+	const ferro = Number(inv.ferro || inv.minerio || 0);
+	const alimento = Number(inv.alimento || 0).toFixed(1);
+	const agua = Number(inv.agua || 0).toFixed(1);
+
+	partes.push('\n[RECURSOS DISPONÍVEIS]');
+	partes.push(`Madeira: ${madeira}, Pedra: ${pedra}, Ferro: ${ferro} (Alimento: ${alimento}, Água: ${agua})`);
+	partes.push('[OPÇÕES DE CONSTRUÇÃO & CRAFTING]');
+	partes.push('- bancada: 4 Madeiras + 2 Pedras (Monta bancada de ferramentas e forja)');
+	partes.push('- muralha: 6 Madeiras + 8 Pedras (Ergue muralha defensiva para a vila)');
+	partes.push('- casa_nova: 10 Madeiras + 5 Pedras (Constrói uma nova cabana de madeira com baú na vila)');
+	if (madeira >= 10 && pedra >= 5) {
+		partes.push('✨ VOCÊ TEM RECURSOS SUFICIENTES PARA UMA CABANA NOVA (10 Madeiras e 5 Pedras)! Se desejar expandir a vila e construir uma nova cabana na comunidade, você pode escolher a ação "construir" ou "construir_casa". A decisão é 100% sua.');
+	} else if (madeira >= 4 && pedra >= 2) {
+		partes.push('🔨 VOCÊ TEM RECURSOS PARA CONSTRUIR! Pode escolher "construir", "construir_bancada" ou continuar coletando para uma cabana.');
+	} else {
+		partes.push('💡 Dica de recursos: colete madeira no bosque/floresta ("coletar_madeira", "cortar_arvore") e minere ferro/pedra na caverna ("minerar_ferro", "coletar_pedra").');
+	}
 	partes.push('[MINHA MEMÓRIA]');
 	const mem=(c.memorias||[]).slice(-8);
 	if(mem.length)partes.push(mem.map(x=>'- '+String(x)).join('\n'));

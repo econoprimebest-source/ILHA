@@ -648,9 +648,11 @@
         mesh.userData = { noId: no.id, dadosNo: no, isHitboxRpg: true };
         mesh.name = 'hitbox_' + no.id;
 
-        // Adiciona indicador / runa de chão suave sob a hitbox
-        const totem = this.criarIndicadorChao(no);
-        mesh.add(totem);
+        // Adiciona indicador / runa de chão suave sob a hitbox apenas se gizmo ativo
+        if (this.mostrarHitboxesGizmo) {
+          const totem = this.criarIndicadorChao(no);
+          mesh.add(totem);
+        }
 
         this.scene.add(mesh);
         this.hitboxMeshes.push(mesh);

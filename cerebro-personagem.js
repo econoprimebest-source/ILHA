@@ -62,6 +62,8 @@ function montarContexto(estado,ser,possiveis,situacao=null){
 		tempo:estado.mundo.tempo,
 		sensoDeTempo:(()=>{try{return require('./motor-v2').obterSensoDeTempo(estado,ser)}catch(_){return ''}})(),
 		ordemCriador:ser.ordemCriador||null,
+		mensagemChat:ser.mensagemChat||(()=>{try{return require('./chat-criador').obterMensagemPendente(ser.id)}catch(_){return null}})(),
+		historicoChat:(()=>{try{return require('./chat-criador').obterHistoricoRecente(ser.id,4)}catch(_){return []}})(),
 		clima:estado.mundo.clima,
 		climaDetalhado:estado.mundo.ecossistema.clima,
 		local:ser.local,

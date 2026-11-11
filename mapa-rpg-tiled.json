@@ -1,0 +1,113 @@
+{
+  "compressionlevel": -1,
+  "width": 40,
+  "height": 28,
+  "tilewidth": 32,
+  "tileheight": 32,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "propriedades": {
+    "nome": "Ilha Aurora - Mapa RPG em Camadas",
+    "autor": "Rafael & Agente Antigravity",
+    "regras": "Colisão estrita: água bloqueada, trilhas de terra, portas de cabanas acessíveis"
+  },
+  "layers": [
+    {
+      "id": 1,
+      "name": "Terreno",
+      "type": "tilelayer",
+      "visible": true,
+      "opacity": 1.0,
+      "width": 40,
+      "height": 28,
+      "x": 0,
+      "y": 0,
+      "legend": {
+        "1": "Agua_Oceano",
+        "2": "Areia_Praia",
+        "3": "Grama_Planicie",
+        "4": "Mata_Bosque",
+        "5": "Rocha_Montanha"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Caminhos_Trilhas",
+      "type": "tilelayer",
+      "visible": true,
+      "opacity": 1.0,
+      "width": 40,
+      "height": 28,
+      "x": 0,
+      "y": 0,
+      "legend": {
+        "10": "Trilha_Terra_Principal",
+        "11": "Trilha_Pedra_Calcada",
+        "12": "Ponte_Madeira"
+      }
+    },
+    {
+      "id": 3,
+      "name": "Colisao",
+      "type": "tilelayer",
+      "visible": false,
+      "opacity": 0.5,
+      "width": 40,
+      "height": 28,
+      "x": 0,
+      "y": 0,
+      "legend": {
+        "0": "Passagem_Livre",
+        "1": "Agua_Bloqueada",
+        "2": "Rocha_Bloqueada",
+        "3": "Parede_Casa_Bloqueada",
+        "4": "Porta_Entrada"
+      }
+    },
+    {
+      "id": 4,
+      "name": "Estruturas_Construcoes",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1.0,
+      "objects": [
+        { "id": 101, "name": "fogueira", "type": "fogueira", "x": 640, "y": 448, "width": 48, "height": 48, "propriedades": { "nome": "Fogueira Central", "seguro": true } },
+        { "id": 102, "name": "casa_icaro", "type": "casa", "x": 288, "y": 384, "width": 64, "height": 64, "door": { "x": 320, "y": 448 }, "propriedades": { "dono": "Ícaro", "nome": "Cabana de Toras do Ícaro" } },
+        { "id": 103, "name": "casa_lara", "type": "casa", "x": 288, "y": 288, "width": 64, "height": 64, "door": { "x": 320, "y": 352 }, "propriedades": { "dono": "Lara", "nome": "Cabana Acolhedora da Lara" } },
+        { "id": 104, "name": "casa_joao", "type": "casa", "x": 576, "y": 192, "width": 64, "height": 64, "door": { "x": 608, "y": 256 }, "propriedades": { "dono": "João", "nome": "Refúgio do João" } },
+        { "id": 105, "name": "casa_maria", "type": "casa", "x": 1024, "y": 416, "width": 64, "height": 64, "door": { "x": 1056, "y": 480 }, "propriedades": { "dono": "Maria", "nome": "Cabana da Maria" } },
+        { "id": 106, "name": "caverna", "type": "caverna", "x": 1088, "y": 160, "width": 96, "height": 80, "door": { "x": 1136, "y": 240 }, "propriedades": { "nome": "Caverna Sombria", "minerio": true } },
+        { "id": 107, "name": "fazenda", "type": "fazenda", "x": 1088, "y": 512, "width": 96, "height": 64, "propriedades": { "nome": "Fazenda e Hortas da Vila" } },
+        { "id": 108, "name": "curral", "type": "curral", "x": 1100, "y": 608, "width": 80, "height": 64, "propriedades": { "nome": "Curral Comunitário" } },
+        { "id": 109, "name": "arena", "type": "arena", "x": 832, "y": 320, "width": 80, "height": 80, "propriedades": { "nome": "Arena de Lutas e Treino" } },
+        { "id": 110, "name": "acampamento", "type": "acampamento", "x": 576, "y": 448, "width": 64, "height": 48, "propriedades": { "nome": "Praça do Acampamento" } },
+        { "id": 111, "name": "bosque", "type": "bosque", "x": 416, "y": 288, "width": 96, "height": 80, "propriedades": { "nome": "Bosque das Frutas" } },
+        { "id": 112, "name": "floresta", "type": "floresta", "x": 960, "y": 256, "width": 112, "height": 96, "propriedades": { "nome": "Floresta das Árvores Altas" } },
+        { "id": 113, "name": "rio", "type": "rio", "x": 736, "y": 480, "width": 64, "height": 48, "propriedades": { "nome": "Margem do Rio Doce" } },
+        { "id": 114, "name": "cachoeira", "type": "cachoeira", "x": 816, "y": 128, "width": 80, "height": 64, "propriedades": { "nome": "Cachoeira das Águas Puras" } },
+        { "id": 115, "name": "mar", "type": "mar", "x": 480, "y": 736, "width": 96, "height": 64, "propriedades": { "nome": "Praia e Litoral Sul" } },
+        { "id": 116, "name": "barco", "type": "barco", "x": 640, "y": 704, "width": 64, "height": 48, "propriedades": { "nome": "Cais do Barco" } }
+      ]
+    }
+  ],
+  "zonas": {
+    "acampamento": { "gridX": 18, "gridY": 14, "pixelX": 576, "pixelY": 448 },
+    "fogueira": { "gridX": 20, "gridY": 14, "pixelX": 640, "pixelY": 448 },
+    "casa_icaro": { "gridX": 9, "gridY": 12, "pixelX": 288, "pixelY": 384 },
+    "casa_lara": { "gridX": 9, "gridY": 9, "pixelX": 288, "pixelY": 288 },
+    "casa_joao": { "gridX": 18, "gridY": 6, "pixelX": 576, "pixelY": 192 },
+    "casa_maria": { "gridX": 32, "gridY": 13, "pixelX": 1024, "pixelY": 416 },
+    "bosque": { "gridX": 13, "gridY": 9, "pixelX": 416, "pixelY": 288 },
+    "floresta": { "gridX": 30, "gridY": 8, "pixelX": 960, "pixelY": 256 },
+    "caverna": { "gridX": 34, "gridY": 5, "pixelX": 1088, "pixelY": 160 },
+    "rio": { "gridX": 23, "gridY": 15, "pixelX": 736, "pixelY": 480 },
+    "cachoeira": { "gridX": 26, "gridY": 4, "pixelX": 816, "pixelY": 128 },
+    "fazenda": { "gridX": 34, "gridY": 16, "pixelX": 1088, "pixelY": 512 },
+    "curral": { "gridX": 35, "gridY": 19, "pixelX": 1100, "pixelY": 608 },
+    "arena": { "gridX": 26, "gridY": 10, "pixelX": 832, "pixelY": 320 },
+    "mar": { "gridX": 15, "gridY": 23, "pixelX": 480, "pixelY": 736 },
+    "barco": { "gridX": 20, "gridY": 22, "pixelX": 640, "pixelY": 704 }
+  }
+}

@@ -18,6 +18,7 @@ const {aplicarMetabolismo}=require('./metab');
 const acontecimentos=require('./acontecimentos');
 const memoria=require('./memoria-personagem');
 const comandosCriador=require('./comandos-criador');
+const chatCriador=require('./chat-criador');
 
 // CAMPADA COGNITIVA (opt-in `ILHA_COG=1`) — require atrasado: a camada é
 // opcional e uma falha dela nunca derruba o ciclo do mundo.
@@ -212,6 +213,8 @@ async function rodada(estado,opcoes={}){
 		const contexto=montarContexto(snapshotMundo,ser,possiveis,situacao);
 		contexto.sensoDeTempo = gerarSensoDeTempo(snapshotMundo.mundo.tempo.ciclo, ser);
 		if(ordemCriador) contexto.ordemCriador = ordemCriador;
+		const msgChatPendente = chatCriador.obterMensagemPendente(ser.id);
+		if(msgChatPendente) contexto.mensagemChat = msgChatPendente;
 		const decidir=cerebroDe(opcoes,ser);
 		// TRILHA CAUSAL (cognição): abre ANTES da decisão para registrar o que
 		// entrou no contexto; fecha depois com a consequência real do motor.
@@ -236,6 +239,16 @@ async function rodada(estado,opcoes={}){
 			ser.memoria.push({ tipo: 'ordem_criador', texto: `Recebi ordem de Rafael: "${cmdPendente.comando}" e atendi decidindo: ${d.acao} (${d.motivo})`, ciclo: estado.mundo.tempo.ciclo });
 			if(ser.cortex && Array.isArray(ser.cortex.diario)){
 				ser.cortex.diario.push(`[ORDEM DO CRIADOR] Atendi ao comando do Rafael: "${cmdPendente.comando}" -> decidi ${d.acao}`);
+			}
+		}
+		if (msgChatPendente) {
+			const falaTexto = d.fala || d.motivo || '...';
+			chatCriador.registrarResposta(ser.id, falaTexto, d.acao, d.motivo, estado.mundo.tempo.ciclo);
+			ser.fala = falaTexto;
+			ser.memoria = Array.isArray(ser.memoria) ? ser.memoria : [];
+			ser.memoria.push({ tipo: 'chat_criador', texto: `Conversei com Rafael no chat: ele perguntou "${msgChatPendente.texto}" e respondi: "${falaTexto}"`, ciclo: estado.mundo.tempo.ciclo });
+			if (ser.cortex && Array.isArray(ser.cortex.diario)) {
+				ser.cortex.diario.push(`[CHAT COM RAFAEL] Conversamos pelo comunicador: respondi "${falaTexto}"`);
 			}
 		}
 		decisoes.push({ser,decisao:d,percepcao:contexto.percepcoes,situacao,trilha,itens});

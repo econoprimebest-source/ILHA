@@ -619,9 +619,9 @@
         });
       }
 
-      // 6. Ampliações de Moradias (Níveis 1 a 5, baús de toras/pedras e andaimes de obra)
+      // 6. Ampliações de Moradias com Y-Sorting (personagem atrás da casa)
       if (typeof window !== 'undefined' && window.MotorCasasIlha && typeof window.MotorCasasIlha.desenhar === 'function') {
-        window.MotorCasasIlha.desenhar(this.structuresContainer, estado, (fx, fy) => this.toScreen(fx, fy), this.box.scale, tempo);
+        window.MotorCasasIlha.desenhar(this.ySortContainer, estado, (fx, fy) => this.toScreen(fx, fy), this.box.scale, tempo);
       }
     }
 

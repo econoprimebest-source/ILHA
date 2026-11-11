@@ -31,7 +31,7 @@ const a=base.filter(v=>v[2]).map(([id,descricao])=>({id,descricao}));
 if(s.local==='rio'||s.local==='cachoeira'){a.push({id:'coletar_agua',descricao:'Beber água fresca direto da fonte e encher o cantil'});}
 if(s.local==='rio'&&x.peixes.rio.populacao>0&&(mesAtual.cardumeNoRio||temCardume)&&!esgotadoHoje)a.push({id:'pescar',descricao:'Tentar pescar no rio'});
 if(s.local==='bosque'&&Object.values(x.arvores).some(t=>t.local==='bosque'&&t.frutos>=.5))a.push({id:'colher_frutas',descricao:'Colher frutos da estação ('+mesAtual.frutas+')'});
-if(s.local==='floresta'&&x.madeira.floresta>0)a.push({id:'coletar_madeira',descricao:'Coletar madeira caída'});
+if(['floresta','bosque'].includes(s.local))a.push({id:'coletar_madeira',descricao:'Coletar madeira e galhos no chão da mata (+2 Madeiras)'});
 // NOVA AÇÃO: CAÇAR (Alta dificuldade, recompensa potencialmente maior que peixe)
 if((s.local==='floresta'||s.local==='bosque')&&Object.values(x.fauna||{}).some(f=>f.populacao>0&&f.local===s.local))a.push({id:'caçar',descricao:'Tentar caçar um animal'});
         if(['floresta', 'caverna', 'bosque'].includes(s.local)) a.push({id:'explorar', descricao:'Explorar a área em busca de tesouros ou recursos raros'});
@@ -54,16 +54,35 @@ if(['curral','fazenda'].includes(s.local)&&x.curral){
 }
 // CORTE DE ÁRVORES E RECURSOS:
 if(['floresta','bosque'].includes(s.local)){
-  a.push({id:'cortar_arvore',descricao:'Usar ferramenta e cortar madeira de uma árvore alta para a vila'});
+  a.push({id:'cortar_arvore',descricao:'Usar ferramenta e cortar madeira de uma árvore alta para a vila (+3 Madeiras)'});
 }
 // COLETA DE PEDRAS:
 if(['rio','cachoeira','caverna'].includes(s.local)){
-  a.push({id:'coletar_pedra',descricao:'Coletar pedras resistentes e sílex na margem/rochas para forja e construções'});
+  a.push({id:'coletar_pedra',descricao:'Coletar pedras resistentes e sílex na margem/rochas para forja e construções (+2 Pedras)'});
+}
+// MINERAÇÃO DE FERRO NA CAVERNA:
+if(s.local==='caverna'){
+  a.push({id:'minerar_ferro',descricao:'Minerar minério de ferro e pedras nas paredes da caverna (+2 Ferro, +1 Pedra)'});
 }
 // FABRICAÇÃO DE FERRAMENTAS (BANCADA RÚSTICA):
 if(['acampamento','fogueira'].includes(s.local)||s.local.startsWith('casa_')){
   const temRecursos=(s.inventario.madeira||0)>=1&&(s.inventario.pedra||0)>=1;
   if(temRecursos)a.push({id:'fabricar_ferramenta',descricao:'Forjar ferramenta rústica (machado, vara de pescar ou lança)'});
+}
+// CRAFTING & EXPANSÃO DA VILA (CONSTRUÇÃO 3D REAL):
+const invMadeira = Number(s.inventario?.madeira || 0);
+const invPedra = Number(s.inventario?.pedra || 0);
+if(invMadeira >= 4 || invPedra >= 2){
+  a.push({id:'construir',descricao:'Construir estrutura na vila (Bancada: 4 Madeiras/2 Pedras | Muralha: 6 Madeiras/8 Pedras | Casa Nova: 10 Madeiras/5 Pedras)'});
+}
+if(invMadeira >= 10 && invPedra >= 5){
+  a.push({id:'construir_casa',descricao:'Construir uma nova Cabana de Madeira com baú na vila (Custo: 10 Madeiras, 5 Pedras)'});
+}
+if(invMadeira >= 6 && invPedra >= 8){
+  a.push({id:'construir_muralha',descricao:'Construir uma Muralha defensiva com tochas para proteger a vila (Custo: 6 Madeiras, 8 Pedras)'});
+}
+if(invMadeira >= 4 && invPedra >= 2){
+  a.push({id:'construir_bancada',descricao:'Construir uma Bancada de trabalho e ferramentas (Custo: 4 Madeiras, 2 Pedras)'});
 }
 // CONSTRUÇÃO E OBRAS DA VILA (NÃO É DO DIA PARA A NOITE):
 if(Array.isArray(x.projetos)){
@@ -403,16 +422,17 @@ case'pescar_mar':{
     }
     break;
 }
+case'minerar_ferro':
 case'minerar_caverna':{
-    const sorte = Math.random();
-    if (sorte > 0.35) {
-        s.inventario.minerio = (s.inventario.minerio || 0) + 2;
-        s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 14);
-        r.quantidade = 2;
-        r.texto = 'Extraiu minério de ferro e quartzo brilhante das fendas rochosas da caverna!';
-    } else {
-        r.texto = 'As pedras eram duras demais; extraiu apenas lascas de pedra.';
-    }
+    const qtdFerro = Math.floor(Math.random() * 2) + 2;
+    const qtdPedra = 1;
+    s.inventario.ferro = (Number(s.inventario.ferro) || 0) + qtdFerro;
+    s.inventario.minerio = (Number(s.inventario.minerio) || 0) + qtdFerro;
+    s.inventario.pedra = (Number(s.inventario.pedra) || 0) + qtdPedra;
+    s.necessidades.energia = Math.max(0, (s.necessidades.energia || 50) - 7);
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 14);
+    r.quantidade = qtdFerro;
+    r.texto = `Minerou nas galerias da caverna e extraiu ${qtdFerro} ferros e ${qtdPedra} pedras resistentes!`;
     break;
 }
 case'afugentar_fera':{
@@ -473,6 +493,109 @@ case'fabricar_ferramenta':{
     r.texto = `Trabalhou na bancada e forjou uma nova ferramenta: ${tipo}!`;
     break;
 }
+case'construir':
+case'construir_casa':
+case'construir_casa_nova':
+case'construir_muralha':
+case'construir_bancada':{
+    let tipo = 'bancada';
+    const pedMadeira = Number(s.inventario.madeira || 0);
+    const pedPedra = Number(s.inventario.pedra || 0);
+    const alvo = String(extra.tipo || extra.estrutura || extra.alvo || id).toLowerCase();
+
+    if (alvo.includes('casa') || (id === 'construir' && pedMadeira >= 10 && pedPedra >= 5)) {
+        tipo = 'casa_nova';
+    } else if (alvo.includes('muralha') || (id === 'construir' && pedMadeira >= 6 && pedPedra >= 8)) {
+        tipo = 'muralha';
+    } else {
+        tipo = 'bancada';
+    }
+
+    let custoM = 4, custoP = 2;
+    if (tipo === 'casa_nova') { custoM = 10; custoP = 5; }
+    else if (tipo === 'muralha') { custoM = 6; custoP = 8; }
+    else { custoM = 4; custoP = 2; }
+
+    // Consome recursos do inventário
+    const gastouM = Math.min(pedMadeira, custoM);
+    const gastouP = Math.min(pedPedra, custoP);
+    s.inventario.madeira = Math.max(0, pedMadeira - gastouM);
+    s.inventario.pedra = Math.max(0, pedPedra - gastouP);
+
+    e.mundo.estruturas = Array.isArray(e.mundo.estruturas) ? e.mundo.estruturas : [];
+    const countTipo = e.mundo.estruturas.filter(st => st.tipo === tipo).length + 1;
+    const local = s.local || 'acampamento';
+
+    // Calcula posição 3D no mapa
+    let posX = 0, posY = 0.45, posZ = 0;
+    try {
+        const NOS_RPG = {
+            fogueira: { x: 0, y: 0.45, z: 0.2 },
+            acampamento: { x: -1.2, y: 0.48, z: 0.8 },
+            casa_icaro: { x: -9.8, y: 0.52, z: -1.2 },
+            casa_lara: { x: -9.1, y: 0.50, z: -3.8 },
+            casa_joao: { x: -1.4, y: 0.55, z: -9.5 },
+            casa_maria: { x: 11.2, y: 0.55, z: 3.2 },
+            bosque: { x: -6.4, y: 0.60, z: -6.8 },
+            floresta: { x: 8.5, y: 0.55, z: -6.2 },
+            caverna: { x: 12.8, y: 0.85, z: -10.5 },
+            rio: { x: 2.8, y: 0.35, z: 2.6 },
+            fazenda: { x: 13.2, y: 0.55, z: 2.4 },
+            curral: { x: 13.5, y: 0.55, z: 6.2 },
+            arena: { x: 5.4, y: 0.50, z: -4.8 }
+        };
+        const pNode = NOS_RPG[local] || { x: 0, y: 0.45, z: 0 };
+        const offsetAng = (e.mundo.estruturas.length * 1.35) + 0.5;
+        const offsetDist = 2.0 + (countTipo * 0.45);
+        posX = Math.round((pNode.x + Math.cos(offsetAng) * offsetDist) * 100) / 100;
+        posZ = Math.round((pNode.z + Math.sin(offsetAng) * offsetDist) * 100) / 100;
+        posY = pNode.y;
+    } catch (_) {}
+
+    const nomesFormatados = {
+        casa_nova: `Cabana de Madeira #${countTipo}`,
+        muralha: `Muralha Defensiva #${countTipo}`,
+        bancada: `Bancada de Ofício #${countTipo}`
+    };
+
+    const novaEstrutura = {
+        id: `est_${tipo}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        tipo: tipo,
+        nome: nomesFormatados[tipo] || `Construção #${countTipo}`,
+        local: local,
+        posicao: { x: posX, y: posY, z: posZ },
+        construtor: s.nome || s.id,
+        ciclo: e.mundo.tempo.ciclo,
+        custo: { madeira: gastouM, pedra: gastouP },
+        timestamp: new Date().toISOString()
+    };
+
+    e.mundo.estruturas.push(novaEstrutura);
+
+    // Se for casa nova, cadastra também no registro de moradias da ilha
+    if (tipo === 'casa_nova') {
+        e.mundo.casas = e.mundo.casas || {};
+        e.mundo.casas[novaEstrutura.id] = {
+            id: novaEstrutura.id,
+            nome: novaEstrutura.nome,
+            construtor: s.nome || s.id,
+            nivel: 1,
+            local: local,
+            bau: { madeira: 0, pedra: 0, alimento: 0, agua: 0 },
+            historico: [`Ciclo ${e.mundo.tempo.ciclo}: Construída com 10 madeiras e 5 pedras por ${s.nome || s.id}`]
+        };
+    }
+
+    s.necessidades.satisfacao = Math.min(100, (s.necessidades.satisfacao || 50) + 35);
+    s.necessidades.seguranca = Math.min(100, (s.necessidades.seguranca || 50) + 20);
+    s.necessidades.frustracao = Math.max(0, (s.necessidades.frustracao || 0) - 30);
+    s.necessidades.energia = Math.max(0, (s.necessidades.energia || 50) - 15);
+
+    r.quantidade = 1;
+    r.estrutura = novaEstrutura;
+    r.texto = `Construiu com orgulho: ${novaEstrutura.nome} em ${local} (gastou ${gastouM} madeiras e ${gastouP} pedras)!`;
+    break;
+}
 case'trabalhar_construcao':{
     const proj = (x.projetos || []).find(p => p && !p.concluido && p.local === s.local);
     if (proj) {
@@ -483,6 +606,24 @@ case'trabalhar_construcao':{
       if (proj.progresso >= 100) {
         proj.concluido = true;
         r.texto = `🎉 Grande marco! A construção de ${proj.nome} foi FINALIZADA pela comunidade!`;
+        e.mundo.estruturas = Array.isArray(e.mundo.estruturas) ? e.mundo.estruturas : [];
+        if (!e.mundo.estruturas.some(st => st.id === proj.id)) {
+          let tipoEst = 'bancada';
+          const pId = String(proj.id).toLowerCase();
+          if (pId.includes('casa') || pId.includes('cabana')) tipoEst = 'casa_nova';
+          else if (pId.includes('muralha')) tipoEst = 'muralha';
+          e.mundo.estruturas.push({
+            id: proj.id,
+            nome: proj.nome,
+            tipo: tipoEst,
+            local: proj.local || s.local || 'acampamento',
+            criador: s.nome || s.id,
+            ciclo: e.mundo.tempo?.ciclo || 1,
+            x: (s.x ? (s.x - 0.5) * 20 : -1.2),
+            y: 0.48,
+            z: (s.y ? (s.y - 0.5) * 20 : 0.8)
+          });
+        }
       } else {
         r.texto = `Trabalhou na estrutura de ${proj.nome} (Progresso da obra: ${proj.progresso}%).`;
       }
@@ -776,10 +917,16 @@ const DURACOES_ACOES = {
   comer: 1,
   beber: 1,
   coletar_madeira: 2,
+  cortar_arvore: 2,
   coletar_pedra: 2,
+  minerar_ferro: 2,
+  minerar_caverna: 2,
   colher_frutas: 1,
   cuidar_horta: 2,
+  construir: 3,
   construir_casa: 4,
+  construir_muralha: 3,
+  construir_bancada: 2,
   ampliar_moradia: 4,
   arrumar_casa: 2,
   tomar_banho: 1,
