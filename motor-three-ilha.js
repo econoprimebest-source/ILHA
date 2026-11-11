@@ -1,6 +1,6 @@
 /**
  * Motor Three.js — Ilha Aurora 3D Real (Renderizador do Modelo GLB e Personagens)
- * Integração procedural de A_ILHA_V2_COMPLETA.glb com estado-ilha.json
+ * Integração procedural de A_ILHA_V2_COMPLETA.glb com estado-ilha.json e MapaRpg
  */
 (function(window) {
   'use strict';
@@ -51,6 +51,7 @@
       this.lastState = null;
       this.clock = new THREE.Clock();
       this.hoveredSerId = null;
+      this.mapaRpgIniciado = false;
     }
 
     init(containerElement) {
@@ -103,7 +104,14 @@
       const ambLight = new THREE.AmbientLight(0x38bdf8, 0.25);
       this.scene.add(ambLight);
 
-      // Carregar GLB da Ilha
+      // 2. Integração com MapaRpg (Hitboxes dos Nós 3D e Painel CORTEX)
+      this.iniciarMapaRpg();
+
+      // 3. Oceano e Vida Marinha 3D (Profundidade correta - Sem tubarão voando)
+      this.criarOceano3D();
+      this.criarTubarao3D();
+
+      // 4. Carregar GLB da Ilha
       this.carregarModelo();
 
       // Eventos de clique e redimensionamento
@@ -114,6 +122,100 @@
       });
       this.renderer.domElement.addEventListener('pointerup', (e) => this.onPointerClick(e));
       this.renderer.domElement.addEventListener('pointermove', (e) => this.onPointerMove(e));
+    }
+
+    iniciarMapaRpg() {
+      if (this.mapaRpgIniciado) return;
+      if (window.MapaRpg && window.MapaRpg.integradorThree) {
+        window.MapaRpg.integradorThree.initThree(this.scene, this.camera, this.renderer, (dadosNo) => {
+          window.MapaRpg.abrirCortex(dadosNo);
+        });
+        this.mapaRpgIniciado = true;
+        console.log('[Motor 3D] MapaRpg conectado: Hitboxes e CORTEX ativos.');
+      }
+    }
+
+    criarOceano3D() {
+      // Plano de água oceânica translúcida cobrindo o entorno da ilha (Y = 0.18)
+      const geo = new THREE.PlaneGeometry(160, 160, 16, 16);
+      geo.rotateX(-Math.PI / 2);
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0x0284c7,
+        transparent: true,
+        opacity: 0.55,
+        roughness: 0.1,
+        metalness: 0.2,
+        depthWrite: false, // Permite enxergar a criatura subaquática
+        depthTest: true
+      });
+      const water = new THREE.Mesh(geo, mat);
+      water.position.y = 0.18; // Nível real da lâmina d'água 3D
+      water.name = 'oceano_agua_3d';
+      this.scene.add(water);
+      this.oceanMesh = water;
+    }
+
+    criarTubarao3D() {
+      const g = new THREE.Group();
+      g.name = 'tubarao_3d';
+
+      // Material cinza ardósia com depthTest ativo para respeitar a água e a ilha
+      const tubMat = new THREE.MeshStandardMaterial({
+        color: 0x334155,
+        roughness: 0.4,
+        metalness: 0.1,
+        depthTest: true,
+        depthWrite: true
+      });
+
+      // 1. Corpo fusiforme hidrodinâmico do tubarão
+      const corpoGeo = new THREE.ConeGeometry(0.35, 2.2, 12);
+      corpoGeo.rotateX(Math.PI / 2);
+      const corpo = new THREE.Mesh(corpoGeo, tubMat);
+      corpo.position.z = 0.2;
+      g.add(corpo);
+
+      // 2. Barbatana Dorsal (triangular, corta a superfície d'água)
+      const dorsalGeo = new THREE.ConeGeometry(0.12, 0.45, 4);
+      dorsalGeo.rotateZ(0.2);
+      const dorsal = new THREE.Mesh(dorsalGeo, tubMat);
+      dorsal.position.set(0, 0.26, -0.1);
+      g.add(dorsal);
+
+      // 3. Nadadeiras Peitorais (laterais)
+      const peitoralGeo = new THREE.BoxGeometry(1.1, 0.04, 0.25);
+      peitoralGeo.rotateY(0.2);
+      const peitoral = new THREE.Mesh(peitoralGeo, tubMat);
+      peitoral.position.set(0, -0.05, 0.3);
+      g.add(peitoral);
+
+      // 4. Cauda / Barbatana Caudal (ondula ao nadar)
+      const caudaGeo = new THREE.BoxGeometry(0.06, 0.6, 0.35);
+      const cauda = new THREE.Mesh(caudaGeo, tubMat);
+      cauda.position.set(0, 0.05, -1.0);
+      g.add(cauda);
+      this.tubaraoCauda = cauda;
+
+      // 5. Runa / esteira sutil na água sobre o tubarão
+      const esteiraGeo = new THREE.RingGeometry(0.4, 0.7, 16);
+      esteiraGeo.rotateX(-Math.PI / 2);
+      const esteiraMat = new THREE.MeshBasicMaterial({
+        color: 0x7dd3fc,
+        transparent: true,
+        opacity: 0.35,
+        depthTest: true
+      });
+      const esteira = new THREE.Mesh(esteiraGeo, esteiraMat);
+      esteira.position.y = 0.19;
+      g.add(esteira);
+
+      // Profundidade Z/Y exata:
+      // Centro submerso em Y = 0.02 (abaixo de 0.18 da água).
+      // Apenas a barbatana dorsal (+0.26) corta suavemente a lâmina da água!
+      g.position.set(-4.5, 0.02, 7.6);
+      this.scene.add(g);
+      this.tubarao3D = g;
+      this.tubaraoAngulo = 0;
     }
 
     carregarModelo() {
@@ -129,6 +231,11 @@
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
+            // Profundidade ativada para oclusão correta
+            if (child.material) {
+              child.material.depthTest = true;
+              child.material.depthWrite = true;
+            }
             if (child.geometry && child.geometry.attributes.color) {
               child.material = new THREE.MeshStandardMaterial({
                 vertexColors: true,
@@ -162,6 +269,10 @@
             if (child.isMesh) {
               child.castShadow = true;
               child.receiveShadow = true;
+              if (child.material) {
+                child.material.depthTest = true;
+                child.material.depthWrite = true;
+              }
               if (child.geometry && child.geometry.attributes.color) {
                 child.material = new THREE.MeshStandardMaterial({
                   vertexColors: true,
@@ -213,26 +324,78 @@
       // Atualiza controles
       if (this.controls) this.controls.update();
 
-      // Interpolação de posição e animação sutil dos personagens (idle breathing / bounce)
+      // 1. Atualiza gerenciador de movimento RPG nas trilhas (Sem Teleporte)
+      if (window.MapaRpg && window.MapaRpg.gerenciadorMov) {
+        window.MapaRpg.gerenciadorMov.atualizar(delta);
+      }
+
+      // 2. Interpolação de posição e animação dos personagens
       for (const id in this.characters) {
         const char = this.characters[id];
         if (char && char.group) {
-          // Lerp suave para targetPos
-          char.group.position.lerp(char.targetPos, 0.08);
+          const movRpg = (window.MapaRpg && window.MapaRpg.gerenciadorMov)
+            ? window.MapaRpg.gerenciadorMov.obterEstado(id)
+            : null;
 
-          // Efeito sutil de flutuação / caminhada
-          const bounce = Math.sin(elapsed * 3 + (id.charCodeAt(0) % 5)) * 0.04;
-          if (char.meshCorpo) {
-            char.meshCorpo.position.y = 0.5 + bounce;
+          if (movRpg && movRpg.estado === 'caminhando') {
+            // Caminha suavemente ao longo dos waypoints da trilha
+            char.group.position.set(movRpg.posicaoAtual.x, movRpg.posicaoAtual.y, movRpg.posicaoAtual.z);
+
+            // Orientação do olhar/corpo na direção do movimento
+            if (movRpg.direcaoAtual && (movRpg.direcaoAtual.x !== 0 || movRpg.direcaoAtual.z !== 0)) {
+              const targetAngle = Math.atan2(movRpg.direcaoAtual.x, movRpg.direcaoAtual.z);
+              char.group.rotation.y = targetAngle;
+            }
+
+            // Animação de passada (bounce rítmico)
+            const bounce = Math.sin(elapsed * 12) * 0.08;
+            if (char.meshCorpo) {
+              char.meshCorpo.position.y = 0.45 + Math.abs(bounce);
+            }
+          } else {
+            // Parado no nó de destino
+            char.group.position.lerp(char.targetPos, 0.08);
+
+            // Respiração ociosa (idle breathing)
+            const breath = Math.sin(elapsed * 3 + (id.charCodeAt(0) % 5)) * 0.03;
+            if (char.meshCorpo) {
+              char.meshCorpo.position.y = 0.45 + breath;
+            }
           }
 
-          // Orientação do Nameplate sempre de frente para a câmera
+          // Orientação do Nameplate sempre de frente para a câmera (Billboard)
           if (char.nameplate) {
             char.nameplate.quaternion.copy(this.camera.quaternion);
           }
           if (char.balaoFala) {
             char.balaoFala.quaternion.copy(this.camera.quaternion);
           }
+        }
+      }
+
+      // 3. Atualiza nado do Tubarão 3D na profundidade correta (submerso, sem voar)
+      if (this.tubarao3D) {
+        this.tubaraoAngulo = (this.tubaraoAngulo || 0) + delta * 0.45;
+        const raioX = 4.2;
+        const raioZ = 2.8;
+        const centroX = -4.5;
+        const centroZ = 7.6;
+
+        const tx = centroX + Math.cos(this.tubaraoAngulo) * raioX;
+        const tz = centroZ + Math.sin(this.tubaraoAngulo) * raioZ;
+
+        // Submerso em Y entre -0.01 e 0.05
+        const waveY = 0.02 + Math.sin(elapsed * 2) * 0.03;
+        this.tubarao3D.position.set(tx, waveY, tz);
+
+        // Orientação tangencial à curva de nado
+        const tangX = -Math.sin(this.tubaraoAngulo) * raioX;
+        const tangZ = Math.cos(this.tubaraoAngulo) * raioZ;
+        this.tubarao3D.rotation.y = Math.atan2(tangX, tangZ);
+
+        // Batimento realista da cauda
+        if (this.tubaraoCauda) {
+          this.tubaraoCauda.rotation.y = Math.sin(elapsed * 6) * 0.4;
         }
       }
 
@@ -243,7 +406,6 @@
     coordenadaParaMundo(normX, normY) {
       const x_3d = (normX - 0.5) * 30.0;
       const y_3d = (0.5 - normY) * 20.0;
-      // Trimesh Z-up com rotação X = -90 graus vira:
       const worldX = x_3d;
       const worldZ = -y_3d;
 
@@ -256,6 +418,10 @@
           worldY = hits[0].point.y;
         }
       }
+      // Se for ambiente marinho / água (litoral sul ou ilha vizinha), limita estritamente à lâmina d'água (0.18)
+      if (normY > 0.8 || (normX < 0.2 && normY > 0.75)) {
+        worldY = Math.min(worldY, 0.18);
+      }
       return new THREE.Vector3(worldX, worldY, worldZ);
     }
 
@@ -264,21 +430,29 @@
       group.name = 'char_' + id;
       const cor = CORES_SERES[id] || 0x38bdf8;
 
-      // 1. Base / Sombra dos pés
+      // 1. Base / Sombra dos pés (com profundidade para respeitar o solo)
       const sombraGeo = new THREE.CircleGeometry(0.35, 16);
       sombraGeo.rotateX(-Math.PI / 2);
-      const sombraMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 });
+      const sombraMat = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.45,
+        depthTest: true,
+        depthWrite: false
+      });
       const sombra = new THREE.Mesh(sombraGeo, sombraMat);
       sombra.position.y = 0.02;
       group.add(sombra);
 
-      // 2. Corpo / Túnica (Cone arredondado / Cilindro estilizado)
+      // 2. Corpo / Túnica (Cone arredondado / Cilindro estilizado com oclusão 3D)
       const corpoGeo = new THREE.CylinderGeometry(0.18, 0.32, 0.8, 12);
       const corpoMat = new THREE.MeshStandardMaterial({
         color: cor,
         roughness: 0.5,
         metalness: 0.1,
-        flatShading: true
+        flatShading: true,
+        depthTest: true,
+        depthWrite: true
       });
       const corpo = new THREE.Mesh(corpoGeo, corpoMat);
       corpo.position.y = 0.45;
@@ -289,7 +463,9 @@
       const cabecaGeo = new THREE.SphereGeometry(0.22, 12, 12);
       const cabecaMat = new THREE.MeshStandardMaterial({
         color: 0xffdfba, // Tom de pele
-        roughness: 0.6
+        roughness: 0.6,
+        depthTest: true,
+        depthWrite: true
       });
       const cabeca = new THREE.Mesh(cabecaGeo, cabecaMat);
       cabeca.position.y = 0.95;
@@ -298,7 +474,11 @@
 
       // 4. Faixa / Acessório distintivo (Cabelo / Capuz / Bandana)
       const acessorioGeo = new THREE.CylinderGeometry(0.23, 0.23, 0.12, 12);
-      const acessorioMat = new THREE.MeshStandardMaterial({ color: cor });
+      const acessorioMat = new THREE.MeshStandardMaterial({
+        color: cor,
+        depthTest: true,
+        depthWrite: true
+      });
       const acessorio = new THREE.Mesh(acessorioGeo, acessorioMat);
       acessorio.position.y = 1.05;
       group.add(acessorio);
@@ -317,7 +497,8 @@
         meshCorpo: corpo,
         nameplate,
         balaoFala: null,
-        targetPos: new THREE.Vector3(0, 0, 0)
+        targetPos: new THREE.Vector3(0, 0, 0),
+        ultimoLocal: null
       };
     }
 
@@ -342,10 +523,10 @@
       // Ação
       ctx.font = '16px "Segoe UI", sans-serif';
       ctx.fillStyle = '#94a3b8';
-      ctx.fillText(status.slice(0, 24), 128, 50);
+      ctx.fillText(String(status).slice(0, 24), 128, 50);
 
       const texture = new THREE.CanvasTexture(canvas);
-      const mat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
       const sprite = new THREE.Sprite(mat);
       sprite.scale.set(1.8, 0.45, 1);
       sprite.userData = { canvas, ctx, texture };
@@ -409,18 +590,31 @@
         if (!char) {
           char = this.criarAvatarPersonagem(s.id, s.nome);
           this.characters[s.id] = char;
+          char.ultimoLocal = s.local;
         }
 
-        // Determinar coordenadas (x, y)
-        let nx = 0.5, ny = 0.5;
-        if (typeof s.x === 'number' && typeof s.y === 'number') {
-          nx = s.x; ny = s.y;
-        } else if (s.local && NOS_DEFAULT[s.local]) {
-          nx = NOS_DEFAULT[s.local].x;
-          ny = NOS_DEFAULT[s.local].y;
-        } else if (window.nos && window.nos()[s.local]) {
-          nx = window.nos()[s.local].x;
-          ny = window.nos()[s.local].y;
+        // Se mudou de nó no RPG, inicia caminhada real ao longo das trilhas sem teleporte
+        if (s.local && char.ultimoLocal && s.local !== char.ultimoLocal) {
+          if (window.MapaRpg && window.MapaRpg.gerenciadorMov) {
+            window.MapaRpg.gerenciadorMov.iniciarDeslocamento(s.id, char.ultimoLocal, s.local);
+          }
+          char.ultimoLocal = s.local;
+        } else if (!char.ultimoLocal && s.local) {
+          char.ultimoLocal = s.local;
+        }
+
+        // Posicionamento no nó lógico do RPG
+        const pos3d = (window.MapaRpg && window.MapaRpg.NOS_RPG && window.MapaRpg.NOS_RPG[s.local])
+          ? window.MapaRpg.NOS_RPG[s.local].pos3D
+          : null;
+
+        let targetWorld;
+        if (pos3d) {
+          targetWorld = new THREE.Vector3(pos3d.x, pos3d.y, pos3d.z);
+        } else {
+          let nx = (typeof s.x === 'number') ? s.x : (NOS_DEFAULT[s.local]?.x ?? 0.5);
+          let ny = (typeof s.y === 'number') ? s.y : (NOS_DEFAULT[s.local]?.y ?? 0.5);
+          targetWorld = this.coordenadaParaMundo(nx, ny);
         }
 
         // Pequeno offset individual se mais de um personagem estiver no mesmo local
@@ -428,16 +622,15 @@
         if (mesmoLocal.length > 1) {
           const idx = mesmoLocal.findIndex(o => o.id === s.id);
           const angle = (idx / mesmoLocal.length) * Math.PI * 2;
-          nx += Math.cos(angle) * 0.025;
-          ny += Math.sin(angle) * 0.025;
+          targetWorld.x += Math.cos(angle) * 0.45;
+          targetWorld.z += Math.sin(angle) * 0.45;
         }
 
-        const worldPos = this.coordenadaParaMundo(nx, ny);
-        char.targetPos.copy(worldPos);
+        char.targetPos.copy(targetWorld);
 
-        // Se for o primeiro posicionamento, teleporta direto
+        // Se for o primeiro posicionamento no mundo, coloca direto no nó de origem
         if (char.group.position.lengthSq() < 0.01) {
-          char.group.position.copy(worldPos);
+          char.group.position.copy(targetWorld);
         }
 
         // Atualiza Nameplate com última ação / motivo
@@ -487,12 +680,12 @@
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ id: this.hoveredSerId, texto: msg.trim() })
           }).then(r => r.json()).then(data => {
-            if (data.ok) {
-              alert(`Mensagem entregue no mundo 3D!\n${char.nome} respondeu: "${data.resposta}"`);
+            if (typeof window.mostrarToast === 'function') {
+              window.mostrarToast(`💬 ${char.nome} respondeu: "${data.resposta || '...'}"`);
             } else {
-              alert(`Mensagem guardada, mas cérebro ocupado: ${data.erro || 'sem resposta'}`);
+              console.log(`[Ilha 3D] ${char.nome}: "${data.resposta}"`);
             }
-          }).catch(err => alert('Erro ao falar: ' + err.message));
+          }).catch(err => console.warn('Erro ao falar:', err));
         }
       }
     }
@@ -507,14 +700,24 @@
         return;
       }
 
-      // Locais
+      // Consulta nós do MapaRpg
+      const noRpg = window.MapaRpg && window.MapaRpg.NOS_RPG && window.MapaRpg.NOS_RPG[target];
+      if (noRpg && noRpg.pos3D) {
+        const p = noRpg.pos3D;
+        this.controls.target.set(p.x, p.y, p.z);
+        this.camera.position.set(p.x + 8, p.y + 7, p.z + 8);
+        this.controls.update();
+        return;
+      }
+
+      // Locais clássicos de fallback
       const LOCAIS_FOCUS = {
-        vila: { x: 0, y: 1.2, z: 0, off: [14, 10, 12] },
-        fogueira: { x: 0, y: 1.2, z: 0, off: [14, 10, 12] },
-        caverna: { x: 11.4, y: 3.2, z: 5.6, off: [8, 6, 8] },
-        mar: { x: -0.6, y: 0.4, z: -6.8, off: [10, 8, 10] },
-        barco: { x: -0.6, y: 0.4, z: -6.8, off: [10, 8, 10] },
-        fazenda: { x: 11.5, y: 1.5, z: -2.5, off: [12, 10, 12] }
+        vila: { x: 0, y: 1.25, z: 0.4, off: [14, 10, 12] },
+        fogueira: { x: 0, y: 1.25, z: 0.4, off: [10, 8, 10] },
+        caverna: { x: 11.4, y: 3.2, z: -5.6, off: [8, 6, 8] },
+        mar: { x: -4.5, y: 0.45, z: 7.6, off: [10, 8, 10] },
+        barco: { x: -0.6, y: 0.45, z: 6.8, off: [10, 8, 10] },
+        fazenda: { x: 11.4, y: 1.25, z: 1.2, off: [10, 8, 10] }
       };
 
       const loc = LOCAIS_FOCUS[target];

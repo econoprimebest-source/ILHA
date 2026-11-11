@@ -1,0 +1,29 @@
+[
+  {
+    "id": "cmd_mwba4ow2_x23q",
+    "timestamp": "2026-11-10T22:46:27.842Z",
+    "serId": "lara",
+    "comando": "v� para a casa",
+    "de": "Rafael",
+    "status": "executado",
+    "executadoEm": "2026-11-10T22:46:32.365Z",
+    "resultado": {
+      "acao": "ir_casa",
+      "motivo": "Rafael me chamou de volta para casa, e na madrugada chuvosa obedeço com o coração tranquilo — a floresta pode esperar.",
+      "fala": "Já vou, Rafael — deixo as pegadas da fera para depois e volto para casa."
+    }
+  },
+  {
+    "id": "cmd_mwbeddxz_lfof",
+    "timestamp": "2026-11-11T00:45:12.023Z",
+    "serId": "lara",
+    "comando": "Elara, vá para casa",
+    "de": "Rafael (Criador)",
+    "status": "executado",
+    "executadoEm": "2026-11-11T00:45:21.182Z",
+    "resultado": {
+      "acao": "teste",
+      "motivo": "teste concluido"
+    }
+  }
+]

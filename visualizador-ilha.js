@@ -129,26 +129,59 @@ http.createServer((req,res)=>{
     const id=u.searchParams.get('ser')||'icaro';
     return json(res,lerCortexProfundo(id));
   }
-  // ROTA DE COMANDO DIRETO DO CRIADOR (RAFAEL)
-  if(u.pathname==='/api/comando'&&req.method==='POST'){
-    let body='';
-    req.on('data',c=>{body+=c;if(body.length>8192)req.destroy()});
-    req.on('end',()=>{
-      try{
-        const payload=JSON.parse(body||'{}');
-        const serId=String(payload.serId||payload.ser||payload.personagem||'elara').toLowerCase();
-        const comando=String(payload.comando||payload.ordem||payload.texto||'').trim();
-        const de=String(payload.de||payload.autor||'Rafael (Criador)').trim();
-        if(!comando)throw new Error('Comando vazio');
-        const cc=require('./comandos-criador');
-        const cmd=cc.registrarComando(serId,comando,de);
-        return json(res,{ok:true,mensagem:`Ordem enviada com sucesso para ${cmd.serId}: "${cmd.comando}"`,comando:cmd});
-      }catch(e){
-        res.writeHead(400,{'content-type':'application/json; charset=utf-8','access-control-allow-origin':'*'});
-        return res.end(JSON.stringify({ok:false,erro:e.message}));
+  // ROTA DE COMANDO DIRETO DO CRIADOR (RAFAEL) — Aceita POST ou GET com CORS
+  if(u.pathname==='/api/comando'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type, authorization');
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      return res.end();
+    }
+    if (req.method === 'GET') {
+      try {
+        let serId = String(u.searchParams.get('serId') || u.searchParams.get('ser') || u.searchParams.get('personagem') || '').toLowerCase();
+        let comando = String(u.searchParams.get('comando') || u.searchParams.get('ordem') || u.searchParams.get('texto') || u.searchParams.get('msg') || '').trim();
+        const de = String(u.searchParams.get('de') || 'Rafael (Criador)').trim();
+        if (!serId && comando) {
+          const m = comando.match(/^(elara|lara|ícaro|icaro|joão|joao|maria)[,:\s]+(.*)$/i);
+          if (m) { serId = m[1].toLowerCase(); comando = m[2].trim(); }
+        }
+        if (!serId) serId = 'elara';
+        if (!comando) throw new Error('Comando vazio. Exemplo: /api/comando?ser=elara&ordem=vá+para+casa');
+        const cc = require('./comandos-criador');
+        const cmd = cc.registrarComando(serId, comando, de);
+        return json(res, { ok: true, mensagem: `Ordem enviada com sucesso para ${cmd.serId}: "${cmd.comando}"`, comando: cmd });
+      } catch (e) {
+        res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ ok: false, erro: e.message }));
       }
-    });
-    return;
+    }
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', c => { body += c; if (body.length > 8192) req.destroy(); });
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          let serId = String(payload.serId || payload.ser || payload.personagem || '').toLowerCase();
+          let comando = String(payload.comando || payload.ordem || payload.texto || payload.mensagem || '').trim();
+          const de = String(payload.de || payload.autor || 'Rafael (Criador)').trim();
+          if (!serId && comando) {
+            const m = comando.match(/^(elara|lara|ícaro|icaro|joão|joao|maria)[,:\s]+(.*)$/i);
+            if (m) { serId = m[1].toLowerCase(); comando = m[2].trim(); }
+          }
+          if (!serId) serId = 'elara';
+          if (!comando) throw new Error('Comando vazio');
+          const cc = require('./comandos-criador');
+          const cmd = cc.registrarComando(serId, comando, de);
+          return json(res, { ok: true, mensagem: `Ordem enviada com sucesso para ${cmd.serId}: "${cmd.comando}"`, comando: cmd });
+        } catch (e) {
+          res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
+          return res.end(JSON.stringify({ ok: false, erro: e.message }));
+        }
+      });
+      return;
+    }
   }
   if(u.pathname==='/api/comandos'){
     const cc=require('./comandos-criador');
@@ -265,6 +298,13 @@ http.createServer((req,res)=>{
         ser.memoria=Array.isArray(ser.memoria)?ser.memoria:[];
         ser.memoria.push({tipo:'fala',de:'observador',texto:'Rafael te disse: "'+msg+'"',ciclo:estado.mundo.tempo.ciclo});
         ser.memoria=ser.memoria.slice(-200);
+
+        // Se for comando / ordem direta de Rafael, registra na fila prioritária
+        try {
+          const cc = require('./comandos-criador');
+          cc.registrarComando(ser.id, msg, 'Rafael (Criador)');
+        } catch (_) {}
+
         gravar(STATE,estado);
         // 2) RESPOSTA — cérebro do próprio ser, com o contexto dele. Falha de
         //    LLM aqui é honesta: mensagem guardada, sem resposta inventada.
@@ -465,6 +505,13 @@ http.createServer((req,res)=>{
       res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store'});
       return res.end(js);
     } catch(e) { res.writeHead(404); return res.end('motor-three-rpg.js nao encontrado'); }
+  }
+  if(u.pathname==='/mapa-rpg.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'mapa-rpg.js'),'utf8');
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('mapa-rpg.js nao encontrado'); }
   }
 
   // --- MODELO 1: APIS ---

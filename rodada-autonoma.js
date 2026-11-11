@@ -44,6 +44,55 @@ function marcarTempo(estado,entrada){
 	return h;
 }
 
+// RELÓGIO BIOLÓGICO & SENSO DE TEMPO (1 ciclo = 10 minutos simulados na Ilha)
+function gerarSensoDeTempo(ciclo, ser) {
+	const c = Math.max(0, Number(ciclo) || 0);
+	const minutosTotais = c * 10;
+	const horaTotal = Math.floor(minutosTotais / 60);
+	const horaDoDia = horaTotal % 24;
+	const minutoDoDia = minutosTotais % 60;
+	const dia = Math.floor(horaTotal / 24) + 1;
+	const horaFormatada = String(horaDoDia).padStart(2, '0') + ':' + String(minutoDoDia).padStart(2, '0');
+
+	let periodo = 'madrugada';
+	if (horaDoDia >= 6 && horaDoDia < 12) periodo = 'manhã';
+	else if (horaDoDia >= 12 && horaDoDia < 18) periodo = 'tarde';
+	else if (horaDoDia >= 18 && horaDoDia < 23) periodo = 'noite';
+
+	const fmtTempo = (ciclosDif) => {
+		if (ciclosDif == null) return null;
+		const min = ciclosDif * 10;
+		if (min < 60) return `${min} minutos (${ciclosDif} ciclos)`;
+		const h = Math.floor(min / 60);
+		const m = min % 60;
+		return `${h}h${m > 0 ? m + 'min' : ''} (${ciclosDif} ciclos)`;
+	};
+
+	const difSono = (ser && ser.ultimoSonoCiclo != null) ? (c - ser.ultimoSonoCiclo) : null;
+	const difRefeicao = (ser && ser.ultimaRefeicaoCiclo != null) ? (c - ser.ultimaRefeicaoCiclo) : null;
+	const difAgua = (ser && ser.ultimaAguaCiclo != null) ? (c - ser.ultimaAguaCiclo) : null;
+
+	const descAcordado = difSono != null
+		? `Você acordou há ${fmtTempo(difSono)}.`
+		: `Você está desperto e ativo desde as primeiras horas do dia.`;
+
+	const descRefeicao = difRefeicao != null
+		? `Sua última refeição foi há ${fmtTempo(difRefeicao)}.`
+		: `Você ainda está em jejum hoje (não realizou refeição substancial).`;
+
+	const descAgua = difAgua != null
+		? `Você bebeu água há ${fmtTempo(difAgua)}.`
+		: `Você ainda não bebeu água neste período.`;
+
+	return [
+		`[SENSO DE TEMPO]`,
+		`- Hora atual na Ilha: ${horaFormatada} (${periodo}) | Dia ${dia}, Ciclo ${c}`,
+		`- Tempo acordado: ${descAcordado}`,
+		`- Última refeição: ${descRefeicao}`,
+		`- Hidratação: ${descAgua}`
+	].join('\n');
+}
+
 // PONTO DE INTEGRAÇÃO — acontecimento do mundo na região do ser.
 // Quando há evento ativo na região, quem está em trajeto É consultado; hoje
 // não há gerador com a flag desligada; a leitura é `mundo.acontecimentos`.
@@ -161,6 +210,7 @@ async function rodada(estado,opcoes={}){
 		}
 		const possiveis=acoes(snapshotMundo,ser);
 		const contexto=montarContexto(snapshotMundo,ser,possiveis,situacao);
+		contexto.sensoDeTempo = gerarSensoDeTempo(snapshotMundo.mundo.tempo.ciclo, ser);
 		if(ordemCriador) contexto.ordemCriador = ordemCriador;
 		const decidir=cerebroDe(opcoes,ser);
 		// TRILHA CAUSAL (cognição): abre ANTES da decisão para registrar o que
@@ -207,6 +257,19 @@ async function rodada(estado,opcoes={}){
 		// observador (o visualizador mostra a atividade real, não uma regra).
 		ser.acao=item.decisao.acao;
 		ser.motivo=item.decisao.motivo||'';
+
+		// Atualiza o Relógio Biológico conforme a ação executada
+		const acItem = item.decisao.acao;
+		const cicloAtualItem = estado.mundo.tempo.ciclo;
+		if (acItem === 'comer' || acItem === 'assar_peixe' || acItem === 'comer_frutas' || acItem === 'cozinhar' || acItem === 'churrasco_fogueira' || acItem === 'fazer_refeicao') {
+			ser.ultimaRefeicaoCiclo = cicloAtualItem;
+		}
+		if (acItem === 'dormir' || acItem === 'descansar' || acItem === 'repousar' || acItem === 'dormir_cabana') {
+			ser.ultimoSonoCiclo = cicloAtualItem;
+		}
+		if (acItem === 'beber' || acItem === 'beber_agua' || acItem === 'coletar_agua') {
+			ser.ultimaAguaCiclo = cicloAtualItem;
+		}
 		if(item.decisao.acao==='coletar_agua'){
 			const q=con.quantidade||0;
 			const f=estado.mundo.ecossistema.agua.fontes.nascente;

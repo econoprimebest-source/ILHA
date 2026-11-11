@@ -124,10 +124,13 @@ function montarPrompt(c,a,ser,extras){
 	if(c.sensacoes&&c.sensacoes.length)partes.push('sensações: '+c.sensacoes.join(', '));
 	if(c.ordemCriador || (extras && extras.ordemCriador)){
 		const ordem = c.ordemCriador || extras.ordemCriador;
+		const casaAlerta = (/casa|lar|voltar/i.test(ordem))
+			? '\n-> COMANDO DE RETORNO: A ordem solicita retornar ao seu lar. Portanto, sua escolha prioritária DEVE SER "ir_casa"!'
+			: '';
 		partes.push('\n[ORDEM DIRETA DO CRIADOR — RAFAEL]\n' +
 			'Rafael (seu Criador) deu a seguinte ordem direta a você agora:\n' +
 			`"${ordem}"\n` +
-			'PRIORIDADE MÁXIMA ABSOLUTA: Esta ordem se sobrepõe a qualquer outro afazer. Você DEVE escolher a ação que melhor cumpre a ordem (ex: ir_casa, ir_<local>, etc.), obedecendo com lealdade, e mencionar a ordem no seu motivo e fala.');
+			'PRIORIDADE MÁXIMA ABSOLUTA: Esta ordem se sobrepõe a qualquer outro afazer. Você DEVE escolher a ação que melhor cumpre a ordem (ex: ir_casa, ir_<local>, etc.), obedecendo com lealdade, e mencionar a ordem no seu motivo e fala.' + casaAlerta);
 	}
 	if(c.sensoDeTempo){
 		partes.push(c.sensoDeTempo);
