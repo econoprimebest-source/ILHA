@@ -150,14 +150,25 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
     const aindaPendentes=[];
     for(const reg of pendentes){
       let enviado=false;
+      const payload = {
+        ser: reg.ser || id,
+        ciclo: reg.ciclo != null ? reg.ciclo : 0,
+        local: reg.local || (reg.antes && reg.antes.local) || 'ilha',
+        decisao: (typeof reg.decisao === 'object' && reg.decisao !== null) ? reg.decisao : { acao: reg.decisao || 'observar' },
+        consequencia: reg.consequencia || {},
+        antes: reg.antes || {}
+      };
       for(const h of hostsTentativa){
         try{
-          await requisicaoHttp({
-            host:h, porta, path:'/ilha/consolidar-aprendizado',
-            body:{ entidade:reg.entidade, limiteTurnos:1, ciclo:reg.ciclo, dados:reg },
-            timeoutMs:8000
+          const res = await requisicaoHttp({
+            host:h, porta, path:'/ilha/consequencia',
+            body: payload,
+            timeoutMs:6000
           });
-          enviado=true;break;
+          if (res && (res.ok || res.canonico !== undefined)) {
+            enviado=true;
+            break;
+          }
         }catch(e){}
       }
       if(!enviado)aindaPendentes.push(reg);
