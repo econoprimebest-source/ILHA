@@ -45,10 +45,35 @@ function listarMensagens(serId = null, limite = 50) {
   }
 }
 
+function sincronizarComCentral(obj) {
+  const hosts = ['100.117.219.66', '127.0.0.1'];
+  const payload = JSON.stringify(obj);
+  for (const h of hosts) {
+    try {
+      const http = require('http');
+      const req = http.request({
+        hostname: h,
+        port: 8793,
+        path: '/ilha/chat-sync',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        },
+        timeout: 3000
+      }, () => {});
+      req.on('error', () => {});
+      req.write(payload);
+      req.end();
+    } catch (_) {}
+  }
+}
+
 function salvarLinha(obj) {
   garantirArquivo();
   try {
     fs.appendFileSync(ARQ_CHAT, JSON.stringify(obj) + '\n', 'utf8');
+    sincronizarComCentral(obj);
   } catch (e) {
     console.error('[CHAT-CRIADOR] Erro ao gravar mensagem:', e.message);
   }
