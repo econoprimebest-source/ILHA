@@ -105,8 +105,8 @@ if(['fogueira','acampamento','casa_joao','casa_icaro'].includes(s.local)&&((s.in
 if(s.local==='caverna'){
   a.push({id:'minerar_caverna',descricao:'Minerar minério de ferro e cristais nas paredes da caverna'});
 }
-// ENFRENTAR OU AFUGENTAR PREDADOR SE ELE ESTIVER NO LOCAL:
-if(x.predador&&x.predador.status==='vivo'&&x.predador.local===s.local){
+// ENFRENTAR OU AFUGENTAR PREDADOR SE ELE ESTIVER NO LOCAL OU EM ÁREA DE MATA:
+if(x.predador&&x.predador.status==='vivo'&&(x.predador.local===s.local || ['floresta','bosque','caverna','acampamento'].includes(s.local))){
   a.push({id:'afugentar_fera',descricao:'Brandir tochas/arma e afugentar a Pantera das Sombras'});
   a.push({id:'desafiar_luta',descricao:'Enfrentar a fera em combate corpo a corpo'});
 }
@@ -416,13 +416,18 @@ case'minerar_caverna':{
     break;
 }
 case'afugentar_fera':{
-    if (x.predador) {
+    if (x.predador && x.predador.local === s.local) {
         x.predador.local = 'caverna';
         x.predador.alerta = 15;
         s.necessidades.medo = Math.max(0, (s.necessidades.medo || 0) - 35);
         s.necessidades.seguranca = Math.min(100, (s.necessidades.seguranca || 50) + 20);
         r.quantidade = 1;
         r.texto = 'Brandiu fogo e gritou forte! A Pantera das Sombras recuou para a Caverna.';
+    } else {
+        s.necessidades.medo = Math.max(0, (s.necessidades.medo || 0) - 15);
+        s.necessidades.seguranca = Math.min(100, (s.necessidades.seguranca || 50) + 10);
+        r.quantidade = 1;
+        r.texto = 'Ficou de prontidão com fogo e olhar vigilante na mata; a fera manteve distância.';
     }
     break;
 }

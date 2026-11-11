@@ -252,7 +252,16 @@ async function rodada(estado,opcoes={}){
 			continue;
 		}
 		const antes={local:ser.local,necessidades:{...ser.necessidades},inventario:{...ser.inventario}};
-		const con=executar(estado,ser,item.decisao.acao,undefined,{...item.decisao,texto:item.decisao.texto,fala:item.decisao.fala,motivo:item.decisao.motivo});
+		let con;
+		try {
+			con = executar(estado,ser,item.decisao.acao,undefined,{...item.decisao,texto:item.decisao.texto,fala:item.decisao.fala,motivo:item.decisao.motivo});
+		} catch (errAcao) {
+			console.warn(`[RODADA] Ação '${item.decisao.acao}' inválida para ${ser.id} no local ${ser.local}: ${errAcao.message}. Aplicando ação segura.`);
+			const permitidas = acoes(estado, ser);
+			const fallback = permitidas.find(a => ['observar', 'descansar', 'explorar', 'continuar', 'conversar'].includes(a.id)) || permitidas[0] || { id: 'descansar' };
+			con = executar(estado, ser, fallback.id, permitidas, {...item.decisao, texto: item.decisao.texto, fala: item.decisao.fala, motivo: item.decisao.motivo});
+			item.decisao.acao = fallback.id;
+		}
 		// O QUE ESTE SER ESTÁ FAZENDO AGORO — espelho do mundo para o
 		// observador (o visualizador mostra a atividade real, não uma regra).
 		ser.acao=item.decisao.acao;
