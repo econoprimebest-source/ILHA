@@ -202,9 +202,9 @@
     </div>
     <div id="top-actions">
       <div id="view-mode-selector" style="display:inline-flex; align-items:center; background:rgba(8,20,34,0.92); border:1px solid #1e3a5f; border-radius:12px; padding:3px; gap:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5);">
-        <button type="button" id="btn-mode-25d" class="mode-pill active" onclick="setVisualMode('25d')" title="Modo Atual (2.5D Isométrico PixiJS com Y-sorting atrás das casas)">🗺️ Modo Atual (2.5D)</button>
+        <button type="button" id="btn-mode-rpg" class="mode-pill active" onclick="setVisualMode('rpg')" style="font-weight:700;" title="Novo Mapa RPG 2D Top-Down: Ilustrado, Figuras de Ações, Quebra-Cabeça da Casa e Expansão de Mapas">⚔️ Mapa RPG 2D (Top-Down)</button>
+        <button type="button" id="btn-mode-25d" class="mode-pill" onclick="setVisualMode('25d')" title="Modo 2.5D Isométrico PixiJS">🗺️ Modo 2.5D</button>
         <button type="button" id="btn-mode-3d" class="mode-pill" onclick="setVisualMode('3d')" title="Modo 3D Real (GLB Colab, tubarão submerso, sem blocos geométricos)">🌐 Modo 3D</button>
-        <button type="button" id="btn-mode-rpg" class="mode-pill" onclick="setVisualMode('rpg')" title="Novo Mapa RPG em Camadas Tiled com colisão real (não andar na água, entrar nas casas)">⚔️ Modo RPG (Camadas)</button>
       </div>
       <button id="btn-ondemand" title="Disparar 1 ciclo da Ilha em modo On-Demand agora (mantendo pausa automática)">&#9654; Ciclo On-Demand</button>
       <button id="btn-predador-rapido" title="Soltar um predador feroz imediatamente na ilha para testar a reação livre dos habitantes">&#128058; Soltar Predador</button>
@@ -740,7 +740,8 @@ async function fetchState(){
   }catch(e){ console.error('Erro fetch:', e); }
 }
 
-let modoVisualAtual = '25d'; // '25d' | '3d' | 'rpg'
+const _urlParams = (typeof window !== 'undefined' && window.location) ? new URLSearchParams(window.location.search) : null;
+let modoVisualAtual = (_urlParams && _urlParams.get('modo')) ? _urlParams.get('modo') : 'rpg'; // 'rpg' (Novo Mapa 2D Top-Down padrão) | '25d' | '3d'
 
 window.setVisualMode = function(modo){
   modoVisualAtual = modo;
@@ -789,6 +790,14 @@ window.setVisualMode = function(modo){
     }
   }
 };
+
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    if (typeof window.setVisualMode === 'function') {
+      window.setVisualMode(modoVisualAtual);
+    }
+  }, 120);
+});
 
 window.toggleModo3D = function(){
   setVisualMode(modoVisualAtual === '3d' ? '25d' : '3d');

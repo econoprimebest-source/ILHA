@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 85" width="100" height="85">
+  <!-- Sombra no solo -->
+  <ellipse cx="50" cy="72" rx="46" ry="14" fill="#000" opacity="0.35"/>
+  <!-- Paredes e Alicerce embaixo -->
+  <polygon points="18,54 52,70 52,40 18,24" fill="#78350f" stroke="#451a03" stroke-width="1.2"/>
+  <polygon points="52,70 84,54 84,24 52,40" fill="#92400e" stroke="#451a03" stroke-width="1.2"/>
+  <!-- Porta aberta com luz quente -->
+  <polygon points="60,64 72,58 72,40 60,46" fill="#fef08a" stroke="#451a03" stroke-width="1.5"/>
+  <!-- Caibros Estruturais do Telhado em duas águas -->
+  <line x1="14" y1="28" x2="52" y2="6" stroke="#b45309" stroke-width="3" stroke-linecap="round"/>
+  <line x1="52" y1="6" x2="88" y2="28" stroke="#b45309" stroke-width="3" stroke-linecap="round"/>
+  <line x1="52" y1="6" x2="52" y2="38" stroke="#78350f" stroke-width="2.5"/>
+  <!-- Ripas e Esteiras de Sapê/Telhas sendo colocadas (Metade pronta, metade visível os caibros) -->
+  <!-- Água esquerda do telhado (pronta com esteiras de palha/telhas) -->
+  <polygon points="14,28 52,6 52,38 18,52" fill="#d97706" stroke="#78350f" stroke-width="1.5"/>
+  <line x1="22" y1="36" x2="52" y2="18" stroke="#b45309" stroke-width="1.5"/>
+  <line x1="20" y1="44" x2="52" y2="28" stroke="#b45309" stroke-width="1.5"/>
+  <!-- Água direita do telhado (em obras com caibros aparentes e feixes sendo trançados) -->
+  <polygon points="52,6 88,28 76,34 52,18" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/>
+  <!-- Caibros expostos -->
+  <line x1="58" y1="12" x2="80" y2="38" stroke="#78350f" stroke-width="2"/>
+  <line x1="64" y1="16" x2="84" y2="44" stroke="#78350f" stroke-width="2"/>
+  <line x1="70" y1="20" x2="88" y2="50" stroke="#78350f" stroke-width="2"/>
+  <!-- Feixe de sapê / telhas no topo da cumeeira -->
+  <rect x="46" y="4" width="12" height="4" rx="2" fill="#fef08a" stroke="#854d0e" stroke-width="1"/>
+  <!-- Escada de madeira apoiada no telhado -->
+  <line x1="30" y1="68" x2="38" y2="26" stroke="#b45309" stroke-width="2"/>
+  <line x1="36" y1="71" x2="44" y2="29" stroke="#b45309" stroke-width="2"/>
+  <line x1="32" y1="58" x2="38" y2="60" stroke="#78350f" stroke-width="1.5"/>
+  <line x1="34" y1="48" x2="40" y2="50" stroke="#78350f" stroke-width="1.5"/>
+  <line x1="36" y1="38" x2="42" y2="40" stroke="#78350f" stroke-width="1.5"/>
+</svg>

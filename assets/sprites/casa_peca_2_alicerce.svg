@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="100" height="80">
+  <!-- Sombra no solo -->
+  <ellipse cx="50" cy="58" rx="44" ry="16" fill="#000" opacity="0.3"/>
+  <!-- Alicerce de Pedra Assentada nos 4 lados -->
+  <!-- Base de pedra esquerda-trás -->
+  <polygon points="18,48 48,34 52,38 22,52" fill="#475569" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- Base de pedra direita-trás -->
+  <polygon points="48,34 82,48 78,52 48,38" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- Base de pedra esquerda-frente -->
+  <polygon points="18,48 52,64 52,70 18,54" fill="#334155" stroke="#0f172a" stroke-width="1.5"/>
+  <!-- Base de pedra direita-frente -->
+  <polygon points="52,64 82,48 82,54 52,70" fill="#475569" stroke="#0f172a" stroke-width="1.5"/>
+  <!-- Textura de blocos de rocha no alicerce -->
+  <line x1="28" y1="52" x2="28" y2="58" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="38" y1="57" x2="38" y2="63" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="62" y1="63" x2="62" y2="57" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="72" y1="58" x2="72" y2="52" stroke="#1e293b" stroke-width="1.2"/>
+  <!-- Vigas e Pilares Mestres de Madeira erguidos nos cantos -->
+  <rect x="16" y="24" width="6" height="26" rx="1.5" fill="#92400e" stroke="#451a03" stroke-width="1.2"/>
+  <rect x="46" y="10" width="6" height="26" rx="1.5" fill="#78350f" stroke="#451a03" stroke-width="1.2"/>
+  <rect x="80" y="24" width="6" height="26" rx="1.5" fill="#92400e" stroke="#451a03" stroke-width="1.2"/>
+  <rect x="49" y="38" width="6" height="28" rx="1.5" fill="#b45309" stroke="#451a03" stroke-width="1.2"/>
+  <!-- Vigas horizontais de amarração superior -->
+  <line x1="19" y1="26" x2="49" y2="12" stroke="#b45309" stroke-width="3" stroke-linecap="round"/>
+  <line x1="49" y1="12" x2="83" y2="26" stroke="#92400e" stroke-width="3" stroke-linecap="round"/>
+</svg>

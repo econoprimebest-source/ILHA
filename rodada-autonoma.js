@@ -188,18 +188,20 @@ async function rodada(estado,opcoes={}){
 			ser.acaoEmCurso.ciclosRestantes--;
 			const restam = ser.acaoEmCurso.ciclosRestantes;
 			const nomeAcao = ser.acaoEmCurso.acao;
+			const continua = restam > 0;
 			decisoes.push({
 				ser,
 				decisao: {
 					acao: nomeAcao,
-					motivo: `Em andamento: ${nomeAcao} (restam ${restam} ciclos para concluir)`,
+					motivo: `Em andamento: ${nomeAcao} (${continua ? restam + ' ciclos restantes' : 'concluindo etapa'})`,
 					origem: 'duracao_acao',
-					...(ser.acaoEmCurso.extra || {})
+					duracaoContinua: continua,
+					...(continua ? (ser.acaoEmCurso.extra || {}) : {})
 				},
 				percepcao: perceber(snapshotMundo, ser),
-				duracaoContinua: restam > 0
+				duracaoContinua: continua
 			});
-			if (restam === 0) {
+			if (!continua) {
 				ser.acaoEmCurso = null;
 			}
 			continue;

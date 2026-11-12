@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90" width="100" height="90">
+  <!-- Sombra no solo -->
+  <ellipse cx="50" cy="78" rx="38" ry="8" fill="#000" opacity="0.35"/>
+  <!-- Toco de Carvalho sendo cortado -->
+  <path d="M 32 76 L 36 46 L 56 46 L 60 76 Z" fill="#78350f" stroke="#451a03" stroke-width="2"/>
+  <ellipse cx="46" cy="46" rx="10" ry="4" fill="#a16207" stroke="#451a03" stroke-width="1.5"/>
+  <ellipse cx="46" cy="46" rx="5" ry="2" fill="none" stroke="#78350f" stroke-width="1"/>
+  <!-- Fenda do Golpe de Machado no Tronco -->
+  <polygon points="46,46 48,58 45,58" fill="#451a03"/>
+  <!-- Machado com Cabo e Lâmina de Aço Golpeando -->
+  <g transform="rotate(-25 46 42)">
+    <!-- Cabo de Madeira envernizada -->
+    <rect x="44" y="10" width="5" height="52" rx="2" fill="#d97706" stroke="#78350f" stroke-width="1.2"/>
+    <!-- Empunhadura de couro -->
+    <rect x="43.5" y="48" width="6" height="14" rx="1" fill="#92400e"/>
+    <!-- Lâmina de Aço Afiada -->
+    <path d="M 46 16 L 32 12 C 28 20, 28 28, 33 34 L 46 30 Z" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+    <!-- Corte polido e reflexo -->
+    <path d="M 33 13 C 30 20, 30 26, 34 32" stroke="#ffffff" stroke-width="1.2" fill="none"/>
+  </g>
+  <!-- Lascas de Madeira Voando pelo Impacto -->
+  <polygon points="36,36 30,32 34,39" fill="#d97706"/>
+  <polygon points="58,34 64,30 62,38" fill="#f59e0b"/>
+  <polygon points="54,26 58,22 57,28" fill="#b45309"/>
+  <!-- Pilha de Toras de Madeira já cortadas ao lado -->
+  <rect x="62" y="66" width="26" height="8" rx="3" fill="#854d0e" stroke="#451a03" stroke-width="1"/>
+  <circle cx="86" cy="70" r="3.5" fill="#d97706" stroke="#451a03" stroke-width="0.8"/>
+  <rect x="64" y="60" width="22" height="7" rx="3" fill="#92400e" stroke="#451a03" stroke-width="1"/>
+  <circle cx="84" cy="63.5" r="3" fill="#b45309" stroke="#451a03" stroke-width="0.8"/>
+</svg>

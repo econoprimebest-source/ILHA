@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 90" width="110" height="90">
+  <defs>
+    <radialGradient id="torchFlame" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="35%" stop-color="#f97316"/>
+      <stop offset="70%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#7f1d1d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glowFogo" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <!-- Sombra no solo -->
+  <ellipse cx="55" cy="80" rx="46" ry="8" fill="#000" opacity="0.4"/>
+  <!-- Tocha Flamejante em punho -->
+  <g filter="url(#glowFogo)">
+    <!-- Luz ambiente da tocha -->
+    <circle cx="34" cy="30" r="22" fill="url(#torchFlame)" opacity="0.4"/>
+    <!-- Chamas da Tocha -->
+    <path d="M 34 14 C 26 22, 28 32, 34 38 C 40 32, 42 22, 34 14 Z" fill="#ef4444"/>
+    <path d="M 34 18 C 29 24, 30 30, 34 35 C 38 30, 39 24, 34 18 Z" fill="#f97316"/>
+    <circle cx="34" cy="28" r="5" fill="#fef08a"/>
+  </g>
+  <!-- Cabo da Tocha -->
+  <rect x="32" y="36" width="4" height="34" rx="2" fill="#78350f" stroke="#451a03" stroke-width="1"/>
+  <!-- Brasas da tocha no topo -->
+  <rect x="30" y="34" width="8" height="5" rx="1.5" fill="#451a03"/>
+  <!-- Fagulhas subindo -->
+  <circle cx="36" cy="10" r="1.2" fill="#fef08a"/>
+  <circle cx="30" cy="8" r="1" fill="#f97316"/>
+  <!-- Onça-Pintada / Pantera recuando nas sombras -->
+  <g opacity="0.95">
+    <!-- Silhueta da Cabeça da Onça -->
+    <path d="M 72 38 C 76 30, 84 28, 90 32 C 96 36, 98 44, 94 52 C 90 60, 80 62, 72 58 C 66 54, 66 42, 72 38 Z" fill="#1c1917" stroke="#dc2626" stroke-width="1"/>
+    <!-- Orelhas pontudas em alerta -->
+    <polygon points="75,34 78,22 84,30" fill="#292524" stroke="#451a03" stroke-width="1"/>
+    <polygon points="88,30 95,24 96,35" fill="#292524" stroke="#451a03" stroke-width="1"/>
+    <!-- Olhos Amarelos Faiscantes na escuridão -->
+    <ellipse cx="76" cy="42" rx="2.8" ry="2" fill="#facc15"/>
+    <ellipse cx="85" cy="44" rx="2.8" ry="2" fill="#facc15"/>
+    <!-- Pupilas em fenda vertical predatória -->
+    <line x1="76" y1="40.5" x2="76" y2="43.5" stroke="#000000" stroke-width="1.2"/>
+    <line x1="85" y1="42.5" x2="85" y2="45.5" stroke="#000000" stroke-width="1.2"/>
+    <!-- Focinho e Presas à mostra em rugido -->
+    <polygon points="78,48 82,48 80,51" fill="#451a03"/>
+    <polygon points="76,52 78,56 79,52" fill="#ffffff"/>
+    <polygon points="81,52 82,56 84,52" fill="#ffffff"/>
+    <!-- Corpo curvado recuando -->
+    <path d="M 88 48 C 96 52, 104 62, 102 74 L 88 74 C 84 66, 86 56, 88 48 Z" fill="#1c1917"/>
+  </g>
+  <!-- Símbolo de Tensão / Garra / Alerta -->
+  <path d="M 52 40 L 56 46 L 50 48" stroke="#ef4444" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M 56 34 L 62 40 L 56 42" stroke="#ef4444" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+</svg>

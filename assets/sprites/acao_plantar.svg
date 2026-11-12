@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90" width="100" height="90">
+  <!-- Sombra no solo -->
+  <ellipse cx="50" cy="80" rx="38" ry="8" fill="#000" opacity="0.35"/>
+  <!-- Canteiro de Terra Fértil Arada -->
+  <ellipse cx="50" cy="74" rx="36" ry="12" fill="#5c2e0b" stroke="#381a05" stroke-width="1.5"/>
+  <ellipse cx="50" cy="74" rx="28" ry="8" fill="#78350f"/>
+  <!-- Sulcos da terra -->
+  <path d="M 26 73 Q 50 78, 74 73" stroke="#451a03" stroke-width="1.5" fill="none"/>
+  <path d="M 30 76 Q 50 81, 70 76" stroke="#451a03" stroke-width="1.2" fill="none"/>
+  <!-- Brotinhos Verdes Nascendo -->
+  <g>
+    <!-- Broto 1 -->
+    <path d="M 36 72 Q 34 62, 38 56 Q 42 62, 38 72 Z" fill="#22c55e"/>
+    <path d="M 38 60 Q 32 58, 30 62 Q 34 66, 38 64" fill="#4ade80"/>
+    <!-- Broto 2 (Central mais alto com duas folhinhas) -->
+    <path d="M 50 72 L 50 52" stroke="#15803d" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 50 56 Q 42 50, 42 44 Q 50 48, 50 54" fill="#22c55e"/>
+    <path d="M 50 54 Q 58 48, 58 42 Q 50 46, 50 52" fill="#4ade80"/>
+    <!-- Broto 3 -->
+    <path d="M 64 72 Q 62 64, 66 58 Q 70 64, 66 72 Z" fill="#22c55e"/>
+    <path d="M 66 62 Q 72 60, 74 64 Q 70 68, 66 66" fill="#86efac"/>
+  </g>
+  <!-- Regador Rústico derramando água -->
+  <g transform="translate(48, 12) rotate(25)">
+    <!-- Corpo do Regador -->
+    <rect x="0" y="8" width="22" height="18" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="1.2"/>
+    <!-- Bico -->
+    <polygon points="22,14 36,8 36,12 22,20" fill="#0369a1"/>
+    <!-- Crivo do bico -->
+    <ellipse cx="36" cy="10" rx="2" ry="3.5" fill="#38bdf8"/>
+    <!-- Alça -->
+    <path d="M 2 8 C -4 0, -4 24, 2 24" fill="none" stroke="#0369a1" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <!-- Gotas d'Água Cristalinas Caindo nos Brotos -->
+  <circle cx="68" cy="40" r="1.5" fill="#38bdf8"/>
+  <circle cx="64" cy="46" r="1.8" fill="#67e8f9"/>
+  <circle cx="56" cy="48" r="1.4" fill="#bae6fd"/>
+  <circle cx="60" cy="54" r="1.6" fill="#38bdf8"/>
+</svg>

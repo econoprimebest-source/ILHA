@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 85" width="100" height="85">
+  <!-- Sombra no solo -->
+  <ellipse cx="50" cy="68" rx="44" ry="14" fill="#000" opacity="0.32"/>
+  <!-- Alicerce de Pedra -->
+  <polygon points="18,54 52,70 52,75 18,59" fill="#334155" stroke="#0f172a" stroke-width="1.2"/>
+  <polygon points="52,70 84,54 84,59 52,75" fill="#475569" stroke="#0f172a" stroke-width="1.2"/>
+  <!-- Parede Esquerda de Toras Sobrepostas -->
+  <polygon points="18,54 52,70 52,38 18,22" fill="#78350f" stroke="#451a03" stroke-width="1.5"/>
+  <!-- Linhas horizontais das toras de madeira -->
+  <line x1="18" y1="30" x2="52" y2="46" stroke="#451a03" stroke-width="1.5"/>
+  <line x1="18" y1="38" x2="52" y2="54" stroke="#451a03" stroke-width="1.5"/>
+  <line x1="18" y1="46" x2="52" y2="62" stroke="#451a03" stroke-width="1.5"/>
+  <!-- Janela rústica na parede esquerda -->
+  <polygon points="26,36 38,42 38,52 26,46" fill="#1e293b" stroke="#b45309" stroke-width="1.5"/>
+  <line x1="32" y1="39" x2="32" y2="49" stroke="#b45309" stroke-width="1"/>
+  <!-- Parede Direita de Toras Sobrepostas com Porta -->
+  <polygon points="52,70 84,54 84,22 52,38" fill="#92400e" stroke="#451a03" stroke-width="1.5"/>
+  <line x1="52" y1="46" x2="84" y2="30" stroke="#451a03" stroke-width="1.5"/>
+  <line x1="52" y1="54" x2="84" y2="38" stroke="#451a03" stroke-width="1.5"/>
+  <line x1="52" y1="62" x2="84" y2="46" stroke="#451a03" stroke-width="1.5"/>
+  <!-- Vão da Porta de Entrada (madeira escura) -->
+  <polygon points="60,64 72,58 72,40 60,46" fill="#1c1917" stroke="#451a03" stroke-width="1.8"/>
+  <!-- Andaime de Obra ao lado da casa -->
+  <line x1="88" y1="64" x2="88" y2="28" stroke="#b45309" stroke-width="2.5"/>
+  <line x1="94" y1="60" x2="94" y2="24" stroke="#b45309" stroke-width="2.5"/>
+  <line x1="86" y1="42" x2="96" y2="42" stroke="#d97706" stroke-width="2"/>
+  <line x1="88" y1="54" x2="94" y2="32" stroke="#78350f" stroke-width="1.2"/>
+</svg>

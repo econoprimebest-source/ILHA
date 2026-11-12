@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 95" width="110" height="95">
+  <!-- Sombra no solo -->
+  <ellipse cx="55" cy="84" rx="48" ry="10" fill="#000" opacity="0.4"/>
+  <!-- Térreo em Pedra e Toras -->
+  <polygon points="20,62 55,78 55,46 20,32" fill="#475569" stroke="#1e293b" stroke-width="1.5"/>
+  <polygon points="55,78 90,62 90,32 55,46" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- Porta de Madeira Maciça -->
+  <polygon points="62,72 74,66 74,48 62,54" fill="#78350f" stroke="#451a03" stroke-width="1.5"/>
+  <circle cx="71" cy="58" r="1.2" fill="#facc15"/>
+  <!-- Segundo Andar (Sobrado) -->
+  <polygon points="26,38 55,50 55,24 26,14" fill="#92400e" stroke="#451a03" stroke-width="1.5"/>
+  <polygon points="55,50 84,38 84,14 55,24" fill="#b45309" stroke="#451a03" stroke-width="1.5"/>
+  <!-- Janelas envidraçadas no andar superior com luz acolhedora -->
+  <polygon points="34,22 44,26 44,34 34,30" fill="#fef08a" stroke="#78350f" stroke-width="1.2"/>
+  <polygon points="66,32 76,28 76,20 66,24" fill="#fef08a" stroke="#78350f" stroke-width="1.2"/>
+  <!-- Varanda com Parapeito e Colunas de Madeira -->
+  <polygon points="18,48 55,62 55,56 18,42" fill="#b45309" stroke="#78350f" stroke-width="1.2"/>
+  <line x1="24" y1="44" x2="24" y2="38" stroke="#78350f" stroke-width="1.5"/>
+  <line x1="34" y1="48" x2="34" y2="42" stroke="#78350f" stroke-width="1.5"/>
+  <line x1="44" y1="52" x2="44" y2="46" stroke="#78350f" stroke-width="1.5"/>
+  <!-- Telhado de Telhas Coloniais Douradas -->
+  <polygon points="22,18 55,4 92,18 55,30" fill="#d97706" stroke="#78350f" stroke-width="2"/>
+  <!-- Lampiões acesos na entrada e varanda -->
+  <circle cx="58" cy="50" r="2.5" fill="#fef08a"/>
+  <circle cx="58" cy="50" r="5" fill="#facc15" opacity="0.3"/>
+  <circle cx="20" cy="40" r="2" fill="#fef08a"/>
+  <!-- Chaminé com fumaça -->
+  <rect x="76" y="2" width="6" height="12" fill="#334155" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="79" cy="-2" r="3" fill="#cbd5e1" opacity="0.6"/>
+  <circle cx="83" cy="-7" r="4" fill="#e2e8f0" opacity="0.4"/>
+</svg>

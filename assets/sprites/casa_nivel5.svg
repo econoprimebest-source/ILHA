@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 105" width="120" height="105">
+  <!-- Sombra no solo -->
+  <ellipse cx="60" cy="94" rx="54" ry="10" fill="#000" opacity="0.45"/>
+  <!-- Base de Cantaria e Rocha Esculpida -->
+  <polygon points="18,72 60,88 60,52 18,38" fill="#334155" stroke="#0f172a" stroke-width="1.8"/>
+  <polygon points="60,88 102,72 102,38 60,52" fill="#475569" stroke="#0f172a" stroke-width="1.8"/>
+  <!-- Porta Nobre com Arco de Pedra -->
+  <path d="M 68 80 L 80 74 L 80 56 Q 74 52, 68 56 Z" fill="#78350f" stroke="#facc15" stroke-width="1.5"/>
+  <!-- Torre de Vigia no Canto Esquerdo -->
+  <polygon points="16,42 34,48 34,16 16,10" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
+  <!-- Mirante da Torre -->
+  <rect x="14" y="8" width="22" height="8" rx="1.5" fill="#475569" stroke="#0f172a" stroke-width="1.2"/>
+  <!-- Telhado cônico da Torre com Bandeira da Ilha -->
+  <polygon points="25,-2 12,8 38,8" fill="#dc2626" stroke="#991b1b" stroke-width="1.5"/>
+  <!-- Mastro e Bandeira Esvoaçante -->
+  <line x1="25" y1="-2" x2="25" y2="-12" stroke="#facc15" stroke-width="1.5"/>
+  <polygon points="25,-12 36,-8 25,-4" fill="#38bdf8" stroke="#0284c7" stroke-width="1"/>
+  <!-- Mansarda e Segundo Andar Principal -->
+  <polygon points="34,42 66,54 66,28 34,18" fill="#92400e" stroke="#451a03" stroke-width="1.5"/>
+  <polygon points="66,54 98,42 98,18 66,28" fill="#b45309" stroke="#451a03" stroke-width="1.5"/>
+  <!-- Janelas em arco iluminadas -->
+  <rect x="42" y="24" width="8" height="12" rx="3" fill="#fef08a" stroke="#78350f" stroke-width="1"/>
+  <rect x="78" y="24" width="8" height="12" rx="3" fill="#fef08a" stroke="#78350f" stroke-width="1"/>
+  <!-- Telhado Principal Majestoso -->
+  <polygon points="30,22 66,6 104,22 66,34" fill="#b45309" stroke="#78350f" stroke-width="2"/>
+  <!-- Chaminé dupla com fumaça -->
+  <rect x="86" y="4" width="8" height="14" fill="#334155" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="90" cy="-1" r="3.5" fill="#e2e8f0" opacity="0.6"/>
+  <circle cx="95" cy="-7" r="4.5" fill="#f8fafc" opacity="0.4"/>
+  <!-- Canteiro de Flores e Jardim na Entrada -->
+  <ellipse cx="64" cy="90" rx="12" ry="4" fill="#15803d"/>
+  <circle cx="58" cy="89" r="2" fill="#ef4444"/>
+  <circle cx="63" cy="88" r="2.2" fill="#facc15"/>
+  <circle cx="69" cy="89" r="2" fill="#38bdf8"/>
+</svg>
