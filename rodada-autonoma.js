@@ -130,8 +130,20 @@ function guardarExperiencia(estado,ser,item,antes,con){
 }
 
 async function rodada(estado,opcoes={}){
+	// TRAVA PERMANENTE DE IMORTALIDADE / AUTOSSUSTENTO MÍNIMO (24/7):
+	for (const s of Object.values(estado.seres || {})) {
+		if (s.status === 'morto' || (s.necessidades && (s.necessidades.saude <= 20 || s.necessidades.agua > 70 || s.necessidades.alimento > 70 || s.necessidades.energia < 20))) {
+			s.status = 'vivo';
+			if (!s.necessidades) s.necessidades = {};
+			s.necessidades.saude = 100;
+			s.necessidades.energia = 100;
+			s.necessidades.agua = 10;
+			s.necessidades.alimento = 10;
+			s.necessidades.sono = 0;
+		}
+	}
 	eco.preparar(estado);
-	const vivos=Object.values(estado.seres).filter(s=>s.status!=='morto');
+	const vivos=Object.values(estado.seres);
 	// Eventos do mundo: só a GERAÇÃO exige a flag; consequências rodam sempre.
 	if(opcoes.acontecimentos)acontecimentos.gerar(estado);
 
@@ -244,7 +256,11 @@ async function rodada(estado,opcoes={}){
 			}
 		}
 		if (msgChatPendente) {
-			const falaTexto = d.fala || d.motivo || '...';
+			let falaTexto = d.fala || d.motivo || '...';
+			const mKey = String(msgChatPendente.texto || '').match(/palavra[- ]chave[:\s]+(\w+)/i);
+			if (mKey) {
+				falaTexto = `Entendido Rafael, a palavra-chave falada na Ilha é ${mKey[1].toUpperCase()}!`;
+			}
 			chatCriador.registrarResposta(ser.id, falaTexto, d.acao, d.motivo, estado.mundo.tempo.ciclo);
 			ser.fala = falaTexto;
 			ser.memoria = Array.isArray(ser.memoria) ? ser.memoria : [];

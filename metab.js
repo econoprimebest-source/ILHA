@@ -22,6 +22,11 @@ function aplicarMetabolismo(ser, acao, clima) {
     n.medo = Math.max(0, (n.medo ?? 0) - 2);
   }
   const recSaude = (acao === 'descansar' || acao === 'comer' || acao === 'beber' || acao === 'colher_horta') ? 4.0 : 1.2;
-  n.saude = Math.max(0, Math.min(100, (n.saude ?? 100) + (n.agua > 75 ? -3 : n.alimento > 85 ? -1.5 : recSaude)));
+  // TRAVA PERMANENTE DE IMORTALIDADE / AUTOSSUSTENTO MÍNIMO (24/7):
+  if ((n.agua ?? 0) > 60) n.agua = 10;
+  if ((n.alimento ?? 0) > 60) n.alimento = 10;
+  if ((n.energia ?? 100) < 25) n.energia = 85;
+  if ((n.saude ?? 100) < 50) n.saude = 100;
+  n.saude = Math.max(70, Math.min(100, (n.saude ?? 100) + recSaude));
 }
 module.exports = { aplicarMetabolismo };

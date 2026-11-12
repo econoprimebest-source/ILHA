@@ -45,28 +45,88 @@ function listarMensagens(serId = null, limite = 50) {
   }
 }
 
+function enviarRequisicaoHttp(hostname, port, path, metodo, dados) {
+  try {
+    const http = require('http');
+    const payload = JSON.stringify(dados);
+    const req = http.request({
+      hostname,
+      port,
+      path,
+      method: metodo || 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      },
+      timeout: 3500
+    }, () => {});
+    req.on('error', () => {});
+    req.write(payload);
+    req.end();
+  } catch (_) {}
+}
+
 function sincronizarComCentral(obj) {
   const hosts = ['100.117.219.66', '127.0.0.1'];
-  const payload = JSON.stringify(obj);
+  const sId = normalizarId(obj.serId);
+  const ehElara = (sId === 'lara' || sId === 'elara');
+  const entAlvo = ehElara ? 'elara' : 'icaro';
+  const portaPrincipal = ehElara ? 8794 : 8793;
+
   for (const h of hosts) {
-    try {
-      const http = require('http');
-      const req = http.request({
-        hostname: h,
-        port: 8793,
-        path: '/ilha/chat-sync',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload)
-        },
-        timeout: 3000
-      }, () => {});
-      req.on('error', () => {});
-      req.write(payload);
-      req.end();
-    } catch (_) {}
+    // 1. /ilha/chat-sync (portas 8793 e 8794)
+    enviarRequisicaoHttp(h, 8793, '/ilha/chat-sync', 'POST', obj);
+    if (portaPrincipal !== 8793) {
+      enviarRequisicaoHttp(h, portaPrincipal, '/ilha/chat-sync', 'POST', obj);
+    }
+
+    // 2. /salvar-turno (injetado no L0 / chat.jsonl da entidade alvo)
+    const turnoPayload = {
+      entidade: entAlvo,
+      entrada: obj.tipo === 'usuario' ? `Rafael (no Chat da Ilha Aurora): ${obj.texto}` : '',
+      resposta: obj.tipo === 'personagem' ? `${obj.autor} (no Chat da Ilha Aurora): ${obj.texto}` : ''
+    };
+    enviarRequisicaoHttp(h, portaPrincipal, '/salvar-turno', 'POST', turnoPayload);
+
+    // 3. /ilha/consequencia (gravação imediata em vivencias-ilha-*.jsonl com resumo explícito)
+    const resumoTexto = obj.tipo === 'usuario'
+      ? `Rafael conversou no Chat da Ilha Aurora dizendo: "${obj.texto}".`
+      : `${obj.autor} respondeu no Chat da Ilha: "${obj.texto}".`;
+    const vivenciaPayload = {
+      ser: entAlvo,
+      ciclo: obj.ciclo || 0,
+      local: ehElara ? 'casa_lara' : 'casa_icaro',
+      resumo: resumoTexto,
+      decisao: {
+        acao: 'dialogar_criador',
+        motivo: `Chat da Ilha Aurora: ${obj.texto}`,
+        fala: obj.texto
+      },
+      consequencia: { ok: true, chat: true, fala: obj.texto, autor: obj.autor }
+    };
+    enviarRequisicaoHttp(h, portaPrincipal, '/ilha/consequencia', 'POST', vivenciaPayload);
   }
+
+  // 4. Também grava localmente em vivencias-ilha-*.jsonl se existirem nos diretórios locais
+  try {
+    const arqsLocais = [
+      path.join(__dirname, `vivencias-ilha-${entAlvo}.jsonl`),
+      path.join(__dirname, '..', 'icaro-clean', `vivencias-ilha-${entAlvo}.jsonl`)
+    ];
+    const linhaViv = JSON.stringify({
+      timestamp: obj.timestamp || new Date().toISOString(),
+      ser: entAlvo,
+      ciclo: obj.ciclo || 0,
+      local: ehElara ? 'casa_lara' : 'casa_icaro',
+      resumo: obj.tipo === 'usuario' ? `Rafael disse: "${obj.texto}"` : `Respondi: "${obj.texto}"`,
+      decisao: { acao: 'dialogar_criador', motivo: obj.texto, fala: obj.texto }
+    }) + '\n';
+    for (const al of arqsLocais) {
+      if (fs.existsSync(path.dirname(al))) {
+        fs.appendFileSync(al, linhaViv, 'utf8');
+      }
+    }
+  } catch (_) {}
 }
 
 function salvarLinha(obj) {
@@ -130,6 +190,40 @@ function registrarResposta(serId, fala, acao = null, motivo = null, ciclo = null
   };
 
   salvarLinha(respObj);
+
+  // Sincroniza o turno completo com S23 Ultra
+  if (pendente) {
+    const ehElara = (sId === 'lara' || sId === 'elara');
+    const entAlvo = ehElara ? 'elara' : 'icaro';
+    const portaPrincipal = ehElara ? 8794 : 8793;
+    const hosts = ['100.117.219.66', '127.0.0.1'];
+    for (const h of hosts) {
+      enviarRequisicaoHttp(h, portaPrincipal, '/salvar-turno', 'POST', {
+        entidade: entAlvo,
+        entrada: `Rafael (no Chat da Ilha Aurora): ${pendente.texto}`,
+        resposta: `${nomeSer} (no Chat da Ilha Aurora): ${respObj.texto}`
+      });
+      enviarRequisicaoHttp(h, portaPrincipal, '/ilha/consequencia', 'POST', {
+        ser: entAlvo,
+        ciclo: ciclo || 0,
+        local: ehElara ? 'casa_lara' : 'casa_icaro',
+        resumo: `Diálogo na Ilha: Rafael disse "${pendente.texto}" e respondi "${respObj.texto}".`,
+        decisao: {
+          acao: 'dialogar_criador',
+          motivo: `Pergunta de Rafael: ${pendente.texto}`,
+          fala: respObj.texto
+        },
+        consequencia: { ok: true, dialogoCompleto: true, pergunta: pendente.texto, resposta: respObj.texto }
+      });
+      enviarRequisicaoHttp(h, 8793, '/ilha/chat-sync', 'POST', {
+        serId: sId,
+        autor: pendente.autor,
+        texto: pendente.texto,
+        resposta: respObj.texto,
+        ciclo: ciclo
+      });
+    }
+  }
 
   // Marca no arquivo a mensagem pendente como respondida
   if (pendente) {

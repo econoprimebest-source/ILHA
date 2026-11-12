@@ -23,8 +23,32 @@
   canvas { width:100%; height:100%; border-radius:18px; }
   #header { position:absolute; left:16px; top:16px; z-index:10; padding:13px 16px; border-radius:14px; background:rgba(8,24,39,.86); border:1px solid #334155; font-size:14px; pointer-events:none; backdrop-filter:blur(12px); box-shadow:0 10px 28px #02061780; }
   #cycle-info { display:inline-block; color:#dbeafe; font-weight:600; letter-spacing:.02em; }
-  #top-actions { position:absolute; right:16px; top:16px; z-index:11; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; max-width:calc(100% - 250px); }
+  #top-actions { position:absolute; right:16px; top:16px; z-index:11; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; max-width:calc(100% - 250px); transition:all .25s ease; }
   #top-actions button { position:static; margin:0; }
+  #menu-toggle-btn {
+    display: none;
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 25;
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #f8fafc;
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    align-items: center;
+    gap: 6px;
+    transition: all .2s ease;
+  }
+  #menu-toggle-btn:hover {
+    background: rgba(30, 41, 59, 0.96);
+    border-color: #38bdf8;
+  }
   #btn-ondemand { padding:10px 15px; border-radius:12px; border:1px solid #059669; background:linear-gradient(135deg,rgba(5,150,105,.94),rgba(16,185,129,.94)); color:#ecfdf5; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #064e3b70; transition:all .2s ease; }
   #btn-ondemand:hover { background:linear-gradient(135deg,#059669,#10b981); transform:translateY(-1px); box-shadow:0 12px 30px #10b98166; }
   #btn-predador-rapido { padding:10px 14px; border-radius:12px; border:1px solid #dc2626; background:linear-gradient(135deg,rgba(153,27,27,.94),rgba(127,29,29,.94)); color:#fee2e2; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #450a0a90; transition:all .2s ease; }
@@ -125,45 +149,45 @@
   #cave-modal[hidden], #predador-modal[hidden] { display:none; }
   @media (max-width:850px) {
     body { overflow:auto; }
-    #layout { height:auto; min-height:100dvh; grid-template-columns:1fr; grid-template-rows:minmax(55vh,65dvh) auto; }
-    #side-column { grid-template-columns:1fr 1fr; grid-template-rows:minmax(280px,auto); }
+    #layout { height:auto; min-height:100dvh; grid-template-columns:1fr; grid-template-rows:minmax(60vh,75dvh) auto; gap:8px; padding:6px; }
+    #side-column { grid-template-columns:1fr; }
+    #menu-toggle-btn { display:inline-flex; }
+    #top-actions.collapsed { display:none !important; }
     #top-actions {
-      max-width:100%;
-      right:8px;
-      top:auto;
-      bottom:52px;
-      justify-content:center;
-      background:rgba(8,24,39,0.92);
-      padding:6px 10px;
-      border-radius:14px;
-      backdrop-filter:blur(10px);
-      border:1px solid #334155;
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      left: 10px;
+      max-width: calc(100% - 20px);
+      z-index: 24;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(8, 24, 39, 0.96);
+      backdrop-filter: blur(14px);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.7);
     }
     #top-actions button {
-      padding:7px 11px;
-      font-size:11.5px;
-      border-radius:8px;
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    #view-mode-selector {
+      width: 100%;
+      justify-content: space-around;
     }
   }
   @media (max-width:560px) {
-    #layout { gap:10px; padding:8px; grid-template-rows:minmax(46vh,54dvh) auto; }
-    #side-column { grid-template-columns:1fr; grid-template-rows:auto minmax(200px,auto); }
-    #header { left:8px; top:8px; padding:8px 10px; }
-    #cycle-info { font-size:11px; }
-    #time-display { font-size:14px; }
-    .panel-section { padding:12px; }
+    #layout { gap:6px; padding:4px; grid-template-rows:minmax(55vh,70dvh) auto; }
+    #header { left:6px; top:6px; padding:6px 8px; font-size:12px; }
+    #cycle-info { font-size:10.5px; }
+    #time-display { font-size:13px; }
+    .panel-section { padding:10px; }
     #map-hint { display:none; }
-    #top-actions {
-      bottom:44px;
-      right:6px;
-      left:6px;
-      gap:4px;
-      padding:4px 6px;
-    }
-    #top-actions button {
-      padding:5px 8px;
-      font-size:10px;
-    }
   }
   .mode-pill {
     padding: 7px 12px;
@@ -200,7 +224,10 @@
       <span id="time-display">--:--</span>
       <div id="active-events-bar" style="margin-top:4px;"></div>
     </div>
-    <div id="top-actions">
+    <button id="menu-toggle-btn" onclick="toggleTopActions()" aria-label="Abrir ou fechar menu de controles" title="Menu de controles">
+      <span id="menu-toggle-icon">☰</span> Menu
+    </button>
+    <div id="top-actions" class="collapsed">
       <div id="view-mode-selector" style="display:inline-flex; align-items:center; background:rgba(8,20,34,0.92); border:1px solid #1e3a5f; border-radius:12px; padding:3px; gap:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5);">
         <button type="button" id="btn-mode-rpg" class="mode-pill active" onclick="setVisualMode('rpg')" style="font-weight:700;" title="Novo Mapa RPG 2D Top-Down: Ilustrado, Figuras de Ações, Quebra-Cabeça da Casa e Expansão de Mapas">⚔️ Mapa RPG 2D (Top-Down)</button>
         <button type="button" id="btn-mode-25d" class="mode-pill" onclick="setVisualMode('25d')" title="Modo 2.5D Isométrico PixiJS">🗺️ Modo 2.5D</button>
@@ -365,6 +392,22 @@
 
 <script>
 'use strict';
+
+window.toggleTopActions = function() {
+  const el = document.getElementById('top-actions');
+  const ic = document.getElementById('menu-toggle-icon');
+  if (!el) return;
+  el.classList.toggle('collapsed');
+  const fechado = el.classList.contains('collapsed');
+  if (ic) ic.textContent = fechado ? '☰' : '✕';
+};
+
+window.addEventListener('resize', () => {
+  const el = document.getElementById('top-actions');
+  if (el && window.innerWidth > 850) {
+    el.classList.remove('collapsed');
+  }
+});
 
 // Toast discreto no canto inferior direito (sem pop-ups bloqueantes)
 window.mostrarToast = function(msg, duracao = 3000) {
