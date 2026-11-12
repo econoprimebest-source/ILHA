@@ -16,7 +16,7 @@ const http = require('http');
 const HOST_CENTRAL_S23 = process.env.CENTRAL_HOST || process.env.ICARO_HOST || '100.117.219.66';
 const HOST_PADRAO = HOST_CENTRAL_S23;
 
-function requisicaoHttp({ host, porta, path, body, timeoutMs = 12000 }) {
+function requisicaoHttp({ host, porta, path, body, timeoutMs = 6000 }) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(body);
     const req = http.request({
@@ -89,10 +89,6 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
         });
 
         if (res && res.ok && res.decisao && res.decisao.acao) {
-          // Se o daemon remoto estiver preso em resposta estática de vigília repetitiva, aciona nível 2
-          if (typeof res.decisao.motivo === 'string' && res.decisao.motivo.includes('aguardar e observar atentamente')) {
-            throw new Error('Central em resposta estática de vigília');
-          }
           return {
             acao: res.decisao.acao,
             motivo: res.decisao.motivo || `Decidido pela Central (${nomeDisplay}).`,
