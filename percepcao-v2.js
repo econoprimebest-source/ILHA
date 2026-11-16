@@ -98,5 +98,16 @@ function perceber(estado,ser){const eco=estado.mundo.ecossistema,p=[],cl=eco.cli
       else if(md>30)p.push('A noite me deixa inquieto.');
     }
 
+    // --- PISTAS E EVENTOS SENSORIAIS DOS TRAJES MÓVEIS (REALME GT 7 / MOTO G7 PLUS) ---
+    try {
+      const { ponteSensorialGlobal } = require('./ponte-sensorial-ilha');
+      if (ponteSensorialGlobal) {
+        const pistasTraje = ponteSensorialGlobal.obterPistasFormatadas(ser.id);
+        if (pistasTraje && pistasTraje.length) {
+          for (const pt of pistasTraje) p.push(pt);
+        }
+      }
+    } catch (_) {}
+
 return [...new Set(p)]}
 module.exports={perceber,observacaoCorporal};

@@ -187,6 +187,177 @@ http.createServer((req,res)=>{
     const cc=require('./comandos-criador');
     return json(res,{ok:true,comandos:cc.listarComandos()});
   }
+  // ROTA DE INTENÇÕES E COMANDOS DE HARDWARE DOS TRAJES (MOTO G7, REALME, S23)
+  if(u.pathname==='/api/traje/intencoes'||u.pathname==='/api/traje/comando'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type, authorization');
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+    const chatCriador = require('./chat-criador');
+    const { motorTrajesVisaoGlobal } = require('./motor-trajes-visao');
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', c => { body += c; if (body.length > 32768) req.destroy(); });
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          chatCriador.despacharIntencaoTraje(payload);
+          if (payload.comando) {
+            motorTrajesVisaoGlobal.despacharComando(payload.dispositivoAlvo || 'motog7', payload.comando, payload.params || {});
+          }
+          return json(res, { ok: true, recebido: payload });
+        } catch (e) {
+          res.writeHead(400); return res.end(JSON.stringify({ ok: false, erro: e.message }));
+        }
+      });
+      return;
+    }
+    const limite = Number(u.searchParams.get('limite')) || 20;
+    return json(res, { ok: true, intencoes: chatCriador.listarIntencoesTraje(limite) });
+  }
+
+  // ROTA DE TRANSMISSÃO DE FRAMES DE CÂMERA DOS TRAJES MÓVEIS (UP TO 4MB)
+  if(u.pathname==='/api/traje/frame'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type, authorization');
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+    const { motorTrajesVisaoGlobal } = require('./motor-trajes-visao');
+
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', c => {
+        body += c;
+        if (body.length > 4 * 1024 * 1024) req.destroy(); // 4MB max
+      });
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          const disp = payload.dispositivo || payload.dispositivoAlvo || 'motog7';
+          const resultado = motorTrajesVisaoGlobal.receberFrameCamera(disp, payload);
+          return json(res, resultado);
+        } catch (e) {
+          res.writeHead(400); return res.end(JSON.stringify({ ok: false, erro: e.message }));
+        }
+      });
+      return;
+    }
+
+    // Se GET, retorna o último frame do dispositivo
+    const disp = u.searchParams.get('dispositivo') || 'motog7';
+    const traje = motorTrajesVisaoGlobal.obterTraje(disp);
+    if (!traje || !traje.ultimoFrameBase64) {
+      res.writeHead(404); return res.end(JSON.stringify({ ok: false, erro: 'Nenhum frame disponível' }));
+    }
+    return json(res, {
+      ok: true,
+      dispositivo: traje.id,
+      timestamp: traje.ultimoFrameTimestamp,
+      imagemBase64: traje.ultimoFrameBase64,
+      analise: traje.ultimaAnalisePerceptual
+    });
+  }
+
+  // ROTA DE TELEMETRIA DOS TRAJES MÓVEIS
+  if(u.pathname==='/api/traje/telemetria'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+    const { motorTrajesVisaoGlobal } = require('./motor-trajes-visao');
+    return json(res, {
+      ok: true,
+      trajes: motorTrajesVisaoGlobal.obterTodosTrajes(),
+      percepcoesRecentes: motorTrajesVisaoGlobal.percepcoesRecentes.slice(0, 10)
+    });
+  }
+
+  // ROTA DE EVENTOS SENSORIAIS DA ILHA (FASE 4)
+  if(u.pathname==='/api/traje/eventos-sensoriais'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+    const { ponteSensorialGlobal } = require('./ponte-sensorial-ilha');
+    const serId = u.searchParams.get('serId') || u.searchParams.get('ser');
+    return json(res, {
+      ok: true,
+      eventos: ponteSensorialGlobal.obterEventosAtivos(serId),
+      pistas: serId ? ponteSensorialGlobal.obterPistasFormatadas(serId) : []
+    });
+  }
+  if(u.pathname==='/api/traje/frame-recente.jpg'){
+    const { motorTrajesVisaoGlobal } = require('./motor-trajes-visao');
+    const disp = u.searchParams.get('dispositivo') || 'motog7';
+    const traje = motorTrajesVisaoGlobal.obterTraje(disp);
+    if (!traje || !traje.ultimoFrameBase64) {
+      res.writeHead(404); return res.end('Frame nao disponivel');
+    }
+    const buf = Buffer.from(traje.ultimoFrameBase64, 'base64');
+    res.writeHead(200, {
+      'content-type': 'image/jpeg',
+      'cache-control': 'no-cache, no-store, must-revalidate',
+      'access-control-allow-origin': '*'
+    });
+    return res.end(buf);
+  }
+  // ROTA DE SINCRONIZAÇÃO CANÔNICA COM O S23 ULTRA (ETAPA 3 & 4)
+  if(u.pathname==='/api/sync/status'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+    try {
+      const { sincronizadorCanonicoGlobal } = require('./sincronizador-canonico-s23');
+      return json(res, {
+        ok: true,
+        hostS23: sincronizadorCanonicoGlobal.hostCentralS23,
+        portas: sincronizadorCanonicoGlobal.portas,
+        statusConexao: sincronizadorCanonicoGlobal.statusConexao,
+        totalPendentesFila: sincronizadorCanonicoGlobal.filaPendentes.length,
+        totalConfirmadosAck: sincronizadorCanonicoGlobal.eventosConfirmadosIds.size,
+        cursores: sincronizadorCanonicoGlobal.cursores,
+        filaRecente: sincronizadorCanonicoGlobal.filaPendentes.slice(-10)
+      });
+    } catch (e) {
+      res.writeHead(500); return res.end(JSON.stringify({ ok: false, erro: e.message }));
+    }
+  }
+  if(u.pathname==='/api/sync/reconciliar'&&req.method==='POST'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'POST, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+    try {
+      const { sincronizadorCanonicoGlobal } = require('./sincronizador-canonico-s23');
+      sincronizadorCanonicoGlobal.processarFilaReconciliacao().then(resultado => {
+        return json(res, { ok: true, resultado });
+      }).catch(err => {
+        res.writeHead(500); return res.end(JSON.stringify({ ok: false, erro: err.message }));
+      });
+      return;
+    } catch (e) {
+      res.writeHead(500); return res.end(JSON.stringify({ ok: false, erro: e.message }));
+    }
+  }
+  if(u.pathname==='/api/sync/novidades'&&req.method==='GET'){
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, OPTIONS');
+    res.setHeader('access-control-allow-headers', 'content-type');
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+    try {
+      const serId = u.searchParams.get('serId') || u.searchParams.get('ser') || 'icaro';
+      const { sincronizadorCanonicoGlobal } = require('./sincronizador-canonico-s23');
+      sincronizadorCanonicoGlobal.puxarNovidadesDaCentral(serId).then(resultado => {
+        return json(res, { ok: true, ...resultado });
+      }).catch(err => {
+        res.writeHead(500); return res.end(JSON.stringify({ ok: false, erro: err.message }));
+      });
+      return;
+    } catch (e) {
+      res.writeHead(500); return res.end(JSON.stringify({ ok: false, erro: e.message }));
+    }
+  }
   // ROTA DE CHAT AO VIVO (BIDIRECIONAL) COM OS HABITANTES
   if(u.pathname==='/api/chat'){
     res.setHeader('access-control-allow-origin', '*');
@@ -555,7 +726,7 @@ http.createServer((req,res)=>{
       if(!fs.existsSync(arqPath) || fs.statSync(arqPath).isDirectory()){ res.writeHead(404); return res.end('Arquivo nao encontrado'); }
       const ext = path.extname(arqPath).toLowerCase();
       const mime = { '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.svg':'image/svg+xml', '.json':'application/json', '.xml':'application/xml' }[ext] || 'application/octet-stream';
-      res.writeHead(200,{'content-type':mime,'cache-control':'public, max-age=86400','access-control-allow-origin':'*'});
+      res.writeHead(200,{'content-type':mime,'cache-control':'no-cache, no-store, must-revalidate','access-control-allow-origin':'*'});
       return res.end(fs.readFileSync(arqPath));
     } catch(e) { res.writeHead(404); return res.end('Erro: '+e.message); }
   }
@@ -616,12 +787,119 @@ http.createServer((req,res)=>{
       return res.end(js);
     } catch(e) { res.writeHead(404); return res.end('motor-rpg-tiled.js nao encontrado'); }
   }
+  if(u.pathname==='/rpg-interface-master.js'){
+    try {
+      const js=fs.readFileSync(path.join(ROOT,'rpg-interface-master.js'),'utf8');
+      res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
+      return res.end(js);
+    } catch(e) { res.writeHead(404); return res.end('rpg-interface-master.js nao encontrado'); }
+  }
   if(u.pathname==='/chat-widget.js'){
     try {
       const js=fs.readFileSync(path.join(ROOT,'chat-widget.js'),'utf8');
       res.writeHead(200,{'content-type':'application/javascript; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
       return res.end(js);
     } catch(e) { res.writeHead(404); return res.end('chat-widget.js nao encontrado'); }
+  }
+  if(u.pathname==='/traje-camera.html'||u.pathname==='/traje'||u.pathname==='/camera'){
+    try {
+      const html=fs.readFileSync(path.join(ROOT,'traje-camera.html'),'utf8');
+      res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*'});
+      return res.end(html);
+    } catch(e) { res.writeHead(404); return res.end('traje-camera.html nao encontrado'); }
+  }
+
+  // =========================================================================
+  // MISSÃO MASTER — ILHA AURORA: APIS RPG, ECONOMIA, INSTÂNCIAS E SOBREVIVÊNCIA
+  // =========================================================================
+  if(u.pathname==='/api/rpg/estado-completo'){
+    res.setHeader('access-control-allow-origin', '*');
+    const { bancoIlhaGlobal } = require('./banco-ilha');
+    const { gerenciadorInstanciasGlobal } = require('./gerenciador-instancias');
+    const { motorAmbientalGlobal } = require('./motor-consequencias-ambientais');
+    const { nucleoPromptGlobal } = require('./nucleo-montador-prompt');
+
+    const estMundo = readState();
+    const habitantesIds = ['icaro', 'elara', 'lara', 'joao', 'maria'];
+    const dadosHabitantes = {};
+
+    for (const hid of habitantesIds) {
+      dadosHabitantes[hid] = {
+        serId: hid,
+        localizacao: gerenciadorInstanciasGlobal.obterLocalizacaoHabitante(hid),
+        saldoAmbar: bancoIlhaGlobal.obterSaldoAmbar(hid),
+        inventario: bancoIlhaGlobal.obterInventario(hid),
+        equipamentos: bancoIlhaGlobal.obterEquipamentos(hid),
+        sobrevivencia: motorAmbientalGlobal.obterEstado(hid),
+        psicologia: nucleoPromptGlobal.psicologia.obterPsique(hid),
+        atividadeAtual: (estMundo.seres && estMundo.seres[hid] && estMundo.seres[hid].acao) || 'descansando'
+      };
+    }
+
+    // HUD Superior Consolidado
+    const recursosEstoque = bancoIlhaGlobal.obterEstoqueVendinha();
+    const madeiraItem = recursosEstoque.find(r => r.recurso_id === 'madeira') || { quantidade: 0 };
+    const peixeItem = recursosEstoque.find(r => r.recurso_id === 'peixe') || { quantidade: 0 };
+    const ambarVendinha = bancoIlhaGlobal.obterSaldoAmbar('vendinha');
+
+    return json(res, {
+      ok: true,
+      hud: {
+        madeira: madeiraItem.quantidade,
+        pedra: 38,
+        comida: peixeItem.quantidade,
+        ambarVendinha: ambarVendinha,
+        saldoIcaro: bancoIlhaGlobal.obterSaldoAmbar('icaro'),
+        saldoElara: bancoIlhaGlobal.obterSaldoAmbar('elara'),
+        localizacaoAtual: '🏝️ Vila Aurora (Mapa Global)'
+      },
+      regioes: gerenciadorInstanciasGlobal.listarRegioes(),
+      habitantes: dadosHabitantes,
+      vendinhaEstoque: recursosEstoque,
+      transacoesRecentes: bancoIlhaGlobal.obterHistoricoTransacoes(15)
+    });
+  }
+
+  if(u.pathname==='/api/rpg/comercio' && req.method==='POST'){
+    res.setHeader('access-control-allow-origin', '*');
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 8192) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const o = JSON.parse(body || '{}');
+        const { bancoIlhaGlobal } = require('./banco-ilha');
+        if (o.acao === 'comprar') {
+          const resComp = bancoIlhaGlobal.comprarItem(o.serId, o.recursoId, o.quantidade || 1);
+          return json(res, { ok: true, resultado: resComp });
+        } else if (o.acao === 'vender') {
+          const resVend = bancoIlhaGlobal.venderItem(o.serId, o.slotIndex, o.quantidade || 1);
+          return json(res, { ok: true, resultado: resVend });
+        }
+        throw new Error('Ação de comércio inválida');
+      } catch (e) {
+        res.writeHead(400, { 'content-type': 'application/json; charset=utf-8', 'access-control-allow-origin': '*' });
+        return res.end(JSON.stringify({ ok: false, erro: e.message }));
+      }
+    });
+    return;
+  }
+
+  if(u.pathname==='/api/rpg/regiao/mudar' && req.method==='POST'){
+    res.setHeader('access-control-allow-origin', '*');
+    let body = '';
+    req.on('data', c => { body += c; if (body.length > 8192) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const o = JSON.parse(body || '{}');
+        const { gerenciadorInstanciasGlobal } = require('./gerenciador-instancias');
+        const resTrans = gerenciadorInstanciasGlobal.transitarHabitante(o.serId || 'icaro', o.regiaoDestinoId, o.spawnX, o.spawnY);
+        return json(res, { ok: true, transicao: resTrans });
+      } catch (e) {
+        res.writeHead(400, { 'content-type': 'application/json; charset=utf-8', 'access-control-allow-origin': '*' });
+        return res.end(JSON.stringify({ ok: false, erro: e.message }));
+      }
+    });
+    return;
   }
 
   // --- MODELO 1: APIS ---

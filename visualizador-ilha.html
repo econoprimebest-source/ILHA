@@ -2,67 +2,81 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Ilha Aurora — Observatório V9 (2.5D PixiJS & 3D Real)</title>
-<script src="/pixi.min.js"></script>
-<script src="/motor-sprites-ilha.js?v=20261108_2155"></script>
-<script src="/motor-pixi-ilha.js?v=20261110_1800"></script>
-<script src="/motor-casas-ilha.js?v=20261110_1800"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="/mapa-rpg.js?v=20261110_2120"></script>
-<script src="/motor-three-ilha.js?v=20261110_2120"></script>
-<script src="/motor-rpg-tiled.js?v=20261111_1200"></script>
-<script src="/chat-widget.js?v=20261111_1300"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ilha Aurora — 2D RPG</title>
+<script src="/mapa-rpg.js?v=20261116_2020"></script>
+<script src="/motor-rpg-tiled.js?v=20261116_2020"></script>
+<script src="/rpg-interface-master.js?v=20261116_2020"></script>
+<script src="/chat-widget.js?v=20261116_2020"></script>
 <style>
-  body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #071827; color: #fff; }
-  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  body { margin: 0; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; background: #071827; color: #fff; }
+  canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
   :root { color-scheme: dark; }
-  #layout { display:grid; grid-template-columns:minmax(0,1fr) 350px; gap:14px; height:100dvh; padding:14px; box-sizing:border-box; }
-  #map-stage { position:relative; min-width:0; min-height:0; overflow:hidden; border:1px solid #38536a; border-radius:18px; background:#082b45; box-shadow:0 12px 32px #0005; }
-  canvas { width:100%; height:100%; border-radius:18px; }
-  #header { position:absolute; left:16px; top:16px; z-index:10; padding:13px 16px; border-radius:14px; background:rgba(8,24,39,.86); border:1px solid #334155; font-size:14px; pointer-events:none; backdrop-filter:blur(12px); box-shadow:0 10px 28px #02061780; }
-  #cycle-info { display:inline-block; color:#dbeafe; font-weight:600; letter-spacing:.02em; }
-  #top-actions { position:absolute; right:16px; top:16px; z-index:11; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; max-width:calc(100% - 250px); transition:all .25s ease; }
-  #top-actions button { position:static; margin:0; }
+  #layout { display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:10px; height:100dvh; padding:8px; box-sizing:border-box; }
+  #left-column { display:grid; grid-template-rows:auto minmax(0,1fr); gap:8px; min-width:0; min-height:0; position:relative; }
+  #top-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(8, 22, 36, 0.96);
+    border: 1px solid #2b4358;
+    border-radius: 12px;
+    z-index: 30;
+    position: relative;
+  }
+  #zonas-toolbar { display:inline-flex; flex-wrap:wrap; align-items:center; gap:5px; }
+  .zona-label { font-size:11px; font-weight:800; color:#38bdf8; letter-spacing:.04em; margin-right:2px; }
+  .zona-btn { padding:5px 10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#cbd5e1; font-size:11.5px; font-weight:700; cursor:pointer; transition:all .15s ease; white-space:nowrap; }
+  .zona-btn:hover { background:#1e293b; color:#fff; border-color:#38bdf8; }
+  .zona-btn.active { background:linear-gradient(135deg,#0284c7,#2563eb); border-color:#38bdf8; color:#fff; box-shadow:0 0 10px rgba(56,189,248,0.45); }
+  #header { display:inline-flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:11.5px; }
+  #cycle-info { color:#dbeafe; font-weight:600; }
+  #time-display { font-size:11.5px; font-weight:800; color:#fbbf24; padding:2px 7px; border-radius:6px; background:rgba(251,191,36,0.14); border:1px solid rgba(251,191,36,0.35); }
   #menu-toggle-btn {
-    display: none;
-    position: absolute;
-    right: 12px;
-    top: 12px;
-    z-index: 25;
-    background: rgba(15, 23, 42, 0.92);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    display: inline-flex;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #38bdf8;
     color: #f8fafc;
-    border-radius: 10px;
-    padding: 7px 12px;
-    font-size: 13px;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
     align-items: center;
+    gap: 5px;
+  }
+  #menu-toggle-btn:hover { background: #0c4a6e; }
+  #top-actions.collapsed { display: none !important; }
+  #top-actions {
+    position: absolute;
+    right: 10px;
+    top: calc(100% + 6px);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
     gap: 6px;
-    transition: all .2s ease;
+    min-width: 220px;
+    background: rgba(8, 22, 36, 0.98);
+    backdrop-filter: blur(14px);
+    border: 1px solid #38bdf8;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.85);
   }
-  #menu-toggle-btn:hover {
-    background: rgba(30, 41, 59, 0.96);
-    border-color: #38bdf8;
-  }
-  #btn-ondemand { padding:10px 15px; border-radius:12px; border:1px solid #059669; background:linear-gradient(135deg,rgba(5,150,105,.94),rgba(16,185,129,.94)); color:#ecfdf5; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #064e3b70; transition:all .2s ease; }
-  #btn-ondemand:hover { background:linear-gradient(135deg,#059669,#10b981); transform:translateY(-1px); box-shadow:0 12px 30px #10b98166; }
-  #btn-predador-rapido { padding:10px 14px; border-radius:12px; border:1px solid #dc2626; background:linear-gradient(135deg,rgba(153,27,27,.94),rgba(127,29,29,.94)); color:#fee2e2; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #450a0a90; transition:all .2s ease; }
-  #btn-predador-rapido:hover { background:linear-gradient(135deg,#dc2626,#991b1b); transform:translateY(-1px); box-shadow:0 12px 30px #ef444466; }
-  #btn-diretor { padding:10px 15px; border-radius:12px; border:1px solid #0284c7; background:rgba(3,105,161,.92); color:#e0f2fe; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
-  #btn-diretor:hover { background:rgba(2,132,199,.98); transform:translateY(-1px); }
-  #btn-reiniciar { padding:10px 14px; border-radius:12px; border:1px solid #7f1d1d; background:rgba(127,29,29,.88); color:#fecaca; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; backdrop-filter:blur(10px); box-shadow:0 10px 28px #02061780; transition:background .2s ease, transform .2s ease; }
-  #btn-reiniciar:hover { background:rgba(153,27,27,.95); transform:translateY(-1px); }
-  .ev-pill { display:inline-flex; align-items:center; gap:5px; margin:4px 6px 0 0; padding:4px 10px; border-radius:99px; font-size:11.5px; font-weight:700; background:rgba(15,23,42,.92); border:1px solid #38bdf8; color:#e0f2fe; box-shadow:0 4px 12px #0006; }
-  .ev-pill.predador { border-color:#ef4444; background:rgba(127,29,29,.92); color:#fecaca; animation:pulseDanger 1.4s infinite ease-in-out; }
+  #top-actions button { width: 100%; text-align: left; margin: 0; padding: 8px 12px; font-size: 12px; border-radius: 8px; }
+  #map-stage { position:relative; min-width:0; min-height:0; overflow:hidden; border:1px solid #38536a; border-radius:14px; background:#052238; box-shadow:0 8px 24px #0005; }
+  #btn-ondemand { padding:10px 15px; border-radius:12px; border:1px solid #059669; background:linear-gradient(135deg,rgba(5,150,105,.94),rgba(16,185,129,.94)); color:#ecfdf5; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
+  #btn-predador-rapido { padding:10px 14px; border-radius:12px; border:1px solid #dc2626; background:linear-gradient(135deg,rgba(153,27,27,.94),rgba(127,29,29,.94)); color:#fee2e2; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
+  #btn-diretor { padding:10px 15px; border-radius:12px; border:1px solid #0284c7; background:rgba(3,105,161,.92); color:#e0f2fe; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
+  #btn-reiniciar { padding:10px 14px; border-radius:12px; border:1px solid #7f1d1d; background:rgba(127,29,29,.88); color:#fecaca; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; }
+  .ev-pill { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:99px; font-size:10.5px; font-weight:700; background:rgba(15,23,42,.92); border:1px solid #38bdf8; color:#e0f2fe; }
+  .ev-pill.predador { border-color:#ef4444; background:rgba(127,29,29,.92); color:#fecaca; }
   .ev-pill.suprimento { border-color:#fbbf24; background:rgba(120,53,15,.92); color:#fef3c7; }
   .ev-pill.artefato { border-color:#a855f7; background:rgba(88,28,135,.92); color:#f3e8ff; }
-  @keyframes pulseDanger { 0%,100%{transform:scale(1);} 50%{transform:scale(1.04);} }
-  #director-panel { position:absolute; right:16px; top:68px; z-index:15; width:min(380px,calc(100% - 32px)); max-height:calc(100% - 96px); overflow:auto; background:rgba(8,24,39,.96); backdrop-filter:blur(14px); border:1px solid #0284c7; border-radius:16px; padding:15px 16px; box-shadow:0 18px 44px #000b; }
+  #director-panel { position:absolute; right:16px; top:16px; z-index:45; width:min(380px,calc(100% - 32px)); max-height:calc(100% - 32px); overflow:auto; background:rgba(8,24,39,.97); backdrop-filter:blur(14px); border:1px solid #0284c7; border-radius:16px; padding:15px 16px; box-shadow:0 18px 44px #000b; }
   #director-panel[hidden] { display:none; }
   .dir-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
   .dir-btn { padding:9px 10px; border-radius:10px; border:1px solid #334155; background:#0f172a; color:#e2e8f0; font-size:12.5px; font-weight:600; text-align:left; cursor:pointer; transition:all .15s ease; }
@@ -70,313 +84,196 @@
   .dir-field { margin-top:10px; display:flex; flex-direction:column; gap:4px; font-size:12px; color:#9fb2c5; }
   .dir-field select, .dir-field input { padding:8px 10px; border-radius:8px; border:1px solid #334155; background:#091524; color:#fff; font-family:inherit; font-size:13px; }
   .dir-submit { margin-top:12px; width:100%; padding:10px; border-radius:10px; border:none; background:linear-gradient(135deg,#0284c7,#2563eb); color:#fff; font-weight:700; font-size:13.5px; cursor:pointer; }
-  .dir-submit:hover { filter:brightness(1.1); }
-  .active-ev-pill { display:inline-flex; align-items:center; gap:6px; margin:4px 6px 0 0; padding:4px 10px; border-radius:99px; font-size:12px; font-weight:600; background:#1e293b; border:1px solid #38bdf8; color:#bae6fd; }
-  #time-display { font-size:18px; font-weight:bold; color:#fbbf24; margin-top:5px; display:block; letter-spacing:.08em; text-shadow:0 0 18px #fbbf2460; }
-  #tooltip { position:absolute; display:none; background:rgba(15,23,42,.95); color:#fff; padding:11px 13px; border-radius:8px; font-size:15px; line-height:1.5; pointer-events:none; border:1px solid #38bdf8; z-index:20; max-width:320px; white-space:pre-wrap; box-shadow:0 10px 15px -3px rgba(0,0,0,.5); }
-  #side-column { min-height:0; display:grid; grid-template-rows:minmax(0,1.15fr) minmax(190px,.85fr); gap:14px; }
-  .panel-section { min-height:0; overflow:auto; padding:16px; border:1px solid #2b4358; border-radius:16px; background:linear-gradient(155deg,rgba(20,38,57,.98),rgba(10,23,38,.98)); box-shadow:0 12px 32px #0004; scrollbar-color:#47647b #0b1928; scrollbar-width:thin; }
-  h2 { position:sticky; top:-16px; z-index:2; margin:0 -2px 12px; padding:4px 2px 11px; background:#142639; color:#7dd3fc; font-size:15px; letter-spacing:1.4px; text-transform:uppercase; border-bottom:1px solid #334155; }
-  .ser-card { margin-bottom:10px; padding:12px; border:1px solid #ffffff12; border-left:4px solid #64748b; border-radius:12px; background:#ffffff08; transition:background .2s ease,border-color .2s ease,transform .2s ease; }
-  .ser-card:hover { transform:translateY(-1px); background:#ffffff0d; }
+  #tooltip { position:absolute; display:none; background:rgba(15,23,42,.95); color:#fff; padding:11px 13px; border-radius:8px; font-size:14px; line-height:1.5; pointer-events:none; border:1px solid #38bdf8; z-index:40; max-width:320px; white-space:pre-wrap; }
+  #side-column { min-height:0; display:grid; grid-template-rows:minmax(0,1.15fr) minmax(180px,.85fr); gap:10px; }
+  .panel-section { min-height:0; overflow:auto; padding:12px; border:1px solid #2b4358; border-radius:14px; background:linear-gradient(155deg,rgba(20,38,57,.98),rgba(10,23,38,.98)); scrollbar-color:#47647b #0b1928; scrollbar-width:thin; }
+  h2 { position:sticky; top:-12px; z-index:2; margin:0 -2px 10px; padding:4px 2px 8px; background:#142639; color:#7dd3fc; font-size:14px; letter-spacing:1.2px; text-transform:uppercase; border-bottom:1px solid #334155; }
+  .ser-card { margin-bottom:8px; padding:10px; border:1px solid #ffffff12; border-left:4px solid #64748b; border-radius:10px; background:#ffffff08; }
   .ser-card.is-home { border-left-color:#34d399; background:linear-gradient(110deg,#064e3b66,#ffffff08 75%); }
-  .ser-card.is-exposed { border-left-color:#fb7185; background:linear-gradient(110deg,#88133777,#ffffff08 75%); box-shadow:inset 0 0 0 1px #fb718544,0 6px 18px #4c051955; }
-  .ser-name { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:7px; font-size:15px; font-weight:bold; }
-  .ser-location { color:#cbd5e1; font-size:14px; }
-  .agent-reason { margin:0 0 8px; color:#a9bacb; font-size:13px; line-height:1.5; font-style:italic; }
-  .ser-status { display:inline-flex; align-items:center; gap:6px; color:#b9cad9; font-size:13px; }
-  .status-badge { padding:3px 8px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:.07em; white-space:nowrap; }
+  .ser-card.is-exposed { border-left-color:#fb7185; background:linear-gradient(110deg,#88133777,#ffffff08 75%); }
+  .ser-name { display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:5px; font-size:14px; font-weight:bold; }
+  .ser-location { color:#cbd5e1; font-size:13px; }
+  .agent-reason { margin:0 0 6px; color:#a9bacb; font-size:12px; line-height:1.4; font-style:italic; }
+  .ser-status { display:inline-flex; align-items:center; gap:5px; color:#b9cad9; font-size:12px; }
+  .status-badge { padding:2px 7px; border-radius:99px; font-size:10px; font-weight:800; white-space:nowrap; }
   .status-badge.home { color:#a7f3d0; background:#064e3b; }
   .status-badge.exposed { color:#ffe4e6; background:#9f1239; }
-  .label-bar { width:56px; font-size:10px; color:#b5c4d3; }
-  .bar-container { height:8px; background:#23364a; border-radius:4px; overflow:hidden; box-shadow:inset 0 1px 2px #0008; }
-  .bar-fill { height:100%; border-radius:inherit; box-shadow:0 0 8px currentColor; transition:width .5s ease-out; }
-  #list-eventos { font-size:14px; line-height:1.55; color:#d3deea; }
-  .event-item { padding:9px 0; border-bottom:1px solid #ffffff12; }
+  .label-bar { width:54px; font-size:10px; color:#b5c4d3; }
+  .bar-container { height:7px; background:#23364a; border-radius:4px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:inherit; transition:width .5s ease-out; }
+  #list-eventos { font-size:13px; line-height:1.45; color:#d3deea; }
+  .event-item { padding:7px 0; border-bottom:1px solid #ffffff12; }
   .event-item:last-child { border-bottom:0; }
-  .event-meta { color:#9fb2c5; font-size:12px; }
-  .empty-state { color:#91a4b7; font-size:14px; }
-  #map-hint { position:absolute; right:16px; bottom:16px; z-index:9; max-width:300px; background:#081827e0; border:1px solid #2b4358; border-radius:12px; padding:9px 13px; font-size:13px; color:#9fb2c5; text-align:right; line-height:1.55; }
-  #house-panel { position:absolute; left:16px; bottom:16px; z-index:12; width:min(450px,calc(100% - 32px)); max-height:calc(100% - 110px); overflow:auto; background:rgba(8,24,39,.95); backdrop-filter:blur(10px); border:1px solid #38536a; border-radius:16px; padding:14px 16px; box-shadow:0 18px 44px #0009; scrollbar-color:#47647b #0b1928; scrollbar-width:thin; }
+  .event-meta { color:#9fb2c5; font-size:11.5px; }
+  .empty-state { color:#91a4b7; font-size:13px; }
+  #map-hint, #camera-toolbar, #live-marquee { display:none !important; }
+  #house-panel { position:absolute; left:14px; bottom:14px; z-index:35; width:min(430px,calc(100% - 28px)); max-height:calc(100% - 28px); overflow:auto; background:rgba(8,24,39,.96); backdrop-filter:blur(10px); border:1px solid #38536a; border-radius:14px; padding:12px 14px; box-shadow:0 18px 44px #0009; }
   #house-panel[hidden] { display:none; }
   .hp-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
   .hp-title { font-size:14px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#7dd3fc; }
-  .hp-sub { font-size:13px; color:#9fb2c5; margin-top:3px; }
+  .hp-sub { font-size:12.5px; color:#9fb2c5; margin-top:2px; }
   #hp-close { flex:none; width:27px; height:27px; border-radius:9px; border:1px solid #38536a; background:#ffffff10; color:#cbd5e1; font-size:15px; line-height:1; cursor:pointer; }
-  #hp-close:hover { background:#ffffff22; }
-  .hp-block { margin-top:12px; }
-  .hp-block h3 { margin:0 0 6px; font-size:12px; letter-spacing:.14em; color:#7c93ab; text-transform:uppercase; }
-  .occ { border:1px solid #ffffff14; border-left:4px solid #64748b; border-radius:12px; background:#ffffff08; padding:10px 12px; margin-top:8px; }
+  .hp-block { margin-top:10px; }
+  .hp-block h3 { margin:0 0 6px; font-size:11.5px; letter-spacing:.12em; color:#7c93ab; text-transform:uppercase; }
+  .occ { border:1px solid #ffffff14; border-left:4px solid #64748b; border-radius:10px; background:#ffffff08; padding:9px 11px; margin-top:7px; }
   .occ-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-  .occ-name { font-weight:700; font-size:14px; }
-  .occ-act { flex:none; font-size:13px; padding:3px 10px; border-radius:99px; color:#a7f3d0; background:#064e3b; white-space:nowrap; }
+  .occ-name { font-weight:700; font-size:13.5px; }
+  .occ-act { flex:none; font-size:12px; padding:2px 8px; border-radius:99px; color:#a7f3d0; background:#064e3b; white-space:nowrap; }
   .occ-act.ultima { color:#bae6fd; background:#164e63; }
   .occ-act.sem { color:#94a3b8; background:#1e293b; }
-  .occ-motivo { font-size:13px; color:#93a8bd; font-style:italic; margin-top:5px; line-height:1.5; }
-  .occ-bars { margin-top:7px; }
-  .diary { margin-top:9px; border-top:1px dashed #ffffff1a; padding-top:7px; }
-  .diary h4 { margin:0 0 4px; font-size:11px; letter-spacing:.14em; color:#7c93ab; text-transform:uppercase; }
-  .diary div { font-size:13px; color:#c9d7e5; padding:2px 0; line-height:1.5; }
+  .occ-motivo { font-size:12px; color:#93a8bd; font-style:italic; margin-top:4px; line-height:1.4; }
+  .occ-bars { margin-top:6px; }
+  .diary { margin-top:8px; border-top:1px dashed #ffffff1a; padding-top:6px; }
+  .diary h4 { margin:0 0 4px; font-size:10.5px; letter-spacing:.12em; color:#7c93ab; text-transform:uppercase; }
+  .diary div { font-size:12px; color:#c9d7e5; padding:2px 0; line-height:1.4; }
   .diary .dc { color:#7dd3fc; font-weight:700; }
-  .pill-list span { display:inline-block; margin:3px 5px 0 0; padding:3px 10px; border-radius:99px; background:#ffffff12; font-size:13px; border-left:3px solid #64748b; }
-  
-  /* CÂMERA & BARRA DE CONTROLE */
-  #camera-toolbar { position:absolute; left:16px; bottom:16px; z-index:11; display:flex; align-items:center; gap:6px; background:rgba(8,24,39,.92); backdrop-filter:blur(10px); padding:7px 12px; border-radius:12px; border:1px solid #334155; box-shadow:0 8px 24px #0009; }
-  .cam-label { font-size:11px; font-weight:800; color:#94a3b8; letter-spacing:.05em; margin-right:3px; }
-  .cam-btn { padding:5px 9px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#f8fafc; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s ease; }
-  .cam-btn:hover { background:#1e293b; border-color:#38bdf8; }
-  .cam-sep { width:1px; height:18px; background:#334155; margin:0 4px; }
-  .cam-pill { padding:5px 10px; border-radius:99px; border:1px solid #334155; background:#0f172a; color:#e2e8f0; font-size:11.5px; font-weight:700; cursor:pointer; transition:all .15s ease; white-space:nowrap; }
-  .cam-pill:hover { background:#0284c7; border-color:#38bdf8; color:#fff; }
-  .cam-pill.fera:hover { background:#991b1b; border-color:#ef4444; }
-  .cam-pill.mar:hover { background:#0369a1; border-color:#38bdf8; }
-  .cam-pill.fogueira:hover { background:#c2410c; border-color:#f97316; }
-
-  /* BARRA DE ZONAS EXPANSÍVEIS (PILLAR 4) */
-  #zonas-toolbar { position:absolute; left:16px; top:88px; z-index:11; display:flex; align-items:center; gap:6px; background:rgba(8,24,39,.90); backdrop-filter:blur(10px); padding:6px 12px; border-radius:12px; border:1px solid #334155; box-shadow:0 8px 24px #0008; }
-  .zona-label { font-size:11px; font-weight:800; color:#38bdf8; letter-spacing:.05em; margin-right:3px; }
-  .zona-btn { padding:5px 12px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer; transition:all .2s ease; }
-  .zona-btn:hover { background:#1e293b; color:#fff; border-color:#38bdf8; }
-  .zona-btn.active { background:linear-gradient(135deg,#0284c7,#2563eb); border-color:#38bdf8; color:#fff; box-shadow:0 0 14px rgba(56,189,248,0.5); }
-
-  /* LIVE MARQUEE / TICKER */
-  #live-marquee { position:absolute; right:16px; bottom:16px; z-index:10; max-width:440px; background:rgba(8,24,39,.94); backdrop-filter:blur(10px); border:1px solid #0284c7; border-radius:12px; padding:8px 14px; display:flex; align-items:center; gap:8px; font-size:12px; color:#e2e8f0; box-shadow:0 8px 26px #0009; }
-  .marquee-live { flex:none; font-weight:800; font-size:11px; color:#facc15; padding:2px 6px; border-radius:4px; background:#854d0e; }
-
-  /* MODAL CAVERNA E PREDADOR */
-  #cave-modal, #predador-modal { position:absolute; right:16px; top:68px; z-index:16; width:min(440px,calc(100% - 32px)); max-height:calc(100% - 96px); overflow:auto; background:rgba(8,24,39,.97); backdrop-filter:blur(14px); border:1px solid #a855f7; border-radius:16px; padding:15px 16px; box-shadow:0 20px 48px #000c; }
+  .pill-list span { display:inline-block; margin:3px 5px 0 0; padding:3px 10px; border-radius:99px; background:#ffffff12; font-size:12px; border-left:3px solid #64748b; }
+  #cave-modal, #predador-modal { position:absolute; right:14px; top:14px; z-index:36; width:min(420px,calc(100% - 28px)); max-height:calc(100% - 28px); overflow:auto; background:rgba(8,24,39,.97); backdrop-filter:blur(14px); border:1px solid #a855f7; border-radius:14px; padding:14px; box-shadow:0 20px 48px #000c; }
   #predador-modal { border-color:#ef4444; }
   #cave-modal[hidden], #predador-modal[hidden] { display:none; }
-  @media (max-width:850px) {
+  @media (max-width:900px) {
     body { overflow:auto; }
-    #layout { height:auto; min-height:100dvh; grid-template-columns:1fr; grid-template-rows:minmax(60vh,75dvh) auto; gap:8px; padding:6px; }
+    #layout { height:auto; min-height:100dvh; grid-template-columns:1fr; grid-template-rows:auto auto; gap:8px; padding:6px; }
+    #map-stage { height:68dvh; min-height:380px; }
     #side-column { grid-template-columns:1fr; }
-    #menu-toggle-btn { display:inline-flex; }
-    #top-actions.collapsed { display:none !important; }
-    #top-actions {
-      position: absolute;
-      top: 50px;
-      right: 10px;
-      left: 10px;
-      max-width: calc(100% - 20px);
-      z-index: 24;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      background: rgba(8, 24, 39, 0.96);
-      backdrop-filter: blur(14px);
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 10px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.7);
-    }
-    #top-actions button {
-      width: 100%;
-      padding: 8px 12px;
-      font-size: 12px;
-      border-radius: 8px;
-    }
-    #view-mode-selector {
-      width: 100%;
-      justify-content: space-around;
-    }
-  }
-  @media (max-width:560px) {
-    #layout { gap:6px; padding:4px; grid-template-rows:minmax(55vh,70dvh) auto; }
-    #header { left:6px; top:6px; padding:6px 8px; font-size:12px; }
-    #cycle-info { font-size:10.5px; }
-    #time-display { font-size:13px; }
-    .panel-section { padding:10px; }
-    #map-hint { display:none; }
-  }
-  .mode-pill {
-    padding: 7px 12px;
-    border-radius: 9px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: #94a3b8;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .mode-pill:hover {
-    color: #f8fafc;
-    background: rgba(255, 255, 255, 0.08);
-  }
-  .mode-pill.active {
-    background: linear-gradient(135deg, #0284c7, #2563eb);
-    color: #ffffff;
-    border-color: #38bdf8;
-    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45);
   }
 </style>
 </head>
 <body>
 
 <main id="layout">
-  <section id="map-stage" aria-label="Mapa da ilha">
-    <div id="header">
-      <span id="cycle-info">Carregando estado...</span><br>
-      <span id="time-display">--:--</span>
-      <div id="active-events-bar" style="margin-top:4px;"></div>
-    </div>
-    <button id="menu-toggle-btn" onclick="toggleTopActions()" aria-label="Abrir ou fechar menu de controles" title="Menu de controles">
-      <span id="menu-toggle-icon">☰</span> Menu
-    </button>
-    <div id="top-actions" class="collapsed">
-      <div id="view-mode-selector" style="display:inline-flex; align-items:center; background:rgba(8,20,34,0.92); border:1px solid #1e3a5f; border-radius:12px; padding:3px; gap:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5);">
-        <button type="button" id="btn-mode-rpg" class="mode-pill active" onclick="setVisualMode('rpg')" style="font-weight:700;" title="Novo Mapa RPG 2D Top-Down: Ilustrado, Figuras de Ações, Quebra-Cabeça da Casa e Expansão de Mapas">⚔️ Mapa RPG 2D (Top-Down)</button>
-        <button type="button" id="btn-mode-25d" class="mode-pill" onclick="setVisualMode('25d')" title="Modo 2.5D Isométrico PixiJS">🗺️ Modo 2.5D</button>
-        <button type="button" id="btn-mode-3d" class="mode-pill" onclick="setVisualMode('3d')" title="Modo 3D Real (GLB Colab, tubarão submerso, sem blocos geométricos)">🌐 Modo 3D</button>
+  <div id="left-column">
+    <!-- BARRA SUPERIOR FORA DO MAPA (NUNCA COBRE O MAPA!) -->
+    <header id="top-bar">
+      <div id="zonas-toolbar">
+        <span class="zona-label">MAPAS 2D RPG:</span>
+        <button type="button" class="zona-btn active" id="btn-zona-ilha" onclick="mudarZonaMundo('ilha_central')">🏝️ Ilha Central</button>
+        <button type="button" class="zona-btn" id="btn-zona-bosque" onclick="mudarZonaMundo('bosque')">🌲 Bosque</button>
+        <button type="button" class="zona-btn" id="btn-zona-caverna" onclick="mudarZonaMundo('caverna')">🪨 Caverna</button>
+        <button type="button" class="zona-btn" id="btn-zona-praia" onclick="mudarZonaMundo('praia')">🏖️ Praia</button>
       </div>
-      <button id="btn-ondemand" title="Disparar 1 ciclo da Ilha em modo On-Demand agora (mantendo pausa automática)">&#9654; Ciclo On-Demand</button>
-      <button id="btn-predador-rapido" title="Soltar um predador feroz imediatamente na ilha para testar a reação livre dos habitantes">&#128058; Soltar Predador</button>
-      <button id="btn-diretor" title="Manipular o mundo físico (Drops da Audiência, Clima, Artefatos, Predadores)">&#127916; Console do Diretor</button>
-      <button id="btn-reiniciar" title="Salvar o estado atual em backups/ e iniciar um novo mundo">&#10227; Reiniciar mundo</button>
-    </div>
-    <div id="director-panel" hidden>
-      <div class="hp-head">
-        <div>
-          <div class="hp-title">Console do Diretor · Audiência</div>
-          <div class="hp-sub">Manipule apenas o MUNDO. Os habitantes percebem e decidem livremente.</div>
+      <div id="top-hud-slot"></div>
+      <div id="header">
+        <span id="cycle-info">Carregando...</span>
+        <span id="time-display">--:--</span>
+        <div id="active-events-bar" style="display:inline-flex;gap:4px;"></div>
+        <button id="menu-toggle-btn" onclick="toggleTopActions()" aria-label="Abrir ou fechar menu" title="Controles do Mundo">
+          <span id="menu-toggle-icon">☰</span> Menu
+        </button>
+      </div>
+      <div id="top-actions" class="collapsed">
+        <button id="btn-ondemand" onclick="toggleTopActions()" title="Disparar 1 ciclo da Ilha agora">&#9654; Ciclo On-Demand</button>
+        <button id="btn-predador-rapido" onclick="toggleTopActions()" title="Soltar predador na ilha">&#128058; Soltar Predador</button>
+        <button id="btn-diretor" onclick="toggleTopActions()" title="Console do Diretor">&#127916; Console do Diretor</button>
+        <button id="btn-reiniciar" onclick="toggleTopActions()" title="Reiniciar mundo">&#10227; Reiniciar mundo</button>
+      </div>
+    </header>
+
+    <section id="map-stage" aria-label="Mapa 2D RPG da Ilha Aurora">
+      <div id="director-panel" hidden>
+        <div class="hp-head">
+          <div>
+            <div class="hp-title">Console do Diretor · Audiência</div>
+            <div class="hp-sub">Manipule apenas o MUNDO. Os habitantes percebem e decidem livremente.</div>
+          </div>
+          <button id="dir-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
         </div>
-        <button id="dir-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
-      </div>
-      <div class="dir-grid" id="dir-types">
-        <button type="button" class="dir-btn active" data-tipo="suprimento">&#127873; Drop de Suprimentos</button>
-        <button type="button" class="dir-btn" data-tipo="artefato">&#128302; Artefato Misterioso</button>
-        <button type="button" class="dir-btn" data-tipo="tempestade">&#9928; Tempestade Severa</button>
-        <button type="button" class="dir-btn" data-tipo="predador">&#128058; Soltar Predador</button>
-        <button type="button" class="dir-btn" data-tipo="cardume">&#128031; Abundância / Cardume</button>
-        <button type="button" class="dir-btn" data-tipo="seca">&#9728; Onda de Seca</button>
-        <button type="button" class="dir-btn" data-tipo="lenha_fogueira" style="border-color:#f59e0b;color:#fde047;">&#128293; Milagre: Lenha Dourada</button>
-        <button type="button" class="dir-btn" data-tipo="cura" style="border-color:#10b981;color:#6ee7b7;">&#10024; Milagre: Cura Geral</button>
-      </div>
-      <div class="dir-field">
-        <label for="dir-local">Local da Intervenção no Mapa:</label>
-        <select id="dir-local">
-          <option value="acampamento">Acampamento</option>
-          <option value="fogueira">Fogueira</option>
-          <option value="rio">Rio</option>
-          <option value="bosque">Bosque</option>
-          <option value="floresta">Floresta</option>
-          <option value="mar">Mar / Praia</option>
-          <option value="barco">Cais do Barco</option>
-          <option value="cachoeira">Cachoeira</option>
-          <option value="fazenda">Fazenda</option>
-          <option value="casa_icaro">Casa do Ícaro e Lara</option>
-          <option value="casa_joao">Casa do João e Maria</option>
-          <option value="casa_maria">Casa da Maria</option>
-          <option value="arena">Arena de Lutas</option>
-          <option value="caverna">Caverna</option>
-          <option value="ilha_vizinha">Ilha Vizinha</option>
-        </select>
-      </div>
-      <div class="dir-field">
-        <label for="dir-patrocinador">Enviado por (Espectador / Patrocinador):</label>
-        <input id="dir-patrocinador" type="text" placeholder="Ex: Audiência VIP, Diretor..." value="Audiência Ao Vivo">
-      </div>
-      <div class="dir-field">
-        <label for="dir-msg">Bilhete / Inscrição física no objeto (opcional):</label>
-        <input id="dir-msg" type="text" placeholder="Ex: Apenas um pode ficar com a caixa...">
-      </div>
-      <div class="dir-field">
-        <label for="dir-duracao">Duração (ciclos):</label>
-        <input id="dir-duracao" type="number" min="1" max="30" value="6">
-      </div>
-      <button type="button" class="dir-submit" id="dir-enviar">&#9889; Disparar Evento no Mundo</button>
-      <div id="dir-feedback" style="margin-top:8px;font-size:12.5px;color:#38bdf8;"></div>
-    </div>
-    <canvas id="game" style="display:none;"></canvas>
-    <canvas id="pixi-game"></canvas>
-    <div id="three-container" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; border-radius:18px; overflow:hidden;"></div>
-    <div id="rpg-tiled-container" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; border-radius:18px; overflow:hidden;"></div>
-    <div id="tension-vignette"></div>
-    <div id="milagre-banner"></div>
-    <div id="cinematic-caption"></div>
-
-    <!-- BARRA DE ZONAS DE EXPANSÃO (ILHA CENTRAL, CAVERNA & RUÍNAS, FLORESTA & SANTUÁRIO) -->
-    <div id="zonas-toolbar">
-      <span class="zona-label">REGIÃO:</span>
-      <button type="button" class="zona-btn active" id="btn-zona-ilha" onclick="mudarZonaMundo('ilha_central')" title="Visão Geral da Ilha Central e Acampamento">🏝️ Ilha Central</button>
-      <button type="button" class="zona-btn" id="btn-zona-caverna" onclick="mudarZonaMundo('caverna_ruinas')" title="Câmera Focada nas Profundezas da Caverna e Ruínas Antigas">🪨 Caverna & Ruínas</button>
-      <button type="button" class="zona-btn" id="btn-zona-floresta" onclick="mudarZonaMundo('floresta_santuario')" title="Câmera Focada na Floresta Norte, Cachoeira e Santuário da Fé">🌲 Floresta & Santuário</button>
-    </div>
-
-    <!-- BARRA DE CAMERA LIVRE & FOCO -->
-    <div id="camera-toolbar">
-      <button type="button" class="cam-pill" id="btn-toggle-3d" onclick="toggleModo3D()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6); border-color:#a855f7; color:#fff; font-weight:800;" title="Alternar entre Visão 2.5D PixiJS e Ilha 3D Real (GLB)">🌐 Modo 3D</button>
-      <div class="cam-sep"></div>
-      <span class="cam-label">FILMADORA:</span>
-      <button type="button" class="cam-btn" onclick="zoomInCamera()" title="Aproximar Visao (Zoom In)">+</button>
-      <button type="button" class="cam-btn" onclick="zoomOutCamera()" title="Afastar Visao (Zoom Out)">-</button>
-      <button type="button" class="cam-btn" onclick="resetCameraGeral()" title="Visao Geral 100%">100%</button>
-      <div class="cam-sep"></div>
-      <button type="button" class="cam-pill" id="btn-cam-diretor" onclick="toggleModoDiretorUI()" style="border-color:#475569;background:#1e293b;color:#94a3b8;" title="Alternar Câmera Diretora Automática 2.5D">🎬 Diretora: OFF</button>
-      <div class="cam-sep"></div>
-      <button type="button" class="cam-pill" onclick="focarCamera('icaro')">Icaro</button>
-      <button type="button" class="cam-pill" onclick="focarCamera('joao')">Joao</button>
-      <button type="button" class="cam-pill" onclick="focarCamera('maria')">Maria</button>
-      <button type="button" class="cam-pill" onclick="focarCamera('lara')">Lara</button>
-      <button type="button" class="cam-pill fera" onclick="focarCamera('pantera')">Pantera</button>
-      <button type="button" class="cam-pill mar" onclick="focarCamera('mar')">Praia</button>
-      <button type="button" class="cam-pill fogueira" onclick="focarCamera('fogueira')">Fogueira</button>
-      <button type="button" class="cam-pill caverna" onclick="focarCamera('caverna')" style="border-color:#a855f7;">Caverna</button>
-      <button type="button" class="cam-pill" id="btn-hitboxes-rpg" onclick="toggleHitboxes3D()" style="display:none; border-color:#0284c7; background:rgba(2,132,199,0.25); color:#38bdf8;" title="Exibir/Ocultar Hitboxes 3D dos Nós de RPG (Fogueira, Caverna, Cabanas)">🎯 Hitboxes</button>
-    </div>
-
-    <!-- MARQUEE / TICKER NARRATIVO AO VIVO -->
-    <div id="live-marquee">
-      <span class="marquee-live">AO VIVO</span>
-      <span id="marquee-text">Acompanhando os sobreviventes e o ciclo natural na Ilha Aurora...</span>
-    </div>
-
-    <!-- MODAL DA CAVERNA SOMBRIA -->
-    <div id="cave-modal" hidden>
-      <div class="hp-head">
-        <div>
-          <div class="hp-title" style="color:#a855f7;">Caverna Sombria - Subterraneo</div>
-          <div class="hp-sub">Estalactites gotejando, veios de minerio e o covil da Pantera das Sombras.</div>
+        <div class="dir-grid" id="dir-types">
+          <button type="button" class="dir-btn active" data-tipo="suprimento">&#127873; Drop de Suprimentos</button>
+          <button type="button" class="dir-btn" data-tipo="artefato">&#128302; Artefato Misterioso</button>
+          <button type="button" class="dir-btn" data-tipo="tempestade">&#9928; Tempestade Severa</button>
+          <button type="button" class="dir-btn" data-tipo="predador">&#128058; Soltar Predador</button>
+          <button type="button" class="dir-btn" data-tipo="cardume">&#128031; Abundância / Cardume</button>
+          <button type="button" class="dir-btn" data-tipo="seca">&#9728; Onda de Seca</button>
+          <button type="button" class="dir-btn" data-tipo="lenha_fogueira" style="border-color:#f59e0b;color:#fde047;">&#128293; Milagre: Lenha Dourada</button>
+          <button type="button" class="dir-btn" data-tipo="cura" style="border-color:#10b981;color:#6ee7b7;">&#10024; Milagre: Cura Geral</button>
         </div>
-        <button id="cave-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
+        <div class="dir-field">
+          <label for="dir-local">Local da Intervenção no Mapa:</label>
+          <select id="dir-local">
+            <option value="acampamento">Acampamento</option>
+            <option value="fogueira">Fogueira</option>
+            <option value="rio">Rio</option>
+            <option value="bosque">Bosque</option>
+            <option value="floresta">Floresta</option>
+            <option value="mar">Mar / Praia</option>
+            <option value="barco">Cais do Barco</option>
+            <option value="cachoeira">Cachoeira</option>
+            <option value="fazenda">Horta Comunitária</option>
+            <option value="casa_icaro">Casa do Ícaro</option>
+            <option value="casa_lara">Casa da Lara</option>
+            <option value="casa_joao">Casa do João</option>
+            <option value="casa_maria">Casa da Maria</option>
+            <option value="arena">Arena</option>
+            <option value="caverna">Caverna</option>
+          </select>
+        </div>
+        <div class="dir-field">
+          <label for="dir-patrocinador">Enviado por (Espectador / Patrocinador):</label>
+          <input id="dir-patrocinador" type="text" placeholder="Ex: Audiência VIP, Diretor..." value="Audiência Ao Vivo">
+        </div>
+        <div class="dir-field">
+          <label for="dir-msg">Bilhete / Inscrição física no objeto (opcional):</label>
+          <input id="dir-msg" type="text" placeholder="Ex: Apenas um pode ficar com a caixa...">
+        </div>
+        <div class="dir-field">
+          <label for="dir-duracao">Duração (ciclos):</label>
+          <input id="dir-duracao" type="number" min="1" max="30" value="6">
+        </div>
+        <button type="button" class="dir-submit" id="dir-enviar">&#9889; Disparar Evento no Mundo</button>
+        <div id="dir-feedback" style="margin-top:8px;font-size:12.5px;color:#38bdf8;"></div>
       </div>
-      <canvas id="cave-canvas" width="400" height="200" style="width:100%;height:auto;border-radius:10px;background:#05070f;margin-top:10px;box-shadow:inset 0 2px 14px #000;"></canvas>
-      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-        <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('minerar_caverna')">Minerar Ferro & Quartzo</button>
-        <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('explorar_caverna')">Explorar com Tocha</button>
-        <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna(\'afugentar_fera\')">Afugentar Fera</button>
-      </div>
-      <div id="cave-log" style="margin-top:8px;font-size:12px;color:#cbd5e1;"></div>
-    </div>
+      <canvas id="game" style="display:none !important;"></canvas>
+      <canvas id="pixi-game" style="display:none !important;"></canvas>
+      <div id="three-container" style="display:none !important;"></div>
+      <div id="rpg-tiled-container" style="display:block; position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; border-radius:14px; overflow:hidden;"></div>
+      <div id="tension-vignette"></div>
+      <div id="milagre-banner"></div>
+      <div id="cinematic-caption"></div>
 
-    <!-- MODAL DO PREDADOR (PANTERA DAS SOMBRAS) -->
-    <div id="predador-modal" hidden>
-      <div class="hp-head">
-        <div>
-          <div class="hp-title" style="color:#ef4444;">Pantera das Sombras - Fera Selvagem</div>
-          <div class="hp-sub" id="pred-sub">Rondando matas e encostas. Teme tochas e fogueiras acesas.</div>
+      <!-- MODAL DA CAVERNA SOMBRIA -->
+      <div id="cave-modal" hidden>
+        <div class="hp-head">
+          <div>
+            <div class="hp-title" style="color:#a855f7;">Caverna Sombria - Subterraneo</div>
+            <div class="hp-sub">Estalactites gotejando, veios de minerio e o covil da Pantera das Sombras.</div>
+          </div>
+          <button id="cave-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
         </div>
-        <button id="pred-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
-      </div>
-      <div id="pred-body" style="margin-top:10px;font-size:13px;line-height:1.5;"></div>
-    </div>
-    <div id="map-hint">Clique numa casa ou lugar da ilha para ver quem está lá, o que cada um está fazendo e o diário de bordo.</div>
-    <div id="house-panel" hidden>
-      <div class="hp-head">
-        <div>
-          <div class="hp-title" id="hp-title"></div>
-          <div class="hp-sub" id="hp-sub"></div>
+        <canvas id="cave-canvas" width="400" height="200" style="width:100%;height:auto;border-radius:10px;background:#05070f;margin-top:10px;box-shadow:inset 0 2px 14px #000;"></canvas>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+          <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('minerar_caverna')">Minerar Ferro & Quartzo</button>
+          <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('explorar_caverna')">Explorar com Tocha</button>
+          <button type="button" class="dir-btn" style="flex:1;" onclick="enviarIntervencaoCaverna('afugentar_fera')">Afugentar Fera</button>
         </div>
-        <button id="hp-close" aria-label="Fechar painel">&times;</button>
+        <div id="cave-log" style="margin-top:8px;font-size:12px;color:#cbd5e1;"></div>
       </div>
-      <canvas id="interior-canvas" width="400" height="220" style="width:100%;height:auto;border-radius:10px;background:#18120c;box-shadow:inset 0 2px 14px #000;margin-top:10px;"></canvas>
-      <div id="hp-body"></div>
-    </div>
-  </section>
+
+      <!-- MODAL DO PREDADOR (PANTERA DAS SOMBRAS) -->
+      <div id="predador-modal" hidden>
+        <div class="hp-head">
+          <div>
+            <div class="hp-title" style="color:#ef4444;">Pantera das Sombras - Fera Selvagem</div>
+            <div class="hp-sub" id="pred-sub">Rondando matas e encostas. Teme tochas e fogueiras acesas.</div>
+          </div>
+          <button id="pred-close" style="flex:none;width:27px;height:27px;border-radius:9px;border:1px solid #38536a;background:#ffffff10;color:#cbd5e1;cursor:pointer;">&times;</button>
+        </div>
+        <div id="pred-body" style="margin-top:10px;font-size:13px;line-height:1.5;"></div>
+      </div>
+      <div id="map-hint"></div>
+      <div id="house-panel" hidden>
+        <div class="hp-head">
+          <div>
+            <div class="hp-title" id="hp-title"></div>
+            <div class="hp-sub" id="hp-sub"></div>
+          </div>
+          <button id="hp-close" aria-label="Fechar painel">&times;</button>
+        </div>
+        <canvas id="interior-canvas" width="400" height="220" style="width:100%;height:auto;border-radius:10px;background:#18120c;box-shadow:inset 0 2px 14px #000;margin-top:10px;"></canvas>
+        <div id="hp-body"></div>
+      </div>
+    </section>
+  </div>
   <aside id="side-column">
     <section class="panel-section" aria-labelledby="agents-title">
       <h2 id="agents-title">Habitantes</h2>
@@ -401,13 +298,6 @@ window.toggleTopActions = function() {
   const fechado = el.classList.contains('collapsed');
   if (ic) ic.textContent = fechado ? '☰' : '✕';
 };
-
-window.addEventListener('resize', () => {
-  const el = document.getElementById('top-actions');
-  if (el && window.innerWidth > 850) {
-    el.classList.remove('collapsed');
-  }
-});
 
 // Toast discreto no canto inferior direito (sem pop-ups bloqueantes)
 window.mostrarToast = function(msg, duracao = 3000) {
@@ -783,68 +673,30 @@ async function fetchState(){
   }catch(e){ console.error('Erro fetch:', e); }
 }
 
-const _urlParams = (typeof window !== 'undefined' && window.location) ? new URLSearchParams(window.location.search) : null;
-let modoVisualAtual = (_urlParams && _urlParams.get('modo')) ? _urlParams.get('modo') : 'rpg'; // 'rpg' (Novo Mapa 2D Top-Down padrão) | '25d' | '3d'
+let modoVisualAtual = 'rpg';
 
-window.setVisualMode = function(modo){
-  modoVisualAtual = modo;
+window.setVisualMode = function(){
+  modoVisualAtual = 'rpg';
   const pixiCanvas = document.getElementById('pixi-game');
   const threeCont = document.getElementById('three-container');
   const rpgCont = document.getElementById('rpg-tiled-container');
 
-  const b25d = document.getElementById('btn-mode-25d');
-  const b3d = document.getElementById('btn-mode-3d');
-  const bRpg = document.getElementById('btn-mode-rpg');
-  const btnHitbox = document.getElementById('btn-hitboxes-rpg');
-
-  [b25d, b3d, bRpg].forEach(b => { if (b) b.classList.remove('active'); });
-
-  if (modo === '25d') {
-    if (b25d) b25d.classList.add('active');
-    if (pixiCanvas) pixiCanvas.style.display = 'block';
-    if (threeCont) threeCont.style.display = 'none';
-    if (rpgCont) rpgCont.style.display = 'none';
-    if (btnHitbox) btnHitbox.style.display = 'none';
-    if (window.motorThreeIlha) window.motorThreeIlha.stop();
-    if (window.motorPixiIlha && window.stateData) {
-      window.motorPixiIlha.atualizarEstado(window.stateData);
-    }
-  } else if (modo === '3d') {
-    if (b3d) b3d.classList.add('active');
-    if (pixiCanvas) pixiCanvas.style.display = 'none';
-    if (threeCont) threeCont.style.display = 'block';
-    if (rpgCont) rpgCont.style.display = 'none';
-    if (btnHitbox) btnHitbox.style.display = 'inline-block';
-    if (window.motorThreeIlha) {
-      window.motorThreeIlha.init(threeCont);
-      window.motorThreeIlha.start();
-      if (window.stateData) window.motorThreeIlha.atualizarEstado(window.stateData);
-    }
-  } else if (modo === 'rpg') {
-    if (bRpg) bRpg.classList.add('active');
-    if (pixiCanvas) pixiCanvas.style.display = 'none';
-    if (threeCont) threeCont.style.display = 'none';
-    if (rpgCont) rpgCont.style.display = 'block';
-    if (btnHitbox) btnHitbox.style.display = 'none';
-    if (window.motorThreeIlha) window.motorThreeIlha.stop();
-    if (window.motorRpgTiled) {
-      window.motorRpgTiled.init(rpgCont);
-      if (window.stateData) window.motorRpgTiled.atualizarEstado(window.stateData);
-    }
+  if (pixiCanvas) pixiCanvas.style.display = 'none';
+  if (threeCont) threeCont.style.display = 'none';
+  if (rpgCont) rpgCont.style.display = 'block';
+  if (window.motorRpgTiled && rpgCont) {
+    window.motorRpgTiled.init(rpgCont);
+    if (window.stateData) window.motorRpgTiled.atualizarEstado(window.stateData);
   }
 };
 
 window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
-    if (typeof window.setVisualMode === 'function') {
-      window.setVisualMode(modoVisualAtual);
-    }
-  }, 120);
+    window.setVisualMode('rpg');
+  }, 50);
 });
 
-window.toggleModo3D = function(){
-  setVisualMode(modoVisualAtual === '3d' ? '25d' : '3d');
-};
+window.toggleModo3D = function(){};
 
 function toggleHitboxes3D(){
   if (window.MapaRpg && window.MapaRpg.integradorThree) {
@@ -1596,13 +1448,23 @@ window.atualizarStatusDiretorUI = function(ativo) {
 
 window.mudarZonaMundo = function(zonaId) {
   document.querySelectorAll('.zona-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById(
-    zonaId === 'ilha_central' ? 'btn-zona-ilha' :
-    zonaId === 'caverna_ruinas' ? 'btn-zona-caverna' : 'btn-zona-floresta'
-  );
+  const s = String(zonaId || '').toLowerCase();
+  let btnId = 'btn-zona-ilha';
+  let regiaoRpg = 'ilha_central';
+  if (s.includes('bosque') || s.includes('floresta')) {
+    btnId = 'btn-zona-bosque';
+    regiaoRpg = 'bosque';
+  } else if (s.includes('caverna') || s.includes('ruina')) {
+    btnId = 'btn-zona-caverna';
+    regiaoRpg = 'caverna';
+  } else if (s.includes('praia') || s.includes('mar')) {
+    btnId = 'btn-zona-praia';
+    regiaoRpg = 'praia';
+  }
+  const btn = document.getElementById(btnId);
   if (btn) btn.classList.add('active');
-  if (window.motorPixi && typeof window.motorPixi.mudarZona === 'function') {
-    window.motorPixi.mudarZona(zonaId);
+  if (window.motorRpgTiled && typeof window.motorRpgTiled.mudarRegiao === 'function') {
+    window.motorRpgTiled.mudarRegiao(regiaoRpg);
   }
 };
 

@@ -89,12 +89,14 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
         });
 
         if (res && res.ok && res.decisao && res.decisao.acao) {
+          const mot = String(res.decisao.motivo || '');
+          const fala = String(res.decisao.fala || '').trim();
           return {
             acao: res.decisao.acao,
-            motivo: res.decisao.motivo || `Decidido pela Central (${nomeDisplay}).`,
-            fala: res.decisao.fala || '',
+            motivo: mot || `Decidido pela Central S23 (${nomeDisplay}).`,
+            fala: fala,
             objetivos: res.decisao.objetivos || [],
-            origem: 'central-' + id
+            origem: res.decisao.origem || ('central-s23-' + id)
           };
         }
         throw new Error((res && res.erro) || 'Resposta sem ação válida');
@@ -103,29 +105,27 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
       }
     }
 
-    // NÍVEL 2: Cérebro Local (Groq qwen3.8-27b / Ollama qwen2.5:7b)
-    try {
-      console.log(`[ADAPTADOR-LOCAL:${id}] Acionando Nível 2 (Cérebro Local)...`);
-      const dLocal = await tentarCerebroLocal(contexto, possiveis, ser);
-      if (dLocal && dLocal.acao && idsPossiveis.includes(dLocal.acao)) {
-        return {
-          ...dLocal,
-          origem: 'cerebro-local-' + id
-        };
-      }
-    } catch (errLocal) {
-      console.warn(`[ADAPTADOR-LOCAL:${id}] Cérebro local falhou: ${errLocal.message}. Acionando Nível 3 (Emergência Neutra)...`);
-    }
-
-    // NÍVEL 3: Emergência Neutra (O loop da Ilha NUNCA pode travar)
+    // PROTEÇÃO DE IDENTIDADE CANÔNICA (ETAPA 4):
+    // Se a Central S23 estiver offline, a Ilha NUNCA aciona cérebro local independente
+    // para evitar split-brain ou alucinação de personalidade paralela.
     const neutras = ['descansar', 'observar', 'esperar'];
     const acaoNeutra = neutras.find(n => idsPossiveis.includes(n)) || (idsPossiveis[0] || 'descansar');
+    let falaVigilia = '';
+    let motivoVigilia = `Cérebro em modo de vigília contemplativa temporária; aguardando reconexão com o núcleo central no S23 Ultra.`;
+    try {
+      const { sincronizadorCanonicoGlobal } = require('./sincronizador-canonico-s23');
+      if (sincronizadorCanonicoGlobal) {
+        const vig = sincronizadorCanonicoGlobal.gerarRespostaVigiliaContemplativa(id);
+        falaVigilia = vig.fala;
+        motivoVigilia = vig.motivo;
+      }
+    } catch (_) {}
     return {
       acao: acaoNeutra,
-      motivo: `Cérebro em modo de vigília neutra temporária; permaneço observando o ambiente.`,
-      fala: '',
-      objetivos: ['Observar'],
-      origem: 'emergencia-neutra-' + id
+      motivo: motivoVigilia,
+      fala: falaVigilia,
+      objetivos: ['Vigília Contemplativa'],
+      origem: 'vigilia-contemplativa-' + id
     };
   }
 
@@ -198,7 +198,16 @@ function criarAdaptador({ id, porta, host = HOST_PADRAO, nome }) {
       fs.appendFileSync(arqVivenciasGeral, JSON.stringify(registro) + '\n', 'utf8');
       console.log(`[ILHA:VIVENCIA-ISOLADA:${id}] Ciclo ${dados.ciclo != null ? dados.ciclo : '?'} gravado em vivencias-ilha-${entidade}.jsonl.`);
 
-      // 2) Enfia para envio à Central S23 (memória de Ícaro e Elara no S23)
+      // 2) Registra no Sincronizador Canônico com UUID e ACK para a Central S23
+      try {
+        const { sincronizadorCanonicoGlobal } = require('./sincronizador-canonico-s23');
+        if (sincronizadorCanonicoGlobal) {
+          sincronizadorCanonicoGlobal.registrarEventoParaS23(entidade, 'consequencia', registro, {
+            origem: 'ilha-zfold2'
+          }).catch(() => {});
+        }
+      } catch (_) {}
+
       filaPush(registro);
 
       // 3) Tenta entregar a fila imediatamente (S23 via Tailscale, ou PC failover)

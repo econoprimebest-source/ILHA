@@ -9,6 +9,62 @@ const fs = require('fs');
 const path = require('path');
 
 const ARQ_CHAT = path.join(__dirname, 'chat-criador.jsonl');
+const ARQ_INTENCOES = path.join(__dirname, 'intencoes-traje.jsonl');
+
+function despacharIntencaoTraje(intencao) {
+  try {
+    fs.appendFileSync(ARQ_INTENCOES, JSON.stringify(intencao) + '\n', 'utf8');
+    const hosts = ['100.117.219.66', '127.0.0.1'];
+    for (const h of hosts) {
+      enviarRequisicaoHttp(h, 8793, '/traje/comando', 'POST', intencao);
+      enviarRequisicaoHttp(h, 8794, '/traje/comando', 'POST', intencao);
+    }
+    console.log(`[TRAJE:INTENÇÃO] Intenção de hardware despachada: ${intencao.comando} (${intencao.dispositivoAlvo})`);
+  } catch (e) {
+    console.error('[TRAJE:INTENÇÃO] Erro ao despachar intenção:', e.message);
+  }
+}
+
+function listarIntencoesTraje(limite = 20) {
+  try {
+    if (!fs.existsSync(ARQ_INTENCOES)) return [];
+    const linhas = fs.readFileSync(ARQ_INTENCOES, 'utf8').split('\n').filter(Boolean);
+    return linhas.slice(-limite).map(l => {
+      try { return JSON.parse(l); } catch (_) { return null; }
+    }).filter(Boolean);
+  } catch (_) {
+    return [];
+  }
+}
+
+function interpretarEExecutarIntencoes(serId, texto, autor) {
+  const t = String(texto || '').trim().toLowerCase();
+
+  // 1. HARDWARE / CÂMERA DO CELULAR / TRAJE (Moto G7 / Realme)
+  const pedeCamera = /lig(ar?|a|ue)\s+(a\s+)?c[aâ]mera|abrir?\s+(a\s+)?c[aâ]mera|me\s+ve(r|ja)|ativa(r|e)?\s+(a\s+)?c[aâ]mera|olh(ar?|e)\s+pra\s+mim/i.test(t);
+  if (pedeCamera) {
+    despacharIntencaoTraje({
+      id: 'traje_' + Date.now().toString(36),
+      comando: 'ativar_camera',
+      serId,
+      solicitante: autor,
+      dispositivoAlvo: t.includes('realme') ? 'realme' : 'motog7',
+      texto,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // 2. ORDEM DE MOVIMENTO OU AÇÃO DIRETA
+  const ehOrdem = /^(?:v[aá]|vai|ande|caminhe|corra|ir|venha|vem|volte|volta|construa|pesque|durma|descanse|coma|beba)/i.test(t) ||
+                  /fogueira|casa|lar|cabana|rio|mar|praia|caverna|floresta|bosque|fazenda|curral|arena|pescar/i.test(t);
+
+  if (ehOrdem) {
+    try {
+      const cc = require('./comandos-criador');
+      cc.registrarComando(serId, texto, autor);
+    } catch (_) {}
+  }
+}
 
 function garantirArquivo() {
   if (!fs.existsSync(ARQ_CHAT)) {
@@ -18,9 +74,11 @@ function garantirArquivo() {
 
 function normalizarId(serId) {
   const s = String(serId || '').toLowerCase().trim();
-  if (s === 'lara' || s === 'elara') return 'lara';
+  // ETAPA 2: Unificação Canônica — Elara é a entidade oficial
+  if (s === 'lara' || s === 'elara') return 'elara';
   if (s === 'icaro' || s === 'ícaro') return 'icaro';
   if (s === 'joao' || s === 'joão') return 'joao';
+  if (s === 'maria') return 'maria';
   return s || 'icaro';
 }
 
@@ -67,11 +125,30 @@ function enviarRequisicaoHttp(hostname, port, path, metodo, dados) {
 }
 
 function sincronizarComCentral(obj) {
-  const hosts = ['100.117.219.66', '127.0.0.1'];
   const sId = normalizarId(obj.serId);
-  const ehElara = (sId === 'lara' || sId === 'elara');
-  const entAlvo = ehElara ? 'elara' : 'icaro';
-  const portaPrincipal = ehElara ? 8794 : 8793;
+  const entAlvo = sId === 'elara' ? 'elara' : 'icaro';
+  const ehElara = entAlvo === 'elara';
+
+  // ETAPA 3: Registro no Sincronizador Canônico com UUID e ACK
+  try {
+    const { sincronizadorCanonicoGlobal } = require('./sincronizador-canonico-s23');
+    if (sincronizadorCanonicoGlobal) {
+      sincronizadorCanonicoGlobal.registrarEventoParaS23(entAlvo, 'chat', {
+        entrada: obj.tipo === 'usuario' ? `Rafael (no Chat da Ilha): ${obj.texto}` : '',
+        resposta: obj.tipo === 'personagem' ? `${obj.autor}: ${obj.texto}` : '',
+        textoOriginal: obj.texto,
+        autor: obj.autor,
+        ciclo: obj.ciclo
+      }, {
+        uuid: obj.id,
+        origem: 'ilha-chat',
+        timestamp: obj.timestamp
+      }).catch(() => {});
+    }
+  } catch (_) {}
+
+  const hosts = ['100.117.219.66', '127.0.0.1'];
+  const portaPrincipal = entAlvo === 'elara' ? 8794 : 8793;
 
   for (const h of hosts) {
     // 1. /ilha/chat-sync (portas 8793 e 8794)
@@ -153,6 +230,9 @@ function enviarMensagem(serId, texto, autor = 'Rafael (Criador)', ciclo = null) 
     resposta: null
   };
   salvarLinha(msgObj);
+  try {
+    interpretarEExecutarIntencoes(sId, texto, autor);
+  } catch (_) {}
   return msgObj;
 }
 
@@ -173,7 +253,7 @@ function registrarResposta(serId, fala, acao = null, motivo = null, ciclo = null
   const sId = normalizarId(serId);
   const pendente = obterMensagemPendente(sId);
 
-  const nomes = { icaro: 'Ícaro', lara: 'Lara (Elara)', joao: 'João', maria: 'Maria' };
+  const nomes = { icaro: 'Ícaro', elara: 'Elara', lara: 'Elara (Lara)', joao: 'João', maria: 'Maria' };
   const nomeSer = nomes[sId] || sId;
 
   const respObj = {
@@ -269,5 +349,7 @@ module.exports = {
   registrarResposta,
   listarMensagens,
   obterHistoricoRecente,
-  normalizarId
+  normalizarId,
+  despacharIntencaoTraje,
+  listarIntencoesTraje
 };

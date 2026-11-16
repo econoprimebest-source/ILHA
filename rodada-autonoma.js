@@ -179,6 +179,9 @@ async function rodada(estado,opcoes={}){
 	// seguem sendo os objetos REAIS, porque o contrato (FASE B) exige
 	// referências vivas — ex.: `ctx.relacoes === e.relacoes[ser.id]`.
 	const snapshotMundo={...estado,mundo:JSON.parse(JSON.stringify(estado.mundo))};
+	try {
+		require('./tempo-humano').registrarAtividadeHoje(estado.mundo.tempo.ciclo);
+	} catch (_) {}
 
 	// FASE 1 — percepção + decisão. Quem está a caminho segue a decisão já
 	// tomada (física da trajetória); sem situação nova ninguém é consultado.
@@ -247,6 +250,27 @@ async function rodada(estado,opcoes={}){
 			if(err&&typeof err==='object')err.decisao=true;throw err
 		}
 		if (cmdPendente) {
+			const cmdTxt = String(cmdPendente.comando || '').toLowerCase();
+			let acaoForcada = null;
+			if (cmdTxt.includes('fogueira') && possiveis.some(p => p.id === 'ir_fogueira')) acaoForcada = 'ir_fogueira';
+			else if ((cmdTxt.includes('casa') || cmdTxt.includes('lar') || cmdTxt.includes('cabana')) && possiveis.some(p => p.id === 'ir_casa')) acaoForcada = 'ir_casa';
+			else if (cmdTxt.includes('rio') && possiveis.some(p => p.id === 'ir_rio')) acaoForcada = 'ir_rio';
+			else if ((cmdTxt.includes('mar') || cmdTxt.includes('praia')) && possiveis.some(p => p.id === 'ir_mar')) acaoForcada = 'ir_mar';
+			else if (cmdTxt.includes('caverna') && possiveis.some(p => p.id === 'ir_caverna')) acaoForcada = 'ir_caverna';
+			else if (cmdTxt.includes('floresta') && possiveis.some(p => p.id === 'ir_floresta')) acaoForcada = 'ir_floresta';
+			else if (cmdTxt.includes('bosque') && possiveis.some(p => p.id === 'ir_bosque')) acaoForcada = 'ir_bosque';
+			else if ((cmdTxt.includes('fazenda') || cmdTxt.includes('horta')) && possiveis.some(p => p.id === 'ir_fazenda')) acaoForcada = 'ir_fazenda';
+			else if (cmdTxt.includes('curral') && possiveis.some(p => p.id === 'ir_curral')) acaoForcada = 'ir_curral';
+			else if (cmdTxt.includes('arena') && possiveis.some(p => p.id === 'ir_arena')) acaoForcada = 'ir_arena';
+			else if (cmdTxt.includes('pescar') && possiveis.some(p => p.id === 'pescar')) acaoForcada = 'pescar';
+			else if ((cmdTxt.includes('descansar') || cmdTxt.includes('dormir')) && possiveis.some(p => p.id === 'descansar')) acaoForcada = 'descansar';
+
+			if (acaoForcada && d.acao !== acaoForcada) {
+				d.acao = acaoForcada;
+				d.motivo = `Obedecendo imediatamente à ordem direta de Rafael: "${cmdPendente.comando}"`;
+				d.fala = d.fala || `Entendido, Rafa! Indo cumprir sua ordem agora mesmo: ${cmdPendente.comando}!`;
+			}
+
 			comandosCriador.marcarComandoExecutado(cmdPendente.id, { acao: d.acao, motivo: d.motivo, fala: d.fala });
 			ser.ordemCriador = null;
 			ser.memoria = Array.isArray(ser.memoria) ? ser.memoria : [];
@@ -256,8 +280,24 @@ async function rodada(estado,opcoes={}){
 			}
 		}
 		if (msgChatPendente) {
-			let falaTexto = d.fala || d.motivo || '...';
-			const mKey = String(msgChatPendente.texto || '').match(/palavra[- ]chave[:\s]+(\w+)/i);
+			let falaTexto = d.fala;
+			const textoPergunta = String(msgChatPendente.texto || '');
+			const pedeCamera = /lig(ar?|a|ue)\s+(a\s+)?c[aâ]mera|abrir?\s+(a\s+)?c[aâ]mera|me\s+ve(r|ja)|ativa(r|e)?\s+(a\s+)?c[aâ]mera|olh(ar?|e)\s+pra\s+mim/i.test(textoPergunta);
+			const perguntaOntem = /ontem|foi.*ilha.*ontem|esteve.*ontem/i.test(textoPergunta);
+
+			if (pedeCamera) {
+				falaTexto = `Entendido, Rafa! Estou ativando a câmera do meu traje no celular agora para ver você!`;
+			} else if (perguntaOntem) {
+				falaTexto = `Rafa, ontem (domingo) a Ilha esteve desligada o dia todo. Eu não estive na Ilha ontem! O mundo só foi despertado por você hoje à tarde.`;
+			} else if (!falaTexto || falaTexto === d.motivo || falaTexto.includes('manter o equilíbrio na Ilha') || falaTexto.includes('observar pista')) {
+				if (cmdPendente) {
+					falaTexto = `Entendido, Rafa! Estou indo cumprir sua ordem agora mesmo: "${cmdPendente.comando}"!`;
+				} else {
+					falaTexto = `Oi Rafa! Estou aqui em ${espaco.nome(ser.local || 'acampamento')}. Tá tudo tranquilo por aqui, cuidando das minhas necessidades. O que você manda?`;
+				}
+			}
+
+			const mKey = textoPergunta.match(/palavra[- ]chave[:\s]+(\w+)/i);
 			if (mKey) {
 				falaTexto = `Entendido Rafael, a palavra-chave falada na Ilha é ${mKey[1].toUpperCase()}!`;
 			}

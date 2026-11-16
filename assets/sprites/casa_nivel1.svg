@@ -1,12 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 80" width="90" height="80">
-  <ellipse cx="45" cy="72" rx="36" ry="7" fill="#000" opacity="0.4"/>
-  <!-- Toras de Estrutura em A -->
-  <line x1="16" y1="70" x2="45" y2="16" stroke="#451a03" stroke-width="6" stroke-linecap="round"/>
-  <line x1="74" y1="70" x2="45" y2="16" stroke="#451a03" stroke-width="6" stroke-linecap="round"/>
-  <line x1="45" y1="16" x2="45" y2="70" stroke="#78350f" stroke-width="4"/>
-  <!-- Cobertura de Peles e Sapê -->
-  <polygon points="45,18 18,68 72,68" fill="#854d0e" stroke="#3d2105" stroke-width="2"/>
-  <polygon points="45,22 24,66 45,66" fill="#a16207"/>
-  <!-- Entrada do Abrigo com interior escuro -->
-  <polygon points="45,34 32,68 58,68" fill="#1c1917"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 100" width="110" height="100">
+  <!-- Sombra projetada no terreno -->
+  <ellipse cx="55" cy="92" rx="46" ry="7" fill="#000" opacity="0.4"/>
+  <!-- Chaminé de Tijolos e Pedra -->
+  <rect x="72" y="12" width="11" height="28" rx="1" fill="#7c2d12" stroke="#292524" stroke-width="1.8"/>
+  <rect x="70" y="10" width="15" height="4" rx="1" fill="#451a03" stroke="#292524" stroke-width="1.2"/>
+  <circle cx="77" cy="6" r="3.5" fill="#e2e8f0" opacity="0.65"/>
+  <circle cx="81" cy="2" r="4.5" fill="#cbd5e1" opacity="0.45"/>
+  <!-- Alicerce de Pedra Talhada -->
+  <rect x="18" y="74" width="74" height="14" rx="2" fill="#64748b" stroke="#1e293b" stroke-width="2"/>
+  <line x1="36" y1="74" x2="36" y2="88" stroke="#334155" stroke-width="1.5"/>
+  <line x1="55" y1="74" x2="55" y2="88" stroke="#334155" stroke-width="1.5"/>
+  <line x1="74" y1="74" x2="74" y2="88" stroke="#334155" stroke-width="1.5"/>
+  <!-- Paredes de Alvenaria Clara com Enxaimel de Madeira -->
+  <rect x="20" y="42" width="70" height="34" rx="2" fill="#fef3c7" stroke="#451a03" stroke-width="2.2"/>
+  <!-- Vigas de Madeira Decorativas (Estilo Casa RPG) -->
+  <rect x="20" y="42" width="5" height="34" fill="#78350f"/>
+  <rect x="85" y="42" width="5" height="34" fill="#78350f"/>
+  <rect x="20" y="42" width="70" height="4" fill="#78350f"/>
+  <!-- Porta Residencial em Arco com Degrau de Pedra -->
+  <rect x="44" y="84" width="22" height="5" rx="1.5" fill="#94a3b8" stroke="#334155" stroke-width="1.2"/>
+  <path d="M46,84 L46,56 Q55,49 64,56 L64,84 Z" fill="#78350f" stroke="#292524" stroke-width="1.8"/>
+  <line x1="55" y1="53" x2="55" y2="84" stroke="#451a03" stroke-width="1.2"/>
+  <circle cx="60" cy="70" r="1.8" fill="#facc15"/>
+  <!-- Janela Esquerda com Venezianas e Floreira -->
+  <rect x="26" y="51" width="13" height="13" rx="1.5" fill="#fef08a" stroke="#451a03" stroke-width="1.8"/>
+  <line x1="32.5" y1="51" x2="32.5" y2="64" stroke="#451a03" stroke-width="1.2"/>
+  <line x1="26" y1="57.5" x2="39" y2="57.5" stroke="#451a03" stroke-width="1.2"/>
+  <rect x="25" y="64" width="15" height="4" rx="1" fill="#15803d" stroke="#14532d" stroke-width="1"/>
+  <circle cx="29" cy="65" r="1.5" fill="#f43f5e"/>
+  <circle cx="35" cy="65" r="1.5" fill="#facc15"/>
+  <!-- Janela Direita com Venezianas e Floreira -->
+  <rect x="71" y="51" width="13" height="13" rx="1.5" fill="#fef08a" stroke="#451a03" stroke-width="1.8"/>
+  <line x1="77.5" y1="51" x2="77.5" y2="64" stroke="#451a03" stroke-width="1.2"/>
+  <line x1="71" y1="57.5" x2="84" y2="57.5" stroke="#451a03" stroke-width="1.2"/>
+  <rect x="70" y="64" width="15" height="4" rx="1" fill="#15803d" stroke="#14532d" stroke-width="1"/>
+  <circle cx="74" cy="65" r="1.5" fill="#38bdf8"/>
+  <circle cx="80" cy="65" r="1.5" fill="#f43f5e"/>
+  <!-- Telhado de Telhas Cerâmicas Vermelhas em Duas Águas -->
+  <polygon points="55,14 10,45 100,45" fill="#b91c1c" stroke="#450a0a" stroke-width="2.4"/>
+  <polygon points="55,16 15,43 55,43" fill="#dc2626"/>
+  <!-- Detalhes de Telhas e Óculo Frontal -->
+  <line x1="25" y1="35" x2="85" y2="35" stroke="#7f1d1d" stroke-width="1.4" opacity="0.7"/>
+  <line x1="36" y1="27" x2="74" y2="27" stroke="#7f1d1d" stroke-width="1.4" opacity="0.7"/>
+  <circle cx="55" cy="31" r="4.5" fill="#fef08a" stroke="#451a03" stroke-width="1.8"/>
 </svg>

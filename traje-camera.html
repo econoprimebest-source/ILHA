@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ilha Aurora — Traje Móvel (Câmera & Telemetria)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #030712;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid #1e293b;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .traje-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 99px;
+      background: #14532d;
+      color: #86efac;
+      border: 1px solid #22c55e;
+    }
+    .badge-status.offline {
+      background: #7f1d1d;
+      color: #fca5a5;
+      border-color: #ef4444;
+    }
+    #viewport-container {
+      flex: 1;
+      position: relative;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* espelhado para frontal por padrão */
+    }
+    video.traseira {
+      transform: scaleX(1);
+    }
+    canvas {
+      display: none;
+    }
+    .hud-overlay {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .hud-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .fala-personagem-card {
+      position: absolute;
+      bottom: 84px;
+      left: 12px;
+      right: 12px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid #0284c7;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #f1f5f9;
+      font-size: 13px;
+      z-index: 5;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+    }
+    .fala-autor {
+      font-weight: 800;
+      color: #38bdf8;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .fala-texto {
+      font-style: italic;
+      line-height: 1.4;
+      color: #f8fafc;
+    }
+    #controles {
+      background: rgba(15, 23, 42, 0.98);
+      border-top: 1px solid #1e293b;
+      padding: 10px 14px;
+      display: flex;
+      gap: 8px;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 10;
+    }
+    .btn-acao {
+      flex: 1;
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-acao:active {
+      transform: scale(0.96);
+      background: #0284c7;
+    }
+    .btn-acao.ativo {
+      background: #0369a1;
+      border-color: #38bdf8;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+    }
+    .btn-acao.torch-ativo {
+      background: #b45309;
+      border-color: #facc15;
+      color: #fef08a;
+      box-shadow: 0 0 16px rgba(250, 204, 21, 0.6);
+    }
+    .btn-destaque {
+      background: #0284c7;
+      border-color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="traje-title">
+      <span id="traje-icone">🤖</span>
+      <span id="traje-nome">Traje Móvel Alpha (Moto G7)</span>
+    </div>
+    <div id="status-conexao" class="badge-status">ONLINE</div>
+  </header>
+
+  <div id="viewport-container">
+    <video id="video-feed" autoplay playsinline muted></video>
+    <canvas id="canvas-capture"></canvas>
+
+    <div class="hud-overlay">
+      <div class="hud-card">
+        🔋 Bateria: <strong id="hud-bateria">--%</strong>
+      </div>
+      <div class="hud-card">
+        📡 FPS: <strong id="hud-fps">0</strong> | Res: <strong id="hud-res">--</strong>
+      </div>
+    </div>
+
+    <div id="card-fala" class="fala-personagem-card">
+      <div class="fala-autor">
+        <span id="fala-nome-habitante">Ícaro (Conectado ao Traje)</span>
+        <span id="fala-local-habitante" style="font-size:11px; color:#94a3b8;">Ilha Central</span>
+      </div>
+      <div id="fala-conteudo" class="fala-texto">
+        "Conectando ao meu traje no mundo real... Já consigo ver através dos sensores."
+      </div>
+    </div>
+  </div>
+
+  <div id="controles">
+    <button type="button" class="btn-acao ativo" id="btn-camera" onclick="alternarCamera()">
+      <span style="font-size:16px;">📷</span>
+      <span id="lbl-camera">Câmera Ligada</span>
+    </button>
+    <button type="button" class="btn-acao" id="btn-inverter" onclick="inverterCamera()">
+      <span style="font-size:16px;">🔄</span>
+      <span>Alternar Lente</span>
+    </button>
+    <button type="button" class="btn-acao" id="btn-lanterna" onclick="alternarLanterna()">
+      <span style="font-size:16px;">💡</span>
+      <span>Lanterna / Tocha</span>
+    </button>
+    <button type="button" class="btn-acao btn-destaque" id="btn-snapshot" onclick="enviarSnapshotManual()">
+      <span style="font-size:16px;">👁️</span>
+      <span>Transmitir Visão</span>
+    </button>
+  </div>
+
+  <script>
+    // Parâmetros de URL: ?dispositivo=motog7 ou realme | &ser=icaro ou elara
+    const params = new URLSearchParams(window.location.search);
+    const dispositivoId = (params.get('dispositivo') || params.get('traje') || 'motog7').toLowerCase();
+    const serIdPredefinido = params.get('ser') || (dispositivoId.includes('realme') ? 'elara' : 'icaro');
+
+    const videoEl = document.getElementById('video-feed');
+    const canvasEl = document.getElementById('canvas-capture');
+    const ctx = canvasEl.getContext('2d');
+
+    let streamAtual = null;
+    let cameraAtiva = true;
+    let modoCamera = 'user'; // 'user' (frontal) ou 'environment' (traseira)
+    let lanternaAtiva = false;
+    let transmissaoContinua = false; // FASE 2: DESLIGADO POR PADRÃO — Transmissão sob demanda
+    let intervalTransmissao = null;
+    let intervalPollComandos = null;
+    let framesEnviados = 0;
+    let fpsContador = 0;
+
+    // Configuração inicial de texto
+    const ehRealme = dispositivoId.includes('realme');
+    document.getElementById('traje-nome').innerText = ehRealme 
+      ? 'Traje Móvel Beta (Realme GT 7)' 
+      : 'Traje Móvel Alpha (Moto G7 Plus)';
+    document.getElementById('traje-icone').innerText = ehRealme ? '⚡' : '🤖';
+
+    // 1. Inicializa a Câmera
+    async function iniciarCamera(facing = 'user') {
+      try {
+        if (streamAtual) {
+          streamAtual.getTracks().forEach(t => t.stop());
+        }
+
+        const constraints = {
+          audio: false,
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+
+        streamAtual = await navigator.mediaDevices.getUserMedia(constraints);
+        videoEl.srcObject = streamAtual;
+        modoCamera = facing;
+
+        if (facing === 'user') {
+          videoEl.classList.remove('traseira');
+        } else {
+          videoEl.classList.add('traseira');
+        }
+
+        videoEl.onloadedmetadata = () => {
+          document.getElementById('hud-res').innerText = `${videoEl.videoWidth}x${videoEl.videoHeight}`;
+        };
+
+        cameraAtiva = true;
+        document.getElementById('btn-camera').classList.add('ativo');
+        document.getElementById('lbl-camera').innerText = 'Câmera Ligada';
+
+        // Dispara primeiro frame
+        setTimeout(capturarETransmitirFrame, 1000);
+      } catch (err) {
+        console.error('Erro ao acessar câmera:', err);
+        alert('Não foi possível acessar a câmera do celular: ' + err.message);
+      }
+    }
+
+    // 2. Alternar entre Ligar/Desligar Câmera
+    function alternarCamera() {
+      if (cameraAtiva && streamAtual) {
+        streamAtual.getTracks().forEach(t => t.stop());
+        streamAtual = null;
+        cameraAtiva = false;
+        document.getElementById('btn-camera').classList.remove('ativo');
+        document.getElementById('lbl-camera').innerText = 'Câmera Desligada';
+      } else {
+        iniciarCamera(modoCamera);
+      }
+    }
+
+    // 3. Inverter Câmera (Frontal / Traseira)
+    function inverterCamera() {
+      const novoModo = modoCamera === 'user' ? 'environment' : 'user';
+      iniciarCamera(novoModo);
+    }
+
+    // 4. Alternar Lanterna (Torch)
+    async function alternarLanterna() {
+      if (!streamAtual) return;
+      const track = streamAtual.getVideoTracks()[0];
+      if (!track) return;
+
+      try {
+        lanternaAtiva = !lanternaAtiva;
+        await track.applyConstraints({
+          advanced: [{ torch: lanternaAtiva }]
+        });
+        const btn = document.getElementById('btn-lanterna');
+        if (lanternaAtiva) {
+          btn.classList.add('torch-ativo');
+        } else {
+          btn.classList.remove('torch-ativo');
+        }
+      } catch (e) {
+        console.warn('Lanterna não suportada nesta lente:', e);
+        alert('Lanterna não disponível ou não suportada na câmera atual.');
+        lanternaAtiva = false;
+      }
+    }
+
+    // 5. Captura frame do vídeo e envia para o backend da Ilha
+    async function capturarETransmitirFrame(motivo = 'automatico') {
+      if (!cameraAtiva || !videoEl.videoWidth) return;
+
+      canvasEl.width = videoEl.videoWidth > 640 ? 640 : videoEl.videoWidth;
+      canvasEl.height = Math.round(canvasEl.width * (videoEl.videoHeight / videoEl.videoWidth));
+
+      ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+      const dataUrl = canvasEl.toDataURL('image/jpeg', 0.65);
+
+      let bateriaNivel = 100;
+      if (navigator.getBattery) {
+        try {
+          const bat = await navigator.getBattery();
+          bateriaNivel = Math.round(bat.level * 100);
+          document.getElementById('hud-bateria').innerText = bateriaNivel + '%';
+        } catch (_) {}
+      }
+
+      const payload = {
+        dispositivo: dispositivoId,
+        serId: serIdPredefinido,
+        imagemBase64: dataUrl,
+        cameraTipo: modoCamera === 'user' ? 'frontal' : 'traseira',
+        lanternaAtiva,
+        bateria: bateriaNivel,
+        motivoTransmissao: motivo
+      };
+
+      try {
+        const resp = await fetch('/api/traje/frame', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (resp.ok) {
+          framesEnviados++;
+          fpsContador++;
+          document.getElementById('status-conexao').className = 'badge-status';
+          document.getElementById('status-conexao').innerText = 'ONLINE';
+        }
+      } catch (e) {
+        document.getElementById('status-conexao').className = 'badge-status offline';
+        document.getElementById('status-conexao').innerText = 'DESCONECTADO';
+      }
+    }
+
+    function enviarSnapshotManual() {
+      capturarETransmitirFrame('manual_usuario');
+      const btn = document.getElementById('btn-snapshot');
+      btn.style.transform = 'scale(0.92)';
+      setTimeout(() => btn.style.transform = 'none', 180);
+    }
+
+    // 6. Polling de Comandos do Criador e Estado do Personagem
+    async function sincronizarEstadoEComandos() {
+      try {
+        // Puxa intenções recentes para o traje
+        const respInt = await fetch(`/api/traje/intencoes?limite=10`);
+        if (respInt.ok) {
+          const dados = await respInt.json();
+          const minhasIntencoes = (dados.intencoes || []).filter(i => {
+            const disp = (i.dispositivoAlvo || '').toLowerCase();
+            return disp === dispositivoId || (ehRealme && disp.includes('realme')) || (!ehRealme && disp.includes('moto'));
+          });
+
+          // Pega o comando mais recente não processado (últimos 15 segundos)
+          const agora = Date.now();
+          const recente = minhasIntencoes.reverse().find(i => (agora - new Date(i.timestamp).getTime()) < 15000);
+          if (recente) {
+            executarComandoRecebido(recente);
+          }
+        }
+
+        // Puxa última fala e estado do habitante da Ilha
+        const respHab = await fetch(`/api/rpg/estado-completo`);
+        if (respHab.ok) {
+          const estado = await respHab.json();
+          const hab = estado.habitantes ? estado.habitantes[serIdPredefinido] : null;
+          if (hab) {
+            document.getElementById('fala-nome-habitante').innerText = `${hab.nome || serIdPredefinido.toUpperCase()} (No Traje)`;
+            document.getElementById('fala-local-habitante').innerText = hab.local || 'Ilha Central';
+            if (hab.ultimaFala) {
+              document.getElementById('fala-conteudo').innerText = `"${hab.ultimaFala}"`;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Erro no sync de comandos:', e);
+      }
+    }
+
+    let ultimoComandoIdExecutado = null;
+    function executarComandoRecebido(intencao) {
+      if (intencao.id === ultimoComandoIdExecutado) return;
+      ultimoComandoIdExecutado = intencao.id;
+
+      console.log('Comando recebido do Criador:', intencao.comando);
+      if (intencao.comando === 'ativar_camera' && !cameraAtiva) {
+        iniciarCamera(modoCamera);
+      } else if (intencao.comando === 'desativar_camera' && cameraAtiva) {
+        alternarCamera();
+      } else if (intencao.comando === 'ligar_lanterna' && !lanternaAtiva) {
+        alternarLanterna();
+      } else if (intencao.comando === 'desligar_lanterna' && lanternaAtiva) {
+        alternarLanterna();
+      } else if (intencao.comando === 'capturar_foto' || intencao.comando === 'capturar_frame') {
+        capturarETransmitirFrame('ordem_criador');
+      }
+    }
+
+    // Inicialização
+    window.addEventListener('DOMContentLoaded', () => {
+      iniciarCamera('user');
+
+      // FASE 2: Câmera NÃO transmite continuamente por padrão.
+      // A transmissão é sob demanda (clique do usuário no botão ou comando direto do Criador).
+      if (transmissaoContinua) {
+        intervalTransmissao = setInterval(() => {
+          capturarETransmitirFrame('ciclo_continuo');
+        }, 2500);
+      }
+
+      // Verificação de intenções / comandos do Criador a cada 1.5s
+      intervalPollComandos = setInterval(sincronizarEstadoEComandos, 1500);
+
+      // Atualizador de FPS da telemetria
+      setInterval(() => {
+        document.getElementById('hud-fps').innerText = fpsContador;
+        fpsContador = 0;
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
