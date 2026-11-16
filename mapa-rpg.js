@@ -81,74 +81,74 @@
 
     casa_icaro: {
       id: 'casa_icaro',
-      nome: 'Cabana do Ícaro',
+      nome: 'Casa do Ícaro',
       icone: '🏠',
-      normX: 0.220,
-      normY: 0.480,
+      normX: 0.214,
+      normY: 0.468,
       pos3D: { x: -8.4, y: 1.45, z: -0.4 },
       hitbox: { tipo: 'box', largura: 2.8, altura: 2.6, profundidade: 2.6, offsetY: 1.3 },
       morador: 'icaro',
-      descricao: 'Cabana de troncos robustos com chaminé de pedra e teto de palha trançada, erguida pelo pioneiro.',
+      descricao: 'Casa de alvenaria clara com chaminé de pedra, janelas iluminadas e telhado cerâmico.',
       tipoZona: 'moradia',
-      recursos: { bau: 'Estoque pessoal protegido', cama: 'Cama de folhas secas macias' },
+      recursos: { bau: 'Estoque pessoal protegido', cama: 'Cama confortável' },
       acoes: [
-        { id: 'dormir', nome: 'Dormir na Cabana', icone: '🛌', desc: 'Sono profundo e recuperação completa de energia' },
+        { id: 'dormir', nome: 'Dormir na Casa', icone: '🛌', desc: 'Sono profundo e recuperação completa de energia' },
         { id: 'guardar_bau', nome: 'Guardar Mantimentos no Baú', icone: '📦', desc: 'Armazena madeira, peixe e água com segurança' },
         { id: 'retirar_bau', nome: 'Pegar Suprimentos do Baú', icone: '🗳️', desc: 'Retira itens para expedições' },
-        { id: 'ampliar_moradia', nome: 'Reforçar / Ampliar Cabana', icone: '🔨', desc: 'Adiciona novos cômodos e melhorias' }
+        { id: 'ampliar_moradia', nome: 'Reforçar / Ampliar Casa', icone: '🔨', desc: 'Adiciona novos cômodos e melhorias' }
       ]
     },
 
     casa_lara: {
       id: 'casa_lara',
-      nome: 'Cabana da Lara',
+      nome: 'Casa da Lara',
       icone: '🏡',
-      normX: 0.240,
-      normY: 0.410,
+      normX: 0.320,
+      normY: 0.486,
       pos3D: { x: -7.8, y: 1.40, z: -1.8 },
       hitbox: { tipo: 'box', largura: 2.6, altura: 2.5, profundidade: 2.5, offsetY: 1.25 },
       morador: 'lara',
-      descricao: 'Cabana aconchegante ornada com conchas marinhas, flores do bosque e feixes de ervas aromáticas.',
+      descricao: 'Casa aconchegante de alvenaria e telhado cerâmico ornada com flores do bosque e ervas aromáticas.',
       tipoZona: 'moradia',
       recursos: { herbario: 'Secagem de folhas medicinais', bau: 'Estoque pessoal' },
       acoes: [
-        { id: 'dormir', nome: 'Repousar na Cabana', icone: '🛌', desc: 'Descanso restaurador' },
+        { id: 'dormir', nome: 'Repousar na Casa', icone: '🛌', desc: 'Descanso restaurador' },
         { id: 'preparar_ervas', nome: 'Preparar Bálsamos e Remédios', icone: '🌿', desc: 'Macera folhas para curar dores e feridas' }
       ]
     },
 
     casa_joao: {
       id: 'casa_joao',
-      nome: 'Abrigo do João',
-      icone: '🛖',
-      normX: 0.460,
-      normY: 0.240,
+      nome: 'Casa do João',
+      icone: '🏠',
+      normX: 0.476,
+      normY: 0.195,
       pos3D: { x: -1.2, y: 1.85, z: -5.2 },
       hitbox: { tipo: 'box', largura: 2.8, altura: 2.5, profundidade: 2.6, offsetY: 1.3 },
       morador: 'joao',
-      descricao: 'Abrigo rústico de pedra e toras erguido na encosta norte, próximo à nascente de água.',
+      descricao: 'Casa de alvenaria, pedra e telhado cerâmico erguida na encosta norte, próxima à nascente.',
       tipoZona: 'moradia',
       recursos: { bancada: 'Oficina de talha de madeira' },
       acoes: [
-        { id: 'dormir', nome: 'Descansar no Abrigo', icone: '🛌', desc: 'Repouso nas alturas' },
+        { id: 'dormir', nome: 'Descansar na Casa', icone: '🛌', desc: 'Repouso nas alturas' },
         { id: 'entalhar_madeira', nome: 'Entalhar Ferramentas', icone: '🪓', desc: 'Fabrica cabos, lanças e peças de encaixe' }
       ]
     },
 
     casa_maria: {
       id: 'casa_maria',
-      nome: 'Cabana da Maria',
-      icone: '🏕️',
-      normX: 0.820,
-      normY: 0.580,
+      nome: 'Casa da Maria',
+      icone: '🏡',
+      normX: 0.855,
+      normY: 0.545,
       pos3D: { x: 9.6, y: 1.35, z: 1.6 },
       hitbox: { tipo: 'box', largura: 2.8, altura: 2.5, profundidade: 2.5, offsetY: 1.25 },
       morador: 'maria',
-      descricao: 'Cabana de terra e madeira localizada junto às plantações e ao curral dos animais.',
+      descricao: 'Casa de alvenaria e telhado cerâmico localizada junto à horta comunitária.',
       tipoZona: 'moradia',
       recursos: { despensa: 'Frascos de sementes e grãos' },
       acoes: [
-        { id: 'dormir', nome: 'Dormir na Cabana', icone: '🛌', desc: 'Descanso após o trabalho do campo' },
+        { id: 'dormir', nome: 'Dormir na Casa', icone: '🛌', desc: 'Descanso após o trabalho do campo' },
         { id: 'separar_sementes', nome: 'Triar Sementes', icone: '🌱', desc: 'Prepara plantios para a próxima estação' }
       ]
     },

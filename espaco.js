@@ -3,10 +3,10 @@
 // Quem decide para onde ir é o personagem; aqui só existem nós, caminhos e
 // distâncias. Coordenadas relativas (0..1) compatíveis com o mapa de referência.
 const nos={
-	casa_icaro:{x:.220,y:.480,nome:'Cabana do Ícaro'},
-	casa_lara:{x:.240,y:.410,nome:'Cabana da Lara'},
-	casa_joao:{x:.460,y:.240,nome:'Abrigo do João'},
-	casa_maria:{x:.820,y:.580,nome:'Cabana da Maria'},
+	casa_icaro:{x:.214,y:.468,nome:'Casa do Ícaro'},
+	casa_lara:{x:.320,y:.486,nome:'Casa da Lara'},
+	casa_joao:{x:.476,y:.195,nome:'Casa do João'},
+	casa_maria:{x:.855,y:.545,nome:'Casa da Maria'},
 	acampamento:{x:.460,y:.540,nome:'Acampamento'},
 	fogueira:{x:.500,y:.520,nome:'Fogueira Central'},
 	arena:{x:.660,y:.360,nome:'Arena de Lutas'},

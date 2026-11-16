@@ -13,15 +13,15 @@
 // próprio habitante.
 const NIVEIS = [
   null,
-  { nivel: 1, nome: 'Cabana de Palha', capacidadeBau: 40, conforto: 0,
-    visual: 'cabana simples de palha' },
-  { nivel: 2, nome: 'Cabana de Toras', custo: { madeira: 10, pedra: 4 }, trabalho: 2, capacidadeBau: 70, conforto: 1,
-    visual: 'anexo lateral de toras + depósito de lenha coberto' },
-  { nivel: 3, nome: 'Casa de Pedra com Chaminé', custo: { madeira: 16, pedra: 12 }, trabalho: 3, capacidadeBau: 110, conforto: 2,
-    visual: 'base de pedra, chaminé fumegante e cerca' },
-  { nivel: 4, nome: 'Sobrado com Varanda', custo: { madeira: 26, pedra: 18 }, trabalho: 4, capacidadeBau: 160, conforto: 3,
+  { nivel: 1, nome: 'Casa Residencial', capacidadeBau: 40, conforto: 1,
+    visual: 'casa de alvenaria clara com telhado cerâmico e chaminé' },
+  { nivel: 2, nome: 'Casa Ampliada', custo: { madeira: 10, pedra: 4 }, trabalho: 2, capacidadeBau: 70, conforto: 2,
+    visual: 'casa ampliada com anexo lateral e depósito coberto' },
+  { nivel: 3, nome: 'Casa de Pedra com Chaminé', custo: { madeira: 16, pedra: 12 }, trabalho: 3, capacidadeBau: 110, conforto: 3,
+    visual: 'base de pedra, chaminé fumegante e jardim cercado' },
+  { nivel: 4, nome: 'Sobrado com Varanda', custo: { madeira: 26, pedra: 18 }, trabalho: 4, capacidadeBau: 160, conforto: 4,
     visual: 'segundo andar, varanda e lampiões' },
-  { nivel: 5, nome: 'Casarão da Vila', custo: { madeira: 40, pedra: 28 }, trabalho: 5, capacidadeBau: 240, conforto: 4,
+  { nivel: 5, nome: 'Casarão da Vila', custo: { madeira: 40, pedra: 28 }, trabalho: 5, capacidadeBau: 240, conforto: 5,
     visual: 'torre de vigia, jardim e bandeira' }
 ];
 const NIVEL_MAX = NIVEIS.length - 1;
@@ -48,7 +48,7 @@ function preparar(estado) {
   for (const id of idsDeCasas(estado)) {
     const c = casas[id] || {};
     c.id = id;
-    c.nome ||= nomePadrao(id);
+    c.nome = nomePadrao(id);
     c.nivel = Math.max(1, Math.min(NIVEL_MAX, Math.floor(num(c.nivel) || 1)));
     c.bau = c.bau && typeof c.bau === 'object' ? c.bau : {};
     for (const k of ['madeira', 'pedra', 'alimento', 'agua']) c.bau[k] = Math.max(0, num(c.bau[k]));
