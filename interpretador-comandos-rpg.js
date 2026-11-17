@@ -115,16 +115,52 @@ function resolverDestino(textoNorm, serKey, estado) {
     return { valido: true, destino: fazendaPropria };
   }
 
-  // 5. Locais e regiões do mundo
+  // 5. Salas / Áreas de Aventura específicas dentro das Regiões (Caverna, Floresta, Praia, Cachoeira)
+  const mapaSalasSubmapa = [
+    // Caverna & Ruínas (Dungeon)
+    { rx: /\b(veio_ferro|jazida|minerar\s+ferro)\b/, no: 'caverna', sala: 'veio_ferro', nomeSala: 'Mina & Veio de Ferro', recurso: 'pedra' },
+    { rx: /\b(galeria_cristais|cristais|quartzo)\b/, no: 'caverna', sala: 'galeria_cristais', nomeSala: 'Santuário dos Cristais Arcanos', recurso: 'pedra' },
+    { rx: /\b(camera_tesouro|camara\s+do\s+tesouro|bau\s+ancestral|reliquia)\b/, no: 'caverna', sala: 'camera_tesouro', nomeSala: 'Câmara do Tesouro Ancestral', recurso: 'pedra' },
+    { rx: /\b(ruinas_ancestrais|salao\s+das\s+colunas|ruinas\s+subterraneas)\b/, no: 'caverna', sala: 'ruinas_ancestrais', nomeSala: 'Salão Central das Ruínas' },
+    { rx: /\b(lago_subterraneo|lago\s+da\s+caverna)\b/, no: 'caverna', sala: 'lago_subterraneo', nomeSala: 'Gruta do Lago Subterrâneo', recurso: 'agua' },
+    { rx: /\b(covil_pantera|covil\s+das\s+sombras|covil)\b/, no: 'caverna', sala: 'covil_pantera', nomeSala: 'Covil da Pantera das Sombras' },
+    // Floresta & Santuário
+    { rx: /\b(clareira_frutas|pomar\s+silvestre)\b/, no: 'bosque', sala: 'clareira_frutas', nomeSala: 'Clareira do Pomar Silvestre', recurso: 'alimento' },
+    { rx: /\b(serraria_lenha|bosque\s+dos\s+troncos|cortar\s+lenha)\b/, no: 'bosque', sala: 'serraria_lenha', nomeSala: 'Bosque dos Troncos & Lenha', recurso: 'madeira' },
+    { rx: /\b(circulo_cogumelos|cogumelos\s+gigantes|cogumelos)\b/, no: 'bosque', sala: 'circulo_cogumelos', nomeSala: 'Círculo dos Cogumelos Gigantes', recurso: 'alimento' },
+    { rx: /\b(santuario_antigo|santuario\s+elfico|altar\s+da\s+floresta)\b/, no: 'bosque', sala: 'santuario_antigo', nomeSala: 'Santuário Antigo da Floresta' },
+    { rx: /\b(riacho_bosque|lagoa\s+da\s+floresta)\b/, no: 'bosque', sala: 'riacho_bosque', nomeSala: 'Lagoa Escondida & Ponte de Tronco', recurso: 'agua' },
+    { rx: /\b(acampamento_caca|cabana\s+do\s+cacador|posto\s+de\s+caca)\b/, no: 'bosque', sala: 'acampamento_caca', nomeSala: 'Cabana do Caçador' },
+    // Praia & Enseada
+    { rx: /\b(coqueiral|cabana\s+do\s+pescador)\b/, no: 'mar', sala: 'coqueiral', nomeSala: 'Coqueiral & Cabana do Pescador', recurso: 'alimento' },
+    { rx: /\b(banco_conchas|enseada\s+das\s+conchas|perolas)\b/, no: 'mar', sala: 'banco_conchas', nomeSala: 'Enseada das Conchas & Pérolas' },
+    { rx: /\b(pier_pesca|pier\s+de\s+pesca)\b/, no: 'barco', sala: 'pier_pesca', nomeSala: 'Píer de Pesca & Cais', recurso: 'alimento' },
+    { rx: /\b(recife_corais|gruta\s+marinha|contrabandistas)\b/, no: 'mar', sala: 'recife_corais', nomeSala: 'Recife de Corais & Gruta Marinha' },
+    { rx: /\b(destrocos_baia|navio\s+naufragado|destrocos)\b/, no: 'mar', sala: 'destrocos_baia', nomeSala: 'Navio Naufragado da Baía', recurso: 'madeira' },
+    // Cachoeira de Banho
+    { rx: /\b(queda_principal|gruta\s+da\s+cachoeira|queda\s+dagua)\b/, no: 'cachoeira', sala: 'queda_principal', nomeSala: 'Grande Queda d\'Água & Gruta', recurso: 'agua' },
+    { rx: /\b(lago_banho|lagoa\s+termal|deck\s+de\s+banho)\b/, no: 'cachoeira', sala: 'lago_banho', nomeSala: 'Lagoa Termal de Banho' },
+    { rx: /\b(pedras_contemplacao|altar\s+do\s+sol|pedras\s+de\s+sol)\b/, no: 'cachoeira', sala: 'pedras_contemplacao', nomeSala: 'Altar de Pedras do Sol' },
+    { rx: /\b(jardim_lirios|bambuzal|ponte\s+de\s+bambu)\b/, no: 'cachoeira', sala: 'jardim_lirios', nomeSala: 'Jardim de Bambus & Lírios' },
+    { rx: /\b(nascente_cristalina|nascente\s+pura)\b/, no: 'cachoeira', sala: 'nascente_cristalina', nomeSala: 'Nascente Cristalina do Alto', recurso: 'agua' }
+  ];
+
+  for (const sItem of mapaSalasSubmapa) {
+    if (sItem.rx.test(textoNorm)) {
+      return { valido: true, destino: sItem.no, salaRegiao: sItem.sala, nomeSala: sItem.nomeSala, recursoColetado: sItem.recurso };
+    }
+  }
+
+  // 6. Locais e regiões do mundo
   const mapaDestinos = [
     { rx: /\b(fogueira|fogo\s+central)\b/, no: 'fogueira' },
     { rx: /\b(mercadinho|mercado|vendinha|venda|loja|area\s+comercial|praca\s+comercial)\b/, no: 'venda' },
-    { rx: /\b(praia|mar|litoral|oceano|areia)\b/, no: 'mar' },
-    { rx: /\b(porto|pier|barco|cais)\b/, no: 'barco' },
-    { rx: /\b(caverna|mina|minas|ruinas|subterraneo)\b/, no: 'caverna' },
-    { rx: /\b(cachoeira|banho\s+na\s+cachoeira|cachoeira\s+de\s+banho)\b/, no: 'cachoeira' },
-    { rx: /\b(bosque|pomar|santuario)\b/, no: 'bosque' },
-    { rx: /\b(floresta|mata)\b/, no: 'floresta' },
+    { rx: /\b(praia|mar|litoral|oceano|areia)\b/, no: 'mar', sala: 'pier_pesca' },
+    { rx: /\b(porto|pier|barco|cais)\b/, no: 'barco', sala: 'pier_pesca' },
+    { rx: /\b(caverna|mina|minas|ruinas|subterraneo)\b/, no: 'caverna', sala: 'ruinas_ancestrais' },
+    { rx: /\b(cachoeira|banho\s+na\s+cachoeira|cachoeira\s+de\s+banho)\b/, no: 'cachoeira', sala: 'lago_banho' },
+    { rx: /\b(bosque|pomar|santuario)\b/, no: 'bosque', sala: 'serraria_lenha' },
+    { rx: /\b(floresta|mata)\b/, no: 'floresta', sala: 'santuario_antigo' },
     { rx: /\b(rio|ponte)\b/, no: 'rio' },
     { rx: /\b(oficina|bancada)\b/, no: 'oficina' },
     { rx: /\b(observatorio|mirante)\b/, no: 'observatorio' },
@@ -138,7 +174,7 @@ function resolverDestino(textoNorm, serKey, estado) {
 
   for (const item of mapaDestinos) {
     if (item.rx.test(textoNorm)) {
-      return { valido: true, destino: item.no };
+      return { valido: true, destino: item.no, salaRegiao: item.sala || null };
     }
   }
 
@@ -216,18 +252,26 @@ function interpretarEExecutarMensagem(serIdSolicitado, textoBruto, estado) {
     };
 
     // Executa a movimentação real no estado do mundo
+    const salaAnterior = ser.salaRegiao || 'saida_ilha';
     ser.local = destino;
+    ser.salaRegiao = resDestino.salaRegiao || null;
     ser.x = noInfo.x;
     ser.y = noInfo.y;
     ser.alvoX = null;
     ser.alvoY = null;
     ser.deslocamento = null;
     ser.acaoEmCurso = null;
-    ser.acao = `em ${noInfo.nome}`;
-    ser.motivo = `Cumpriu ordem direta de Rafael: deslocou-se de ${espaco.nome(origem) || origem} para ${noInfo.nome}.`;
+    const labelDestino = resDestino.nomeSala ? `${resDestino.nomeSala} (${noInfo.nome})` : noInfo.nome;
+    ser.acao = `em ${labelDestino}`;
+    if (resDestino.recursoColetado && ser.inventario) {
+      ser.inventario[resDestino.recursoColetado] = Math.round((Number(ser.inventario[resDestino.recursoColetado]) || 0) + 1);
+    }
+    ser.motivo = `Cumpriu ordem direta de Rafael: deslocou-se de ${espaco.nome(origem) || origem} para ${labelDestino}.`;
     ser.ultimoTrajeto = {
       de: origem,
       para: destino,
+      salaDe: salaAnterior,
+      salaPara: ser.salaRegiao,
       caminho: rotaCalc.caminho,
       nomesCaminho: rotaCalc.caminho.map(n => espaco.nome(n) || n),
       timestamp: Date.now(),
