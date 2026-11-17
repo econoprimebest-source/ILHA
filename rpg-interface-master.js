@@ -26,10 +26,11 @@
     }
   }
 
-  // 1. Renderiza o HUD Superior Master (Fora do Mapa, na Barra Superior Limpa)
+  // 1. Renderiza o HUD Superior Master (Recursos Individuais por Habitante/Casa — Não compartilhados!)
   function renderizarHud() {
     if (!estadoRpgAtual || !estadoRpgAtual.hud) return;
     const hud = estadoRpgAtual.hud;
+    const porHab = hud.porHabitante || {};
 
     let elHud = document.getElementById('rpg-hud-master');
     if (!elHud) {
@@ -40,28 +41,37 @@
       elHud.style.cssText = `
         display: inline-flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 5px;
         align-items: center;
         font-family: system-ui, -apple-system, sans-serif;
       `;
       slot.appendChild(elHud);
     }
 
+    const listaPessoas = [
+      { id: 'icaro', nome: 'Ícaro', cor: '#10b981', icone: '🏠' },
+      { id: 'elara', nome: 'Elara', cor: '#a855f7', icone: '🏡' },
+      { id: 'joao',  nome: 'João',  cor: '#3b82f6', icone: '🏠' },
+      { id: 'maria', nome: 'Maria', cor: '#f59e0b', icone: '🏡' }
+    ];
+
+    const pillsIndividuais = listaPessoas.map(p => {
+      const r = porHab[p.id] || { comida: 0, madeira: 0, pedra: 0, ambar: 50 };
+      return `
+        <button type="button" onclick="window.abrirCardHabitanteRPG('${p.id}')" style="background: rgba(15,23,42,0.92); border: 1px solid ${p.cor}; color: #f8fafc; padding: 3px 8px; border-radius: 99px; font-size: 10.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Clique para ver a Casa, Baú, Fazenda e Mochila de ${p.nome}">
+          <span style="color:${p.cor};font-weight:800;">${p.icone} ${p.nome}:</span>
+          <span title="Comida (Mochila + Baú da Casa)">🍖${r.comida}</span>
+          <span title="Madeira (Mochila + Baú da Casa)">🪵${r.madeira}</span>
+          <span title="Pedra (Mochila + Baú da Casa)">🪨${r.pedra}</span>
+          <span style="color:#facc15;" title="Carteira de Âmbar">🟡${r.ambar}</span>
+        </button>
+      `;
+    }).join('');
+
     elHud.innerHTML = `
-      <div class="rpg-hud-pill" style="background: rgba(120,53,15,0.85); border: 1px solid #b45309; color: #fef3c7; padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px;">
-        🪵 <span id="hud-madeira" style="color:#fff;">${hud.madeira}</span>
-      </div>
-      <div class="rpg-hud-pill" style="background: rgba(71,85,105,0.85); border: 1px solid #64748b; color: #f1f5f9; padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px;">
-        🪨 <span id="hud-pedra" style="color:#fff;">${hud.pedra}</span>
-      </div>
-      <div class="rpg-hud-pill" style="background: rgba(14,116,144,0.85); border: 1px solid #06b6d4; color: #cffafe; padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px;">
-        🐟 <span id="hud-comida" style="color:#fff;">${hud.comida}</span>
-      </div>
-      <div class="rpg-hud-pill" style="background: rgba(161,98,7,0.9); border: 1px solid #facc15; color: #fef08a; padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
-        🟡 <span id="hud-ambar" style="color:#fff;">${hud.ambarVendinha}</span>
-      </div>
-      <button type="button" onclick="window.abrirVendinhaComunitaria()" style="background: rgba(120,53,15,0.92); border: 1px solid #f59e0b; color: #fef08a; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Abrir Venda Comunitária">
-        🏪 Venda
+      ${pillsIndividuais}
+      <button type="button" onclick="window.abrirVendinhaComunitaria()" style="background: rgba(120,53,15,0.92); border: 1px solid #f59e0b; color: #fef08a; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Abrir Mercadinho da Praça Comercial">
+        🏪 Mercadinho
       </button>
       <button type="button" onclick="window.abrirModalTrajesRPG()" style="background: rgba(8,47,73,0.95); border: 1px solid #0284c7; color: #38bdf8; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Câmeras e Telemetria dos Trajes Móveis">
         📷 Trajes
@@ -69,15 +79,15 @@
     `;
   }
 
-  // 2. Janela / Card Individual do Habitante
+  // 2. Janela / Card Individual do Habitante (Propriedade, Casa, Baú, Fazenda e Mochila)
   window.abrirCardHabitanteRPG = function (serId) {
-    habitanteCardAberto = serId;
-    renderizarCardHabitante(serId);
+    habitanteCardAberto = (serId === 'lara') ? 'elara' : serId;
+    renderizarCardHabitante(habitanteCardAberto);
   };
 
   function renderizarCardHabitante(serId) {
     if (!estadoRpgAtual || !estadoRpgAtual.habitantes) return;
-    const hab = estadoRpgAtual.habitantes[serId];
+    const hab = estadoRpgAtual.habitantes[serId] || estadoRpgAtual.habitantes[serId === 'elara' ? 'lara' : serId];
     if (!hab) return;
 
     let modal = document.getElementById('rpg-habitante-modal');
@@ -87,9 +97,9 @@
       modal.style.cssText = `
         position: fixed;
         left: 20px;
-        top: 80px;
-        width: 340px;
-        max-height: calc(100vh - 110px);
+        top: 64px;
+        width: 355px;
+        max-height: calc(100vh - 90px);
         overflow-y: auto;
         background: rgba(9, 21, 37, 0.96);
         backdrop-filter: blur(14px);
@@ -109,22 +119,58 @@
     const maoDireita = (hab.equipamentos && hab.equipamentos.find(e => e.slot_equipamento === 'mao_direita')) || { recurso_id: null };
     const bio = hab.sobrevivencia || { fome: 20, sede: 20, energia: 80, saude: 100, orientacao: 100, seguranca: 85 };
     const psi = hab.psicologia || {};
-
-    const nomeFormatado = serId.charAt(0).toUpperCase() + serId.slice(1);
+    const rec = hab.recursosProprios || {
+      comida: 0, agua: 0, madeira: 0, pedra: 0, ambar: hab.saldoAmbar || 0,
+      mochila: { comida: 0, agua: 0, madeira: 0, pedra: 0 },
+      bauCasa: { comida: 0, agua: 0, madeira: 0, pedra: 0 },
+      fazendaIndividual: { nome: 'Fazenda Individual', cultura: 'Hortaliças', plantados: 2, maduros: 1 }
+    };
+    const faz = rec.fazendaIndividual || {};
+    const nomeFormatado = hab.nome || (serId === 'lara' || serId === 'elara' ? 'Elara' : (serId.charAt(0).toUpperCase() + serId.slice(1)));
 
     modal.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; border-bottom:1px solid #1e3a5f; padding-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; border-bottom:1px solid #1e3a5f; padding-bottom:8px;">
         <div>
-          <div style="font-size:16px; font-weight:800; color:#38bdf8;">👤 ${nomeFormatado}</div>
-          <div style="font-size:11.5px; color:#94a3b8;">${hab.localizacao.regiaoNome}</div>
+          <div style="font-size:16px; font-weight:800; color:#38bdf8;">👤 ${nomeFormatado} — ${hab.casaNome || ('Casa de ' + nomeFormatado)} (Nv ${hab.casaNivel || 1})</div>
+          <div style="font-size:11.5px; color:#94a3b8;">📍 Agora em: <strong style="color:#e2e8f0;">${hab.localNome || hab.localizacao.regiaoNome}</strong></div>
         </div>
         <button onclick="document.getElementById('rpg-habitante-modal').style.display='none'; habitanteCardAberto=null;" style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer; padding:0 4px;">✕</button>
+      </div>
+
+      <!-- ESTOQUE INDIVIDUAL: CASA (BAÚ) + PESSOAL + FAZENDA -->
+      <div style="margin-bottom:12px; background:rgba(15,23,42,0.85); border:1px solid #0284c7; border-radius:12px; padding:10px;">
+        <div style="font-size:11px; font-weight:800; color:#38bdf8; text-transform:uppercase; margin-bottom:6px;">🏠 Recursos Próprios de ${nomeFormatado} (Casa + Mochila)</div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; text-align:center; margin-bottom:8px;">
+          <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:5px;">
+            <div style="font-size:9.5px; color:#94a3b8;">🍖 Comida</div>
+            <div style="font-size:14px; font-weight:800; color:#4ade80;">${rec.comida}</div>
+            <div style="font-size:8.5px; color:#64748b;">Baú:${rec.bauCasa.comida} Moc:${rec.mochila.comida}</div>
+          </div>
+          <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:5px;">
+            <div style="font-size:9.5px; color:#94a3b8;">💧 Água</div>
+            <div style="font-size:14px; font-weight:800; color:#38bdf8;">${rec.agua}</div>
+            <div style="font-size:8.5px; color:#64748b;">Baú:${rec.bauCasa.agua} Moc:${rec.mochila.agua}</div>
+          </div>
+          <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:5px;">
+            <div style="font-size:9.5px; color:#94a3b8;">🪵 Madeira</div>
+            <div style="font-size:14px; font-weight:800; color:#fbbf24;">${rec.madeira}</div>
+            <div style="font-size:8.5px; color:#64748b;">Baú:${rec.bauCasa.madeira} Moc:${rec.mochila.madeira}</div>
+          </div>
+          <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:5px;">
+            <div style="font-size:9.5px; color:#94a3b8;">🪨 Pedra</div>
+            <div style="font-size:14px; font-weight:800; color:#cbd5e1;">${rec.pedra}</div>
+            <div style="font-size:8.5px; color:#64748b;">Baú:${rec.bauCasa.pedra} Moc:${rec.mochila.pedra}</div>
+          </div>
+        </div>
+        <div style="font-size:11px; color:#86efac; background:rgba(20,83,45,0.4); border:1px solid #15803d; border-radius:8px; padding:6px 8px;">
+          🌱 <strong>${faz.nome || ('Fazenda de ' + nomeFormatado)}:</strong> ${faz.cultura || 'Hortaliças'} (Plantados: ${faz.plantados || 0} · Maduros p/ colher: ${faz.maduros || 0})
+        </div>
       </div>
 
       <!-- CARTEIRA E MÃO DIREITA -->
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:12px;">
         <div style="background:rgba(15,23,42,0.8); border:1px solid #334155; border-radius:10px; padding:8px; text-align:center;">
-          <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">Carteira</div>
+          <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">Carteira Pessoal</div>
           <div style="font-size:15px; font-weight:800; color:#facc15;">🟡 ${hab.saldoAmbar} Âmbar</div>
         </div>
         <div style="background:rgba(15,23,42,0.8); border:1px solid #334155; border-radius:10px; padding:8px; text-align:center;">

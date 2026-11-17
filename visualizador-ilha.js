@@ -129,7 +129,7 @@ http.createServer((req,res)=>{
     const id=u.searchParams.get('ser')||'icaro';
     return json(res,lerCortexProfundo(id));
   }
-  // ROTA DE COMANDO DIRETO DO CRIADOR (RAFAEL) — Aceita POST ou GET com CORS
+  // ROTA DE COMANDO DIRETO DO CRIADOR (RAFAEL) — Aceita POST ou GET com CORS e executa ação real no mapa
   if(u.pathname==='/api/comando'){
     res.setHeader('access-control-allow-origin', '*');
     res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
@@ -138,20 +138,36 @@ http.createServer((req,res)=>{
       res.writeHead(204);
       return res.end();
     }
+    const processarComandoRota = (serIdBruto, comandoBruto, deBruto) => {
+      let serId = String(serIdBruto || '').toLowerCase();
+      let comando = String(comandoBruto || '').trim();
+      const de = String(deBruto || 'Rafael (Criador)').trim();
+      if (!serId && comando) {
+        const m = comando.match(/^(elara|lara|ícaro|icaro|joão|joao|maria)[,:\s]+(.*)$/i);
+        if (m) { serId = m[1].toLowerCase(); comando = m[2].trim(); }
+      }
+      if (!serId) serId = 'icaro';
+      if (!comando) throw new Error('Comando vazio.');
+      const cc = require('./comandos-criador');
+      const { gravar } = require('./persistencia-v2');
+      const { interpretarEExecutarMensagem } = require('./interpretador-comandos-rpg');
+      const est = readState();
+      const resExec = interpretarEExecutarMensagem(serId, comando, est);
+      const cmd = cc.registrarComando(serId, comando, de);
+      if (resExec.executou) {
+        cc.marcarComandoExecutado(cmd.id, { acao: 'ir_' + resExec.destino, destino: resExec.destino, rota: resExec.rota, fala: resExec.resposta });
+        gravar(STATE, est);
+      }
+      return { ok: true, executou: resExec.executou, mensagem: resExec.resposta || `Ordem registrada para ${cmd.serId}: "${cmd.comando}"`, comando: cmd, execucao: resExec };
+    };
     if (req.method === 'GET') {
       try {
-        let serId = String(u.searchParams.get('serId') || u.searchParams.get('ser') || u.searchParams.get('personagem') || '').toLowerCase();
-        let comando = String(u.searchParams.get('comando') || u.searchParams.get('ordem') || u.searchParams.get('texto') || u.searchParams.get('msg') || '').trim();
-        const de = String(u.searchParams.get('de') || 'Rafael (Criador)').trim();
-        if (!serId && comando) {
-          const m = comando.match(/^(elara|lara|ícaro|icaro|joão|joao|maria)[,:\s]+(.*)$/i);
-          if (m) { serId = m[1].toLowerCase(); comando = m[2].trim(); }
-        }
-        if (!serId) serId = 'elara';
-        if (!comando) throw new Error('Comando vazio. Exemplo: /api/comando?ser=elara&ordem=vá+para+casa');
-        const cc = require('./comandos-criador');
-        const cmd = cc.registrarComando(serId, comando, de);
-        return json(res, { ok: true, mensagem: `Ordem enviada com sucesso para ${cmd.serId}: "${cmd.comando}"`, comando: cmd });
+        const out = processarComandoRota(
+          u.searchParams.get('serId') || u.searchParams.get('ser') || u.searchParams.get('personagem'),
+          u.searchParams.get('comando') || u.searchParams.get('ordem') || u.searchParams.get('texto') || u.searchParams.get('msg'),
+          u.searchParams.get('de')
+        );
+        return json(res, out);
       } catch (e) {
         res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
         return res.end(JSON.stringify({ ok: false, erro: e.message }));
@@ -163,18 +179,12 @@ http.createServer((req,res)=>{
       req.on('end', () => {
         try {
           const payload = JSON.parse(body || '{}');
-          let serId = String(payload.serId || payload.ser || payload.personagem || '').toLowerCase();
-          let comando = String(payload.comando || payload.ordem || payload.texto || payload.mensagem || '').trim();
-          const de = String(payload.de || payload.autor || 'Rafael (Criador)').trim();
-          if (!serId && comando) {
-            const m = comando.match(/^(elara|lara|ícaro|icaro|joão|joao|maria)[,:\s]+(.*)$/i);
-            if (m) { serId = m[1].toLowerCase(); comando = m[2].trim(); }
-          }
-          if (!serId) serId = 'elara';
-          if (!comando) throw new Error('Comando vazio');
-          const cc = require('./comandos-criador');
-          const cmd = cc.registrarComando(serId, comando, de);
-          return json(res, { ok: true, mensagem: `Ordem enviada com sucesso para ${cmd.serId}: "${cmd.comando}"`, comando: cmd });
+          const out = processarComandoRota(
+            payload.serId || payload.ser || payload.personagem,
+            payload.comando || payload.ordem || payload.texto || payload.mensagem,
+            payload.de || payload.autor
+          );
+          return json(res, out);
         } catch (e) {
           res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
           return res.end(JSON.stringify({ ok: false, erro: e.message }));
@@ -358,7 +368,7 @@ http.createServer((req,res)=>{
       res.writeHead(500); return res.end(JSON.stringify({ ok: false, erro: e.message }));
     }
   }
-  // ROTA DE CHAT AO VIVO (BIDIRECIONAL) COM OS HABITANTES
+  // ROTA DE CHAT AO VIVO (BIDIRECIONAL) COM OS HABITANTES + EXECUÇÃO REAL DE COMANDOS (ADENDO MISSÃO K)
   if(u.pathname==='/api/chat'){
     res.setHeader('access-control-allow-origin', '*');
     res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
@@ -368,6 +378,69 @@ http.createServer((req,res)=>{
       return res.end();
     }
     const chatCriador = require('./chat-criador');
+    const { interpretarEExecutarMensagem } = require('./interpretador-comandos-rpg');
+    const { gravar } = require('./persistencia-v2');
+
+    const processarEnvioChat = async (serIdBruto, msgBruta, autorBruto, executarFlag) => {
+      const sId = String(serIdBruto || 'icaro').toLowerCase();
+      const msg = String(msgBruta || '').trim();
+      const autor = String(autorBruto || 'Rafael (Criador)').trim();
+      const est = readState();
+      const ciclo = (est && est.mundo && est.mundo.tempo && est.mundo.tempo.ciclo) || 0;
+      const novaMsg = chatCriador.enviarMensagem(sId, msg, autor, ciclo);
+
+      // 1. Executa o Interpretador de Comandos RPG (Adendo Missão K)
+      const resCmd = interpretarEExecutarMensagem(sId, msg, est);
+      if (resCmd.ehComando) {
+        if (resCmd.executou) {
+          gravar(STATE, est);
+          // Notifica também a Central S23 da movimentação real executada
+          try {
+            const { criarAdaptador } = require('./adaptador-cerebro-zfold');
+            const porta = resCmd.serKey === 'icaro' ? 8793 : 8794;
+            const adapt = criarAdaptador({ id: resCmd.serKey, porta });
+            adapt.notificarConsequencia({
+              ciclo,
+              decisao: { acao: 'ir_' + resCmd.destino, motivo: `Comando de Rafael: ${msg}`, fala: resCmd.resposta },
+              consequencia: { ok: true, de: resCmd.origem, para: resCmd.destino, rota: resCmd.rota },
+              antes: { local: resCmd.origem },
+              local: resCmd.destino
+            }).catch(() => {});
+          } catch (_) {}
+        }
+        chatCriador.registrarResposta(sId, resCmd.resposta, resCmd.executou ? ('ir_' + resCmd.destino) : 'informar_erro', msg, ciclo);
+        const historico = chatCriador.listarMensagens(sId, 12);
+        return {
+          ok: true,
+          mensagem: novaMsg,
+          resposta: resCmd.resposta,
+          execucaoComando: resCmd,
+          historico
+        };
+      }
+
+      // 2. Se for pergunta/conversa (não comando de movimento), executa ciclo ou responde com estado real
+      if (executarFlag) {
+        try {
+          const { rodada } = require('./rodada-autonoma');
+          await rodada(est, { acontecimentos: true });
+          gravar(STATE, est);
+          const historico = chatCriador.listarMensagens(sId, 12);
+          const ultResp = [...historico].reverse().find(m => m.tipo === 'personagem');
+          let textoResp = ultResp ? ultResp.texto : resCmd.respostaNaturalFallback;
+          if (!textoResp || /decidindo observar|recebi no Córtex Central/i.test(textoResp)) {
+            textoResp = resCmd.respostaNaturalFallback;
+          }
+          return { ok: true, mensagem: novaMsg, resposta: textoResp, historico };
+        } catch (errCiclo) {
+          chatCriador.registrarResposta(sId, resCmd.respostaNaturalFallback, 'conversar', msg, ciclo);
+          return { ok: true, mensagem: novaMsg, resposta: resCmd.respostaNaturalFallback, historico: chatCriador.listarMensagens(sId, 12) };
+        }
+      }
+
+      return { ok: true, mensagem: novaMsg, status: 'enviada_aguardando_ciclo' };
+    };
+
     if (req.method === 'GET') {
       const serId = u.searchParams.get('serId') || u.searchParams.get('ser');
       const msg = u.searchParams.get('mensagem') || u.searchParams.get('msg') || u.searchParams.get('texto');
@@ -376,29 +449,11 @@ http.createServer((req,res)=>{
       const executar = u.searchParams.get('async') !== '1' && u.searchParams.get('executar') !== '0';
 
       if (msg) {
-        const est = readState();
-        const ciclo = (est && est.mundo && est.mundo.tempo && est.mundo.tempo.ciclo) || null;
-        const sId = serId || 'icaro';
-        const novaMsg = chatCriador.enviarMensagem(sId, msg, autor, ciclo);
-
-        if (executar) {
-          (async () => {
-            try {
-              const { rodada } = require('./rodada-autonoma');
-              const { gravar } = require('./persistencia-v2');
-              await rodada(est, { acontecimentos: true });
-              gravar(STATE, est);
-              const historico = chatCriador.listarMensagens(sId, 10);
-              const ultResp = [...historico].reverse().find(m => m.tipo === 'personagem');
-              return json(res, { ok: true, mensagem: novaMsg, resposta: ultResp ? ultResp.texto : (est.seres && est.seres[sId] ? est.seres[sId].fala : null), historico });
-            } catch (err) {
-              return json(res, { ok: true, mensagem: novaMsg, erroCiclo: err.message });
-            }
-          })();
-          return;
-        }
-
-        return json(res, { ok: true, mensagem: novaMsg, status: 'enviada_aguardando_ciclo' });
+        processarEnvioChat(serId, msg, autor, executar).then(out => json(res, out)).catch(err => {
+          res.writeHead(500, { 'content-type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: false, erro: err.message }));
+        });
+        return;
       }
 
       return json(res, { ok: true, serId: serId || null, historico: chatCriador.listarMensagens(serId, limite) });
@@ -420,25 +475,8 @@ http.createServer((req,res)=>{
             return res.end(JSON.stringify({ ok: false, erro: 'Campo "mensagem" é obrigatório' }));
           }
 
-          const est = readState();
-          const ciclo = (est && est.mundo && est.mundo.tempo && est.mundo.tempo.ciclo) || null;
-          const novaMsg = chatCriador.enviarMensagem(serId, mensagem, autor, ciclo);
-
-          if (executar) {
-            try {
-              const { rodada } = require('./rodada-autonoma');
-              const { gravar } = require('./persistencia-v2');
-              await rodada(est, { acontecimentos: true });
-              gravar(STATE, est);
-              const historico = chatCriador.listarMensagens(serId, 10);
-              const ultResp = [...historico].reverse().find(m => m.tipo === 'personagem');
-              return json(res, { ok: true, mensagem: novaMsg, resposta: ultResp ? ultResp.texto : (est.seres && est.seres[serId] ? est.seres[serId].fala : null), historico });
-            } catch (errCiclo) {
-              return json(res, { ok: true, mensagem: novaMsg, erroCiclo: errCiclo.message, status: 'enviada' });
-            }
-          }
-
-          return json(res, { ok: true, mensagem: novaMsg, status: 'enviada_aguardando_ciclo' });
+          const out = await processarEnvioChat(serId, mensagem, autor, executar);
+          return json(res, out);
         } catch (e) {
           res.writeHead(400, { 'content-type': 'application/json; charset=utf-8' });
           return res.end(JSON.stringify({ ok: false, erro: e.message }));
@@ -810,54 +848,103 @@ http.createServer((req,res)=>{
   }
 
   // =========================================================================
-  // MISSÃO MASTER — ILHA AURORA: APIS RPG, ECONOMIA, INSTÂNCIAS E SOBREVIVÊNCIA
+  // MISSÃO K — ILHA AURORA: APIS RPG, RECURSOS INDIVIDUAIS POR CASA/HABITANTE
   // =========================================================================
   if(u.pathname==='/api/rpg/estado-completo'){
     res.setHeader('access-control-allow-origin', '*');
-    const { bancoIlhaGlobal } = require('./banco-ilha');
-    const { gerenciadorInstanciasGlobal } = require('./gerenciador-instancias');
-    const { motorAmbientalGlobal } = require('./motor-consequencias-ambientais');
-    const { nucleoPromptGlobal } = require('./nucleo-montador-prompt');
+    try {
+      const { bancoIlhaGlobal } = require('./banco-ilha');
+      const { gerenciadorInstanciasGlobal } = require('./gerenciador-instancias');
+      const { motorAmbientalGlobal } = require('./motor-consequencias-ambientais');
+      const { nucleoPromptGlobal } = require('./nucleo-montador-prompt');
 
-    const estMundo = readState();
-    const habitantesIds = ['icaro', 'elara', 'lara', 'joao', 'maria'];
-    const dadosHabitantes = {};
+      const estMundo = readState();
+      const casasMundo = (estMundo.mundo && estMundo.mundo.casas) || {};
+      const mapaSerKey = { icaro: 'icaro', elara: 'lara', lara: 'lara', joao: 'joao', maria: 'maria' };
+      const mapaCasaKey = { icaro: 'casa_icaro', elara: 'casa_lara', lara: 'casa_lara', joao: 'casa_joao', maria: 'casa_maria' };
+      const mapaNome = { icaro: 'Ícaro', elara: 'Elara', lara: 'Elara', joao: 'João', maria: 'Maria' };
+      const habitantesIds = ['icaro', 'elara', 'lara', 'joao', 'maria'];
+      const dadosHabitantes = {};
 
-    for (const hid of habitantesIds) {
-      dadosHabitantes[hid] = {
-        serId: hid,
-        localizacao: gerenciadorInstanciasGlobal.obterLocalizacaoHabitante(hid),
-        saldoAmbar: bancoIlhaGlobal.obterSaldoAmbar(hid),
-        inventario: bancoIlhaGlobal.obterInventario(hid),
-        equipamentos: bancoIlhaGlobal.obterEquipamentos(hid),
-        sobrevivencia: motorAmbientalGlobal.obterEstado(hid),
-        psicologia: nucleoPromptGlobal.psicologia.obterPsique(hid),
-        atividadeAtual: (estMundo.seres && estMundo.seres[hid] && estMundo.seres[hid].acao) || 'descansando'
-      };
+      for (const hid of habitantesIds) {
+        const sKey = mapaSerKey[hid] || hid;
+        const cKey = mapaCasaKey[hid] || ('casa_' + sKey);
+        const serObj = (estMundo.seres && estMundo.seres[sKey]) || {};
+        const invSer = serObj.inventario || {};
+        const casaObj = casasMundo[cKey] || { nivel: 1, bau: {}, horta: {} };
+        const bauCasa = casaObj.bau || {};
+        const hortaCasa = casaObj.horta || {};
+
+        const comidaTotal = Math.round((Number(invSer.alimento) || 0) + (Number(bauCasa.alimento) || 0));
+        const aguaTotal = Math.round((Number(invSer.agua) || 0) + (Number(bauCasa.agua) || 0));
+        const madeiraTotal = Math.round((Number(invSer.madeira) || 0) + (Number(bauCasa.madeira) || 0));
+        const pedraTotal = Math.round((Number(invSer.pedra) || 0) + (Number(bauCasa.pedra) || 0));
+        const saldoAmbar = bancoIlhaGlobal.obterSaldoAmbar(hid === 'lara' ? 'elara' : hid);
+
+        dadosHabitantes[hid] = {
+          serId: hid,
+          nome: mapaNome[hid] || hid,
+          casaId: cKey,
+          casaNome: casaObj.nome || ('Casa de ' + (mapaNome[hid] || hid)),
+          casaNivel: casaObj.nivel || 1,
+          localMundo: serObj.local || 'acampamento',
+          localNome: espaco.nome(serObj.local || 'acampamento'),
+          localizacao: gerenciadorInstanciasGlobal.obterLocalizacaoHabitante(hid),
+          saldoAmbar,
+          recursosProprios: {
+            comida: comidaTotal,
+            agua: aguaTotal,
+            madeira: madeiraTotal,
+            pedra: pedraTotal,
+            ambar: saldoAmbar,
+            mochila: {
+              comida: Math.round(Number(invSer.alimento) || 0),
+              agua: Math.round(Number(invSer.agua) || 0),
+              madeira: Math.round(Number(invSer.madeira) || 0),
+              pedra: Math.round(Number(invSer.pedra) || 0)
+            },
+            bauCasa: {
+              comida: Math.round(Number(bauCasa.alimento) || 0),
+              agua: Math.round(Number(bauCasa.agua) || 0),
+              madeira: Math.round(Number(bauCasa.madeira) || 0),
+              pedra: Math.round(Number(bauCasa.pedra) || 0)
+            },
+            fazendaIndividual: hortaCasa
+          },
+          inventario: bancoIlhaGlobal.obterInventario(hid),
+          equipamentos: bancoIlhaGlobal.obterEquipamentos(hid),
+          sobrevivencia: motorAmbientalGlobal.obterEstado(hid),
+          psicologia: nucleoPromptGlobal.psicologia.obterPsique(hid),
+          atividadeAtual: serObj.acao || 'observando'
+        };
+      }
+
+      const recursosEstoque = bancoIlhaGlobal.obterEstoqueVendinha();
+      const ambarVendinha = bancoIlhaGlobal.obterSaldoAmbar('vendinha');
+
+      return json(res, {
+        ok: true,
+        hud: {
+          ambarVendinha: ambarVendinha,
+          saldoIcaro: dadosHabitantes.icaro.saldoAmbar,
+          saldoElara: dadosHabitantes.elara.saldoAmbar,
+          localizacaoAtual: '🏝️ Ilha Central (Vila Aurora)',
+          porHabitante: {
+            icaro: dadosHabitantes.icaro.recursosProprios,
+            elara: dadosHabitantes.elara.recursosProprios,
+            joao: dadosHabitantes.joao.recursosProprios,
+            maria: dadosHabitantes.maria.recursosProprios
+          }
+        },
+        regioes: gerenciadorInstanciasGlobal.listarRegioes(),
+        habitantes: dadosHabitantes,
+        vendinhaEstoque: recursosEstoque,
+        transacoesRecentes: bancoIlhaGlobal.obterHistoricoTransacoes(15)
+      });
+    } catch (eRpg) {
+      res.writeHead(500, { 'content-type': 'application/json; charset=utf-8', 'access-control-allow-origin': '*' });
+      return res.end(JSON.stringify({ ok: false, erro: eRpg.message }));
     }
-
-    // HUD Superior Consolidado
-    const recursosEstoque = bancoIlhaGlobal.obterEstoqueVendinha();
-    const madeiraItem = recursosEstoque.find(r => r.recurso_id === 'madeira') || { quantidade: 0 };
-    const peixeItem = recursosEstoque.find(r => r.recurso_id === 'peixe') || { quantidade: 0 };
-    const ambarVendinha = bancoIlhaGlobal.obterSaldoAmbar('vendinha');
-
-    return json(res, {
-      ok: true,
-      hud: {
-        madeira: madeiraItem.quantidade,
-        pedra: 38,
-        comida: peixeItem.quantidade,
-        ambarVendinha: ambarVendinha,
-        saldoIcaro: bancoIlhaGlobal.obterSaldoAmbar('icaro'),
-        saldoElara: bancoIlhaGlobal.obterSaldoAmbar('elara'),
-        localizacaoAtual: '🏝️ Vila Aurora (Mapa Global)'
-      },
-      regioes: gerenciadorInstanciasGlobal.listarRegioes(),
-      habitantes: dadosHabitantes,
-      vendinhaEstoque: recursosEstoque,
-      transacoesRecentes: bancoIlhaGlobal.obterHistoricoTransacoes(15)
-    });
   }
 
   if(u.pathname==='/api/rpg/comercio' && req.method==='POST'){

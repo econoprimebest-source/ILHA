@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Ilha Aurora — 2D RPG</title>
-<script src="/mapa-rpg.js?v=20261116_2020"></script>
-<script src="/motor-rpg-tiled.js?v=20261116_2020"></script>
-<script src="/rpg-interface-master.js?v=20261116_2020"></script>
-<script src="/chat-widget.js?v=20261116_2020"></script>
+<script src="/mapa-rpg.js?v=20261116_2055"></script>
+<script src="/motor-rpg-tiled.js?v=20261116_2055"></script>
+<script src="/rpg-interface-master.js?v=20261116_2055"></script>
+<script src="/chat-widget.js?v=20261116_2055"></script>
 <style>
   body { margin: 0; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; background: #071827; color: #fff; }
   canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
@@ -146,11 +146,12 @@
     <!-- BARRA SUPERIOR FORA DO MAPA (NUNCA COBRE O MAPA!) -->
     <header id="top-bar">
       <div id="zonas-toolbar">
-        <span class="zona-label">MAPAS 2D RPG:</span>
+        <span class="zona-label">REGIÕES:</span>
         <button type="button" class="zona-btn active" id="btn-zona-ilha" onclick="mudarZonaMundo('ilha_central')">🏝️ Ilha Central</button>
-        <button type="button" class="zona-btn" id="btn-zona-bosque" onclick="mudarZonaMundo('bosque')">🌲 Bosque</button>
-        <button type="button" class="zona-btn" id="btn-zona-caverna" onclick="mudarZonaMundo('caverna')">🪨 Caverna</button>
+        <button type="button" class="zona-btn" id="btn-zona-caverna" onclick="mudarZonaMundo('caverna')">🪨 Caverna & Ruínas</button>
+        <button type="button" class="zona-btn" id="btn-zona-bosque" onclick="mudarZonaMundo('bosque')">🌲 Floresta & Santuário</button>
         <button type="button" class="zona-btn" id="btn-zona-praia" onclick="mudarZonaMundo('praia')">🏖️ Praia</button>
+        <button type="button" class="zona-btn" id="btn-zona-cachoeira" onclick="mudarZonaMundo('cachoeira')">💧 Cachoeira de Banho</button>
       </div>
       <div id="top-hud-slot"></div>
       <div id="header">
@@ -662,16 +663,13 @@ async function fetchState(){
       eventsData = data.eventos.slice(-20).reverse();
       updateUI();
       renderPainelLocal();
-      if(modoVisualAtual === '3d' && window.motorThreeIlha){
-        window.motorThreeIlha.atualizarEstado(stateData);
-      } else if(modoVisualAtual === 'rpg' && window.motorRpgTiled){
+      if(modoVisualAtual === 'rpg' && window.motorRpgTiled){
         window.motorRpgTiled.atualizarEstado(stateData);
-      } else if(modoVisualAtual === '25d' && window.motorPixiIlha){
-        window.motorPixiIlha.atualizarEstado(stateData);
       }
     }
   }catch(e){ console.error('Erro fetch:', e); }
 }
+window.fetchState = fetchState;
 
 let modoVisualAtual = 'rpg';
 
@@ -871,14 +869,25 @@ function updateUI(){
     const objAtivo = textoMeta
       ? '<div style="font-size:11.5px;color:#fcd34d;margin-bottom:5px;">🎯 Meta: ' + textoMeta + '</div>'
       : '';
+    const nomeExib = (s.id === 'lara' || s.id === 'elara') ? 'Elara' : s.nome;
+    const casaPropId = s.casa || ('casa_' + s.id);
+    const casaProp = (stateData && stateData.mundo && stateData.mundo.casas && stateData.mundo.casas[casaPropId]) || { bau: {}, nivel: 1 };
+    const bauProp = casaProp.bau || {};
+    const totAlim = Math.round((Number(s.inventario?.alimento)||0) + (Number(bauProp.alimento)||0));
+    const totAgua = Math.round((Number(s.inventario?.agua)||0) + (Number(bauProp.agua)||0));
+    const totMad  = Math.round((Number(s.inventario?.madeira)||0) + (Number(bauProp.madeira)||0));
+    const totPed  = Math.round((Number(s.inventario?.pedra)||0) + (Number(bauProp.pedra)||0));
     card.innerHTML = ''
       + '<div class="ser-name">'
-      +   '<span style="color:' + (PALETTE[s.id] || '#fff') + '">' + s.nome + '</span>'
+      +   '<span style="color:' + (PALETTE[s.id] || '#fff') + '">' + nomeExib + '</span>'
       +   '<span class="ser-status">' + nomeLocal(s.local) + ' · <span style="color:' + cor + '">' + act.texto + '</span> ' + shelterBadge + '</span>'
       + '</div>'
       + '<div class="agent-reason">"' + motivo + '"</div>'
       + objAtivo
-      + '<div class="ser-location" style="font-size:12px;color:#8fa4b8;margin-bottom:6px;">moradia: ' + nomeLocal(s.casa) + ' · 📦 água:' + Math.round(s.inventario?.agua||0) + ' alim:' + Math.round(s.inventario?.alimento||0) + ' · <span style="color:#a78bfa">ver CORTEX ↗</span></div>'
+      + '<div class="ser-location" style="font-size:11.5px;color:#cbd5e1;margin-bottom:6px;background:rgba(15,23,42,0.65);padding:5px 8px;border-radius:8px;border:1px solid #334155;">'
+      +   '🏠 <b>' + nomeLocal(casaPropId) + ' (Nv ' + (casaProp.nivel||1) + ')</b> · '
+      +   '🍖Comida:<b>' + totAlim + '</b> · 💧Água:<b>' + totAgua + '</b> · 🪵Mad:<b>' + totMad + '</b> · 🪨Ped:<b>' + totPed + '</b>'
+      + '</div>'
       + barrasDe(s);
     listSer.appendChild(card);
   });
@@ -1451,7 +1460,10 @@ window.mudarZonaMundo = function(zonaId) {
   const s = String(zonaId || '').toLowerCase();
   let btnId = 'btn-zona-ilha';
   let regiaoRpg = 'ilha_central';
-  if (s.includes('bosque') || s.includes('floresta')) {
+  if (s.includes('cachoeira') || s.includes('banho')) {
+    btnId = 'btn-zona-cachoeira';
+    regiaoRpg = 'cachoeira';
+  } else if (s.includes('bosque') || s.includes('floresta') || s.includes('santuario')) {
     btnId = 'btn-zona-bosque';
     regiaoRpg = 'bosque';
   } else if (s.includes('caverna') || s.includes('ruina')) {

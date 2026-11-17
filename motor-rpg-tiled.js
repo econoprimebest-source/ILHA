@@ -1,33 +1,39 @@
 /**
- * MOTOR RPG TILED — Motor Oficial 2D Top-Down RPG (Ilha Aurora)
+ * MOTOR RPG TILED — Motor Oficial 2D RPG Isométrico/Top-Down (Ilha Aurora — Missão K)
  *
- * - Proporção 100% preservada (sem distorção/esticamento em nenhuma tela, Z Fold fechado ou aberto)
- * - Casas reais de alvenaria, telhado cerâmico, janelas e chaminé (substituindo antigas cabanas)
- * - 4 Mapas 2D RPG Completos e Interativos:
+ * - Proporção 3:2 exata preservada em qualquer tela (Z Fold 2 fechado/aberto, celular, desktop)
+ * - 4 Propriedades Individuais completas (Ícaro, Elara, João, Maria):
+ *   * Casa RPG de alvenaria, pedra e telhado cerâmico (sem barracas de camping; casa sempre visível mesmo em obra!)
+ *   * Terreno delimitado nivelado + Fazenda Individual fisicamente integrada a cada propriedade
+ *   * Indicador visual dos recursos individuais de cada casa/habitante
+ * - Praça Comercial nivelada e pavimentada com Mercadinho completo (sem quadrado marrom e sem duplicação)
+ * - Oficina de Fabricação e Mirante/Observatório integrados
+ * - 5 Regiões e Mapas Independentes Navegáveis:
  *   1. ilha_central (🏝️ Ilha Central / Vila Aurora)
- *   2. bosque       (🌲 Mapa do Bosque & Floresta Alta)
- *   3. caverna      (🪨 Mapa da Caverna & Minas Subterrâneas)
- *   4. praia        (🏖️ Mapa da Praia & Litoral Sul)
- * - Sem menus flutuantes cobrindo o canvas do mapa
+ *   2. caverna      (🪨 Caverna & Ruínas)
+ *   3. bosque       (🌲 Floresta & Santuário)
+ *   4. praia        (🏖️ Praia)
+ *   5. cachoeira    (💧 Cachoeira de Banho)
+ * - Movimentação fluida por rota de waypoints quando os habitantes recebem comandos no chat
  */
 (function (window) {
   'use strict';
 
   const CORES_PERSONAGENS = {
     icaro: '#10b981', // Esmeralda
-    lara: '#a855f7',  // Roxo Real
+    lara: '#a855f7',  // Roxo Real (Elara)
     elara: '#a855f7',
     joao: '#3b82f6',  // Azul Oceano
     maria: '#f59e0b', // Âmbar Dourado
     pantera: '#dc2626'
   };
 
-  // Normaliza qualquer alias de região para um dos 4 mapas canônicos
   function normalizarIdMapa(id) {
     const s = String(id || '').toLowerCase();
-    if (s.includes('bosque') || s.includes('floresta')) return 'bosque';
+    if (s.includes('cachoeira') || s.includes('banho')) return 'cachoeira';
+    if (s.includes('bosque') || s.includes('floresta') || s.includes('santuario')) return 'bosque';
     if (s.includes('caverna') || s.includes('mina') || s.includes('ruina')) return 'caverna';
-    if (s.includes('praia') || s.includes('mar') || s.includes('litoral') || s.includes('baia')) return 'praia';
+    if (s.includes('praia') || s.includes('mar') || s.includes('litoral')) return 'praia';
     return 'ilha_central';
   }
 
@@ -36,76 +42,91 @@
       id: 'ilha_central',
       idBackend: 'mapa_global',
       nome: '🏝️ Ilha Central',
-      tituloCompleto: '🏝️ Ilha Central — Vila Aurora',
-      descricao: 'Coração da colônia: Casas dos habitantes, Fogueira Central, Venda Comunitária e Horta.'
-    },
-    bosque: {
-      id: 'bosque',
-      idBackend: 'regiao_bosque',
-      nome: '🌲 Bosque',
-      tituloCompleto: '🌲 Mapa do Bosque & Floresta Alta',
-      descricao: 'Mata densa ao norte e oeste: árvores frutíferas, corte de lenha, riacho cristalino e ruínas.'
+      tituloCompleto: '🏝️ Ilha Central — Vila Aurora'
     },
     caverna: {
       id: 'caverna',
       idBackend: 'regiao_caverna',
-      nome: '🪨 Caverna',
-      tituloCompleto: '🪨 Mapa da Caverna & Minas Sombrias',
-      descricao: 'Galerias subterrâneas iluminadas por tochas: veios de ferro, cristais de quartzo, lago e covil.'
+      nome: '🪨 Caverna & Ruínas',
+      tituloCompleto: '🪨 Caverna & Ruínas Subterrâneas'
+    },
+    bosque: {
+      id: 'bosque',
+      idBackend: 'regiao_bosque',
+      nome: '🌲 Floresta & Santuário',
+      tituloCompleto: '🌲 Floresta & Santuário Antigo'
     },
     praia: {
       id: 'praia',
       idBackend: 'regiao_praia',
       nome: '🏖️ Praia',
-      tituloCompleto: '🏖️ Mapa da Praia & Litoral Sul',
-      descricao: 'Enseada de areia dourada: píer de pesca, barco a vela, recife de corais, conchas e mar aberto.'
+      tituloCompleto: '🏖️ Praia & Litoral Sul'
+    },
+    cachoeira: {
+      id: 'cachoeira',
+      idBackend: 'regiao_cachoeira',
+      nome: '💧 Cachoeira de Banho',
+      tituloCompleto: '💧 Cachoeira de Banho & Lago Cristalino'
     }
   };
 
-  // Coordenadas normalizadas (u, v de 0.0 a 1.0) perfeitamente alinhadas à arte de cada mapa
   const ZONAS_POR_MAPA = {
     ilha_central: {
-      casa_icaro:  { u: 0.214, v: 0.468, nome: '🏠 Casa do Ícaro' },
-      casa_lara:   { u: 0.320, v: 0.486, nome: '🏠 Casa da Lara' },
-      casa_joao:   { u: 0.476, v: 0.195, nome: '🏠 Casa do João' },
-      casa_maria:  { u: 0.855, v: 0.545, nome: '🏠 Casa da Maria' },
-      fogueira:    { u: 0.492, v: 0.476, nome: '🔥 Fogueira Central' },
-      acampamento: { u: 0.435, v: 0.495, nome: '⛺ Praça Central' },
-      venda:       { u: 0.415, v: 0.585, nome: '🏪 Venda Comunitária' },
-      fazenda:     { u: 0.948, v: 0.555, nome: '🌱 Horta Comunitária' },
-      curral:      { u: 0.583, v: 0.198, nome: '🐾 Curral da Vila' },
-      arena:       { u: 0.560, v: 0.380, nome: '⚔️ Arena' },
-      bosque:      { u: 0.235, v: 0.245, nome: '🌲 Entrada do Bosque', portalPara: 'bosque' },
-      floresta:    { u: 0.815, v: 0.295, nome: '🌲 Mata Leste', portalPara: 'bosque' },
-      caverna:     { u: 0.932, v: 0.175, nome: '🪨 Entrada da Caverna', portalPara: 'caverna' },
-      cachoeira:   { u: 0.730, v: 0.115, nome: '💧 Cachoeira' },
-      rio:         { u: 0.692, v: 0.420, nome: '🌉 Ponte do Rio' },
-      mar:         { u: 0.350, v: 0.825, nome: '🏖️ Acesso à Praia', portalPara: 'praia' },
-      barco:       { u: 0.502, v: 0.845, nome: '⛵ Cais do Barco', portalPara: 'praia' }
-    },
-    bosque: {
-      saida_ilha:        { u: 0.14, v: 0.84, nome: '🚪 Voltar à Ilha Central', portalPara: 'ilha_central' },
-      clareira_frutas:   { u: 0.28, v: 0.34, nome: '🍎 Pomar das Frutas Silvestres', icone: '🍎', cor: '#22c55e' },
-      serraria_lenha:    { u: 0.52, v: 0.52, nome: '🪵 Clareira de Corte de Lenha', icone: '🪵', cor: '#d97706' },
-      riacho_bosque:     { u: 0.74, v: 0.30, nome: '💧 Nascente & Riacho do Bosque', icone: '💧', cor: '#38bdf8' },
-      ruinas_expedicao:  { u: 0.80, v: 0.72, nome: '🏛️ Ruínas Antigas & Sucata', icone: '🏛️', cor: '#a855f7' },
-      acampamento_caca:  { u: 0.38, v: 0.72, nome: '🏹 Posto de Vigília & Caça', icone: '🏹', cor: '#f59e0b' }
+      casa_icaro:    { u: 0.214, v: 0.445, nome: '🏠 Casa do Ícaro' },
+      fazenda_icaro: { u: 0.214, v: 0.542, nome: '🌱 Fazenda do Ícaro' },
+      casa_lara:     { u: 0.332, v: 0.455, nome: '🏡 Casa da Elara' },
+      fazenda_lara:  { u: 0.332, v: 0.548, nome: '🌿 Fazenda da Elara' },
+      casa_joao:     { u: 0.476, v: 0.185, nome: '🏠 Casa do João' },
+      fazenda_joao:  { u: 0.583, v: 0.198, nome: '🌾 Fazenda do João' },
+      casa_maria:    { u: 0.855, v: 0.535, nome: '🏡 Casa da Maria' },
+      fazenda_maria: { u: 0.948, v: 0.545, nome: '🌻 Fazenda da Maria' },
+      fazenda:       { u: 0.948, v: 0.545, nome: '🌻 Fazenda da Maria' },
+      fogueira:      { u: 0.492, v: 0.476, nome: '🔥 Fogueira Central' },
+      acampamento:   { u: 0.445, v: 0.500, nome: '⛺ Praça Central' },
+      venda:         { u: 0.425, v: 0.630, nome: '🏪 Mercadinho (Praça Comercial)' },
+      oficina:       { u: 0.568, v: 0.465, nome: '⚒️ Oficina de Fabricação' },
+      observatorio:  { u: 0.135, v: 0.205, nome: '🔭 Mirante & Observatório' },
+      curral:        { u: 0.855, v: 0.640, nome: '🐾 Curral' },
+      arena:         { u: 0.565, v: 0.375, nome: '⚔️ Arena de Treino' },
+      bosque:        { u: 0.255, v: 0.245, nome: '🌲 Floresta & Santuário ↗', portalPara: 'bosque' },
+      floresta:      { u: 0.815, v: 0.295, nome: '🌲 Floresta Leste ↗', portalPara: 'bosque' },
+      caverna:       { u: 0.932, v: 0.175, nome: '🪨 Caverna & Ruínas ↗', portalPara: 'caverna' },
+      cachoeira:     { u: 0.730, v: 0.115, nome: '💧 Cachoeira de Banho ↗', portalPara: 'cachoeira' },
+      rio:           { u: 0.692, v: 0.420, nome: '🌉 Ponte do Rio' },
+      mar:           { u: 0.350, v: 0.825, nome: '🏖️ Ir à Praia ↗', portalPara: 'praia' },
+      barco:         { u: 0.502, v: 0.845, nome: '⛵ Porto & Píer ↗', portalPara: 'praia' }
     },
     caverna: {
-      saida_ilha:        { u: 0.14, v: 0.52, nome: '🚪 Escadaria para a Ilha Central', portalPara: 'ilha_central' },
-      veio_ferro:        { u: 0.38, v: 0.26, nome: '⛏️ Veio de Ferro & Pedra', icone: '⛏️', cor: '#f59e0b' },
-      galeria_cristais:  { u: 0.64, v: 0.24, nome: '💎 Galeria de Quartzo & Ametista', icone: '💎', cor: '#c084fc' },
-      lago_subterraneo:  { u: 0.52, v: 0.72, nome: '🌊 Lago Subterrâneo Cristalino', icone: '🌊', cor: '#38bdf8' },
-      altar_ancestral:   { u: 0.82, v: 0.42, nome: '🔮 Altar de Pedra Ancestral', icone: '🔮', cor: '#818cf8' },
-      covil_pantera:     { u: 0.84, v: 0.78, nome: '🐾 Covil da Pantera das Sombras', icone: '🐾', cor: '#ef4444' }
+      saida_ilha:       { u: 0.14, v: 0.52, nome: '🚪 Escadaria → Ilha Central', portalPara: 'ilha_central' },
+      veio_ferro:       { u: 0.36, v: 0.26, nome: '⛏️ Jazida de Ferro & Pedra', cor: '#f59e0b', recurso: 'pedra' },
+      galeria_cristais: { u: 0.64, v: 0.24, nome: '💎 Galeria de Cristais Luminosos', cor: '#c084fc', recurso: 'pedra' },
+      ruinas_ancestrais:{ u: 0.52, v: 0.48, nome: '🏛️ Ruínas Subterrâneas Ancestrais', cor: '#38bdf8' },
+      lago_subterraneo: { u: 0.46, v: 0.76, nome: '🌊 Lago Subterrâneo Cristalino', cor: '#0284c7', recurso: 'agua' },
+      covil_pantera:    { u: 0.84, v: 0.74, nome: '🐾 Covil das Sombras', cor: '#ef4444' }
+    },
+    bosque: {
+      saida_ilha:       { u: 0.14, v: 0.84, nome: '🚪 Trilha → Ilha Central', portalPara: 'ilha_central' },
+      clareira_frutas:  { u: 0.28, v: 0.32, nome: '🍎 Pomar de Frutas Silvestres', cor: '#22c55e', recurso: 'alimento' },
+      serraria_lenha:   { u: 0.50, v: 0.54, nome: '🪵 Clareira de Corte de Madeira', cor: '#d97706', recurso: 'madeira' },
+      santuario_antigo: { u: 0.78, v: 0.30, nome: '⛩️ Santuário da Fé & Sabedoria', cor: '#a855f7' },
+      riacho_bosque:    { u: 0.76, v: 0.72, nome: '💧 Riacho da Floresta', cor: '#38bdf8', recurso: 'agua' },
+      acampamento_caca: { u: 0.36, v: 0.74, nome: '🏹 Posto de Exploração', cor: '#f59e0b' }
     },
     praia: {
-      saida_ilha:        { u: 0.50, v: 0.14, nome: '🚪 Trilha para a Ilha Central', portalPara: 'ilha_central' },
-      coqueiral:         { u: 0.22, v: 0.32, nome: '🌴 Coqueiral da Costa', icone: '🌴', cor: '#22c55e' },
-      banco_conchas:     { u: 0.78, v: 0.34, nome: '🐚 Banco de Conchas & Pérolas', icone: '🐚', cor: '#f472b6' },
-      pier_pesca:        { u: 0.50, v: 0.62, nome: '⛵ Píer de Madeira & Barco', icone: '⛵', cor: '#f59e0b' },
-      recife_corais:     { u: 0.82, v: 0.74, nome: '🪸 Recife de Corais', icone: '🪸', cor: '#06b6d4' },
-      destrocos_baia:    { u: 0.20, v: 0.72, nome: '📦 Destroços & Suprimentos', icone: '📦', cor: '#fbbf24' }
+      saida_ilha:       { u: 0.50, v: 0.14, nome: '🚪 Caminho → Ilha Central', portalPara: 'ilha_central' },
+      coqueiral:        { u: 0.22, v: 0.34, nome: '🌴 Coqueiral da Costa', cor: '#22c55e', recurso: 'alimento' },
+      banco_conchas:    { u: 0.78, v: 0.34, nome: '🐚 Banco de Conchas & Pérolas', cor: '#f472b6' },
+      pier_pesca:       { u: 0.50, v: 0.62, nome: '⛵ Píer de Pesca & Barco', cor: '#f59e0b', recurso: 'alimento' },
+      recife_corais:    { u: 0.82, v: 0.74, nome: '🪸 Recife de Corais', cor: '#06b6d4' },
+      destrocos_baia:   { u: 0.20, v: 0.72, nome: '📦 Destroços & Suprimentos', cor: '#fbbf24' }
+    },
+    cachoeira: {
+      saida_ilha:          { u: 0.50, v: 0.88, nome: '🚪 Trilha → Ilha Central', portalPara: 'ilha_central' },
+      queda_principal:     { u: 0.50, v: 0.22, nome: '💦 Grande Queda d\'Água Pura', cor: '#38bdf8', recurso: 'agua' },
+      lago_banho:          { u: 0.50, v: 0.52, nome: '🛁 Lago Natural de Banho', cor: '#06b6d4', recurso: 'banho' },
+      pedras_contemplacao: { u: 0.76, v: 0.46, nome: '🧘 Pedras de Sol & Contemplação', cor: '#a855f7' },
+      jardim_lirios:       { u: 0.24, v: 0.48, nome: '🎋 Bambuzal & Lírios D\'Água', cor: '#22c55e' },
+      nascente_cristalina: { u: 0.28, v: 0.26, nome: '💧 Nascente de Água Doce', cor: '#67e8f9', recurso: 'agua' }
     }
   };
 
@@ -121,16 +142,16 @@
       this.carregado = false;
       this.mapaAtivo = 'ilha_central';
       this.personagens = {};
-      this.estruturasDinamicas = [];
       this.imgFundo = null;
       this.fundoPronto = false;
       this.sprites = {};
       this.baloes = {};
       this.boxAtual = { x: 0, y: 0, w: 1280, h: 853, escala: 1 };
       this.posicoesLocaisSubmapa = {
-        bosque:  { icaro: 'serraria_lenha', lara: 'clareira_frutas', joao: 'acampamento_caca', maria: 'riacho_bosque' },
-        caverna: { icaro: 'veio_ferro', lara: 'galeria_cristais', joao: 'saida_ilha', maria: 'lago_subterraneo' },
-        praia:   { icaro: 'pier_pesca', lara: 'banco_conchas', joao: 'destrocos_baia', maria: 'coqueiral' }
+        bosque:    { icaro: 'serraria_lenha', lara: 'santuario_antigo', joao: 'acampamento_caca', maria: 'clareira_frutas' },
+        caverna:   { icaro: 'veio_ferro', lara: 'galeria_cristais', joao: 'ruinas_ancestrais', maria: 'lago_subterraneo' },
+        praia:     { icaro: 'pier_pesca', lara: 'banco_conchas', joao: 'destrocos_baia', maria: 'coqueiral' },
+        cachoeira: { icaro: 'lago_banho', lara: 'pedras_contemplacao', joao: 'nascente_cristalina', maria: 'jardim_lirios' }
       };
     }
 
@@ -167,22 +188,16 @@
         const resp = await fetch('/mapa-rpg-tiled.json?v=' + Date.now());
         this.tiledData = await resp.json();
         this.carregado = true;
-      } catch (err) {
-        console.warn('[Motor RPG 2D] Aviso ao carregar mapa-rpg-tiled.json:', err);
-      }
+      } catch (err) {}
 
       this.iniciarLoop();
     }
 
     carregarFundo() {
       this.imgFundo = new Image();
-      this.imgFundo.onload = () => {
-        this.fundoPronto = true;
-      };
-      this.imgFundo.onerror = () => {
-        this.fundoPronto = false;
-      };
-      this.imgFundo.src = '/mapa-ilha-nova.png?v=20261116_2015';
+      this.imgFundo.onload = () => { this.fundoPronto = true; };
+      this.imgFundo.onerror = () => { this.fundoPronto = false; };
+      this.imgFundo.src = '/mapa-ilha-nova.png?v=20261116_2050';
     }
 
     carregarSprites() {
@@ -191,10 +206,6 @@
         ['cortar_lenha', '/assets/sprites/acao_cortar_lenha.svg'],
         ['cacar_onca', '/assets/sprites/acao_cacar_onca.svg'],
         ['plantar', '/assets/sprites/acao_plantar.svg'],
-        ['peca_estacas', '/assets/sprites/casa_peca_1_estacas.svg'],
-        ['peca_alicerce', '/assets/sprites/casa_peca_2_alicerce.svg'],
-        ['peca_paredes', '/assets/sprites/casa_peca_3_paredes.svg'],
-        ['peca_telhado', '/assets/sprites/casa_peca_4_telhado.svg'],
         ['casa_nv1', '/assets/sprites/casa_nivel1.svg'],
         ['casa_nv2', '/assets/sprites/casa_nivel2.svg'],
         ['casa_nv3', '/assets/sprites/casa_nivel3.svg'],
@@ -205,7 +216,6 @@
         ['canteiro_broto', '/assets/sprites/canteiro_broto.svg'],
         ['canteiro_maduro', '/assets/sprites/canteiro_maduro.svg'],
         ['canteiro_colhido', '/assets/sprites/canteiro_colhido.svg'],
-        ['caverna', '/assets/sprites/caverna_rocha.svg'],
         ['curral', '/assets/sprites/curral.svg'],
         ['barco', '/assets/sprites/barco.svg'],
         ['mercado', '/assets/sprites/mercado.svg'],
@@ -214,7 +224,7 @@
         ['palmeira', '/assets/sprites/palmeira.svg']
       ];
 
-      const versao = '20261116_2015';
+      const versao = '20261116_2055';
       lista.forEach(([chave, url]) => {
         const img = new Image();
         img.src = `${url}?v=${versao}`;
@@ -235,11 +245,10 @@
       this.recalcularCaixa(rect.width, rect.height);
     }
 
-    // Calcula a caixa proporcional (sem deformar a arte 3:2)
     recalcularCaixa(w, h) {
       const ar = (this.imgFundo && this.imgFundo.naturalWidth && this.imgFundo.naturalHeight)
         ? (this.imgFundo.naturalWidth / this.imgFundo.naturalHeight)
-        : 1.5; // 882x588 = 1.5
+        : 1.5;
       let mw = w;
       let mh = mw / ar;
       if (mh > h) {
@@ -248,7 +257,7 @@
       }
       const mx = (w - mw) * 0.5;
       const my = (h - mh) * 0.5;
-      const escala = Math.max(0.55, Math.min(1.35, mw / 1100));
+      const escala = Math.max(0.55, Math.min(1.30, mw / 1100));
       this.boxAtual = { x: mx, y: my, w: mw, h: mh, escala, canvasW: w, canvasH: h };
       return this.boxAtual;
     }
@@ -280,12 +289,11 @@
       if (this.mapaAtivo === 'ilha_central') {
         return this.coordZona(ser.local || 'fogueira', 'ilha_central');
       }
-      // Nos submapas (bosque, caverna, praia), posiciona os habitantes nos pontos de interesse do mapa
       const subMap = this.posicoesLocaisSubmapa[this.mapaAtivo] || {};
       let poiKey = subMap[ser.id];
       if (!poiKey) {
         const chaves = Object.keys(ZONAS_POR_MAPA[this.mapaAtivo] || {});
-        poiKey = chaves[0] || 'saida_ilha';
+        poiKey = chaves[1] || chaves[0] || 'saida_ilha';
       }
       return this.coordZona(poiKey, this.mapaAtivo);
     }
@@ -300,20 +308,23 @@
           return;
         }
 
+        const nomeDisplay = (ser.id === 'lara' || ser.id === 'elara') ? 'Elara' : (ser.nome || ser.id);
         const dest = this.obterDestinoPersonagem(ser);
         const offsetAng = (idx * Math.PI * 0.5) + 0.3;
-        const offX = Math.cos(offsetAng) * 14;
-        const offY = Math.sin(offsetAng) * 10;
+        const offX = Math.cos(offsetAng) * 12;
+        const offY = Math.sin(offsetAng) * 8;
 
         let p = this.personagens[ser.id];
         if (!p) {
           p = {
             id: ser.id,
-            nome: ser.nome || ser.id,
+            nome: nomeDisplay,
             x: dest.x + offX,
             y: dest.y + offY,
             targetX: dest.x + offX,
             targetY: dest.y + offY,
+            waypoints: [],
+            ultimoTrajetoTs: 0,
             acao: ser.acao || ser.ultimaAcao || 'Observando',
             fala: ser.ultimaFala || '',
             cor: CORES_PERSONAGENS[ser.id] || '#38bdf8',
@@ -322,8 +333,27 @@
           this.personagens[ser.id] = p;
         }
 
-        p.targetX = dest.x + offX;
-        p.targetY = dest.y + offY;
+        p.nome = nomeDisplay;
+
+        // Se houve novo trajeto de comando no mapa central, monta a fila de waypoints para caminhar visualmente pela trilha!
+        if (this.mapaAtivo === 'ilha_central' && ser.ultimoTrajeto && ser.ultimoTrajeto.timestamp > (p.ultimoTrajetoTs || 0)) {
+          p.ultimoTrajetoTs = ser.ultimoTrajeto.timestamp;
+          const cam = Array.isArray(ser.ultimoTrajeto.caminho) ? ser.ultimoTrajeto.caminho : [];
+          if (cam.length > 1) {
+            const ptIni = this.coordZona(cam[0], 'ilha_central');
+            p.x = ptIni.x + offX;
+            p.y = ptIni.y + offY;
+            p.waypoints = cam.slice(1).map(noId => {
+              const c = this.coordZona(noId, 'ilha_central');
+              return { x: c.x + offX, y: c.y + offY };
+            });
+          }
+        }
+
+        if (!p.waypoints || p.waypoints.length === 0) {
+          p.targetX = dest.x + offX;
+          p.targetY = dest.y + offY;
+        }
         p.acao = ser.acao || ser.ultimaAcao || ser.local || 'Observando';
         p.local = ser.local;
 
@@ -331,12 +361,10 @@
           p.fala = ser.ultimaFala;
           this.baloes[ser.id] = {
             texto: ser.ultimaFala,
-            expiraEm: Date.now() + 8000
+            expiraEm: Date.now() + 9000
           };
         }
       });
-
-      this.estruturasDinamicas = (stateData.mundo && stateData.mundo.estruturas) || [];
     }
 
     reposicionarPersonagensNoMapaAtivo() {
@@ -346,10 +374,9 @@
         if (!p) return;
         const dest = this.obterDestinoPersonagem(ser);
         const offsetAng = (idx * Math.PI * 0.5) + 0.3;
-        const offX = Math.cos(offsetAng) * 14;
-        const offY = Math.sin(offsetAng) * 10;
-        p.x = dest.x + offX;
-        p.y = dest.y + offY;
+        p.waypoints = [];
+        p.x = dest.x + Math.cos(offsetAng) * 12;
+        p.y = dest.y + Math.sin(offsetAng) * 8;
         p.targetX = p.x;
         p.targetY = p.y;
       });
@@ -366,29 +393,28 @@
       const ctx = this.ctx;
       ctx.clearRect(0, 0, w, h);
 
-      // Renderiza o mapa correspondente à região ativa
       if (this.mapaAtivo === 'bosque') {
         this.renderizarMapaBosque(ctx, w, h);
       } else if (this.mapaAtivo === 'caverna') {
         this.renderizarMapaCaverna(ctx, w, h);
       } else if (this.mapaAtivo === 'praia') {
         this.renderizarMapaPraia(ctx, w, h);
+      } else if (this.mapaAtivo === 'cachoeira') {
+        this.renderizarMapaCachoeira(ctx, w, h);
       } else {
         this.renderizarMapaIlhaCentral(ctx, w, h);
       }
 
-      // Personagens + Figuras de Ações + Balões de Fala
       this.desenharPersonagensEAcoes(ctx, w, h);
       this.desenharBaloesDialogo(ctx);
     }
 
     // =========================================================================
-    // MAPA 1: ILHA CENTRAL (VILA AURORA) — PROPORÇÃO 3:2 EXATA E CASAS REAIS
+    // 1. ILHA CENTRAL — VILA AURORA (CASAS, FAZENDAS INDIVIDUAIS, MERCADINHO)
     // =========================================================================
     renderizarMapaIlhaCentral(ctx, w, h) {
       const box = this.boxAtual;
 
-      // 1. Oceano preenchendo toda a tela para nunca esticar a ilha
       const gradMar = ctx.createRadialGradient(w * 0.5, h * 0.5, box.w * 0.2, w * 0.5, h * 0.5, Math.max(w, h) * 0.75);
       gradMar.addColorStop(0, '#0c689b');
       gradMar.addColorStop(0.65, '#074871');
@@ -396,90 +422,225 @@
       ctx.fillStyle = gradMar;
       ctx.fillRect(0, 0, w, h);
 
-      // Ondinhas suaves nas bordas oceânicas
-      ctx.strokeStyle = 'rgba(186, 230, 253, 0.16)';
-      ctx.lineWidth = 1.5;
-      for (let i = 0; i < 12; i++) {
-        const wy = ((i * 73 + this.tempo * 12) % h);
-        const wx = ((i * 137) % w);
-        ctx.beginPath();
-        ctx.moveTo(wx - 18, wy);
-        ctx.quadraticCurveTo(wx, wy - 4, wx + 18, wy);
-        ctx.stroke();
-      }
-
-      // 2. Desenha a arte oficial da Ilha respeitando 100% da proporção (box.x, box.y, box.w, box.h)
       if (this.fundoPronto && this.imgFundo && this.imgFundo.complete) {
         ctx.drawImage(this.imgFundo, box.x, box.y, box.w, box.h);
-      } else {
-        ctx.fillStyle = '#d97706';
-        ctx.beginPath();
-        ctx.ellipse(box.x + box.w * 0.5, box.y + box.h * 0.5, box.w * 0.44, box.h * 0.40, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#15803d';
-        ctx.beginPath();
-        ctx.ellipse(box.x + box.w * 0.5, box.y + box.h * 0.5, box.w * 0.40, box.h * 0.36, 0, 0, Math.PI * 2);
-        ctx.fill();
       }
 
-      // 3. Casas dos Habitantes (Substituindo cabanas por Casas de Alvenaria & Telhado Cerâmico)
-      this.desenharCasasIlhaCentral(ctx);
+      // 1. Propriedades Individuais (Terreno Delimitado + Casa RPG + Fazenda Individual Integrada)
+      this.desenharPropriedadesEFazendas(ctx);
 
-      // 4. Elementos vivos (Fogueira, Horta Comunitária, Curral, Venda e Portais)
+      // 2. Praça Comercial Nivelada + Mercadinho
+      this.desenharAreaComercialMercadinho(ctx);
+
+      // 3. Oficina, Observatório, Fogueira Central e Portais das 5 Regiões
       this.desenharElementosIlhaCentral(ctx);
     }
 
-    desenharCasasIlhaCentral(ctx) {
-      const box = this.boxAtual;
-      const esc = box.escala;
+    desenharPropriedadesEFazendas(ctx) {
+      const esc = this.boxAtual.escala;
       const casasMundo = (this.estadoAtual && this.estadoAtual.mundo && this.estadoAtual.mundo.casas) || {};
+      const seresMundo = (this.estadoAtual && this.estadoAtual.seres) || {};
 
-      const listaCasas = [
-        { id: 'casa_icaro', dono: 'Casa do Ícaro', cor: '#10b981' },
-        { id: 'casa_lara',  dono: 'Casa da Lara',  cor: '#a855f7' },
-        { id: 'casa_joao',  dono: 'Casa do João',  cor: '#3b82f6' },
-        { id: 'casa_maria', dono: 'Casa da Maria', cor: '#f59e0b' }
+      const propriedades = [
+        { casaId: 'casa_icaro', fazendaId: 'fazenda_icaro', serKey: 'icaro', dono: 'Ícaro', cor: '#10b981', prepararTerreno: false },
+        { casaId: 'casa_lara',  fazendaId: 'fazenda_lara',  serKey: 'lara',  dono: 'Elara', cor: '#a855f7', prepararTerreno: true },
+        { casaId: 'casa_joao',  fazendaId: 'fazenda_joao',  serKey: 'joao',  dono: 'João',  cor: '#3b82f6', prepararTerreno: false },
+        { casaId: 'casa_maria', fazendaId: 'fazenda_maria', serKey: 'maria', dono: 'Maria', cor: '#f59e0b', prepararTerreno: false }
       ];
 
-      listaCasas.forEach(c => {
-        const p = this.coordZona(c.id, 'ilha_central');
-        const info = casasMundo[c.id] || { nivel: 1, bau: {}, obra: null };
-        const nivel = Math.max(1, Math.min(5, info.nivel || 1));
-        const obra = info.obra;
+      propriedades.forEach(prop => {
+        const pCasa = this.coordZona(prop.casaId, 'ilha_central');
+        const pFaz = this.coordZona(prop.fazendaId, 'ilha_central');
+        const infoCasa = casasMundo[prop.casaId] || { nivel: 1, bau: {}, horta: {}, obra: null };
+        const serObj = seresMundo[prop.serKey] || { inventario: {} };
+        const nivel = Math.max(1, Math.min(5, infoCasa.nivel || 1));
+        const bau = infoCasa.bau || {};
+        const inv = serObj.inventario || {};
+        const horta = infoCasa.horta || { plantados: 3, maduros: 2, cultura: 'Hortaliças' };
+
+        const comidaProp = Math.round((Number(inv.alimento) || 0) + (Number(bau.alimento) || 0));
+        const madeiraProp = Math.round((Number(inv.madeira) || 0) + (Number(bau.madeira) || 0));
+        const pedraProp = Math.round((Number(inv.pedra) || 0) + (Number(bau.pedra) || 0));
 
         ctx.save();
 
-        if (obra && obra.progresso < 100) {
-          const prog = obra.progresso || 20;
-          const chavePeca = prog < 25 ? 'peca_estacas' : (prog < 50 ? 'peca_alicerce' : (prog < 75 ? 'peca_paredes' : 'peca_telhado'));
-          this.desenharSpriteOuFallback(ctx, chavePeca, p.x - 36 * esc, p.y - 28 * esc, 72 * esc, 56 * esc);
+        // A) Se a propriedade precisa de clareira preparada (ex: Propriedade da Elara), nivela o terreno com cerca de madeira!
+        if (prop.prepararTerreno) {
+          ctx.fillStyle = '#b48250';
+          ctx.strokeStyle = '#5c3a1e';
+          ctx.lineWidth = 2.2 * esc;
+          ctx.beginPath();
+          ctx.roundRect(pCasa.x - 42 * esc, pCasa.y - 28 * esc, 84 * esc, 118 * esc, 8 * esc);
+          ctx.fill();
+          ctx.stroke();
 
-          ctx.fillStyle = 'rgba(8, 24, 39, 0.92)';
-          ctx.fillRect(p.x - 26 * esc, p.y + 30 * esc, 52 * esc, 7 * esc);
-          ctx.fillStyle = '#f59e0b';
-          ctx.fillRect(p.x - 25 * esc, p.y + 31 * esc, (50 * esc * prog) / 100, 5 * esc);
-        } else {
-          this.desenharCasaVila(ctx, p.x, p.y, nivel, esc);
+          // Cerca de estacas ao redor da Propriedade da Elara
+          ctx.fillStyle = '#78350f';
+          for (let dx = -38; dx <= 38; dx += 12) {
+            ctx.fillRect(pCasa.x + dx * esc - 2, pCasa.y - 30 * esc, 4 * esc, 6 * esc);
+            ctx.fillRect(pCasa.x + dx * esc - 2, pCasa.y + 86 * esc, 4 * esc, 6 * esc);
+          }
         }
 
-        // Plaqueta limpa da Casa
-        const largPlaca = Math.max(88, 96 * esc);
-        const altPlaca = 18;
-        ctx.fillStyle = 'rgba(9, 20, 34, 0.90)';
-        ctx.strokeStyle = c.cor;
-        ctx.lineWidth = 1.2;
+        // B) Caminho interno ligando a Casa à sua Fazenda Individual
+        ctx.strokeStyle = 'rgba(180, 115, 55, 0.75)';
+        ctx.lineWidth = 10 * esc;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.roundRect(p.x - largPlaca * 0.5, p.y - 46 * esc, largPlaca, altPlaca, 5);
+        ctx.moveTo(pCasa.x, pCasa.y + 18 * esc);
+        ctx.lineTo(pFaz.x, pFaz.y - 8 * esc);
+        ctx.stroke();
+
+        // C) SEMPRE desenha a Casa RPG completa (mesmo se houver obra de ampliação em curso!)
+        this.desenharCasaVila(ctx, pCasa.x, pCasa.y, nivel, esc);
+
+        // Se houver obra de ampliação para o próximo nível, mostra um indicador discreto ao lado sem apagar a casa
+        if (infoCasa.obra && infoCasa.obra.progresso < 100) {
+          const prog = Math.round(infoCasa.obra.progresso || 20);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(pCasa.x + 22 * esc, pCasa.y + 4 * esc, 46 * esc, 14 * esc, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#fde047';
+          ctx.font = 'bold 8.5px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(`🔨+${prog}%`, pCasa.x + 45 * esc, pCasa.y + 14 * esc);
+        }
+
+        // D) Plaqueta da Casa com Nome e Estoque Individual da Propriedade (Comida, Madeira, Pedra)
+        const largPlaca = Math.max(108, 116 * esc);
+        const altPlaca = 28;
+        ctx.fillStyle = 'rgba(8, 20, 34, 0.92)';
+        ctx.strokeStyle = prop.cor;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.roundRect(pCasa.x - largPlaca * 0.5, pCasa.y - 54 * esc, largPlaca, altPlaca, 6);
         ctx.fill();
         ctx.stroke();
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10px system-ui';
         ctx.textAlign = 'center';
-        ctx.fillText(`🏠 ${c.dono}`, p.x, p.y - 46 * esc + 12.5);
+        ctx.fillText(`🏠 Casa de ${prop.dono} (Nv ${nivel})`, pCasa.x, pCasa.y - 54 * esc + 11.5);
+
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = 'bold 9px system-ui';
+        ctx.fillText(`🍖${comidaProp}  🪵${madeiraProp}  🪨${pedraProp}`, pCasa.x, pCasa.y - 54 * esc + 23.5);
+
+        // E) FAZENDA INDIVIDUAL INTEGRADA À PROPRIEDADE
+        const faseHorta = (horta.maduros >= 2) ? 'canteiro_maduro' : (horta.plantados > 0 ? 'canteiro_broto' : 'canteiro_arado');
+        this.desenharCanteiroFazenda(ctx, pFaz.x, pFaz.y, faseHorta, esc, prop.dono, prop.cor);
 
         ctx.restore();
       });
+    }
+
+    desenharCanteiroFazenda(ctx, fx, fy, chaveSprite, esc, dono, corBorda) {
+      ctx.save();
+      // Base de solo arado fértil delimitado
+      ctx.fillStyle = '#5c3415';
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 1.8 * esc;
+      ctx.beginPath();
+      ctx.roundRect(fx - 26 * esc, fy - 16 * esc, 52 * esc, 32 * esc, 5 * esc);
+      ctx.fill();
+      ctx.stroke();
+
+      const spr = this.sprites[chaveSprite];
+      if (spr && spr.complete && spr.naturalWidth > 0) {
+        ctx.drawImage(spr, fx - 24 * esc, fy - 15 * esc, 48 * esc, 30 * esc);
+      } else {
+        // Sulcos e brotos verdes
+        for (let sy = -10; sy <= 10; sy += 7) {
+          ctx.strokeStyle = '#3b1f0b';
+          ctx.lineWidth = 2 * esc;
+          ctx.beginPath();
+          ctx.moveTo(fx - 20 * esc, fy + sy * esc);
+          ctx.lineTo(fx + 20 * esc, fy + sy * esc);
+          ctx.stroke();
+          for (let sx = -14; sx <= 14; sx += 9) {
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.arc(fx + sx * esc, fy + sy * esc - 1, 2.8 * esc, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // Etiqueta compacta da Fazenda Individual
+      ctx.fillStyle = 'rgba(8, 22, 36, 0.90)';
+      ctx.strokeStyle = corBorda;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(fx - 38 * esc, fy + 16 * esc, 76 * esc, 14, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#86efac';
+      ctx.font = 'bold 8.5px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`🌱 Fazenda ${dono}`, fx, fy + 16 * esc + 10);
+      ctx.restore();
+    }
+
+    desenharAreaComercialMercadinho(ctx) {
+      const esc = this.boxAtual.escala;
+      const pVenda = this.coordZona('venda', 'ilha_central');
+      const pFogo = this.coordZona('fogueira', 'ilha_central');
+
+      ctx.save();
+      // 1. Caminho pavimentado conectando a Praça Central à Praça Comercial do Mercadinho
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
+      ctx.lineWidth = 14 * esc;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pFogo.x - 12 * esc, pFogo.y + 20 * esc);
+      ctx.lineTo(pVenda.x, pVenda.y);
+      ctx.stroke();
+
+      // 2. Terreno aberto, nivelado e calçado em pedra para a Praça Comercial
+      ctx.fillStyle = '#94a3b8';
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2 * esc;
+      ctx.beginPath();
+      ctx.ellipse(pVenda.x, pVenda.y + 6 * esc, 48 * esc, 26 * esc, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.ellipse(pVenda.x, pVenda.y + 5 * esc, 42 * esc, 21 * esc, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Estrutura do Mercadinho (usa sprite SVG se carregado, ou desenha o Mercadinho RPG detalhado com toldo listrado)
+      const sprMerc = this.sprites['mercado'];
+      if (sprMerc && sprMerc.complete && sprMerc.naturalWidth > 0) {
+        ctx.drawImage(sprMerc, pVenda.x - 34 * esc, pVenda.y - 28 * esc, 68 * esc, 54 * esc);
+      } else {
+        // Desenho procedural rico do Mercadinho (NUNCA um quadrado marrom!)
+        ctx.fillStyle = '#fef3c7';
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 1.8 * esc;
+        ctx.fillRect(pVenda.x - 28 * esc, pVenda.y - 12 * esc, 56 * esc, 26 * esc);
+        ctx.strokeRect(pVenda.x - 28 * esc, pVenda.y - 12 * esc, 56 * esc, 26 * esc);
+
+        // Balcão de madeira com mercadorias
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(pVenda.x - 26 * esc, pVenda.y + 2 * esc, 52 * esc, 10 * esc);
+
+        // Toldo listrado vermelho e dourado
+        for (let i = -2; i <= 2; i++) {
+          ctx.fillStyle = (i % 2 === 0) ? '#dc2626' : '#facc15';
+          ctx.fillRect(pVenda.x + i * 11 * esc - 5.5 * esc, pVenda.y - 22 * esc, 11 * esc, 12 * esc);
+        }
+      }
+
+      // 4. Placa da Praça Comercial & Mercadinho
+      this.desenharEtiquetaMapa(ctx, pVenda.x, pVenda.y + 30 * esc, '🏪 Mercadinho & Praça Comercial', '#fef08a', '#f59e0b');
+      ctx.restore();
     }
 
     desenharCasaVila(ctx, cx, cy, nivel, esc = 1) {
@@ -492,67 +653,44 @@
         return;
       }
 
-      // Renderização procedural de Casa Residencial de Alvenaria e Telhado Cerâmico
       ctx.save();
       ctx.translate(cx, cy);
       ctx.scale(esc, esc);
 
-      // Sombra
       ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
       ctx.beginPath();
       ctx.ellipse(0, 26, 36, 7, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Chaminé de tijolos
       ctx.fillStyle = '#7c2d12';
       ctx.fillRect(14, -30, 9, 20);
-      // Fumaça
-      for (let i = 0; i < 3; i++) {
-        const fy = -34 - ((this.tempo * 18 + i * 10) % 18);
-        const fx = 18 + Math.sin(this.tempo * 3 + i) * 3;
-        ctx.fillStyle = 'rgba(241, 245, 249, 0.5)';
-        ctx.beginPath();
-        ctx.arc(fx, fy, 2.5 + i * 0.8, 0, Math.PI * 2);
-        ctx.fill();
-      }
 
-      // Alicerce de pedra
       ctx.fillStyle = '#64748b';
       ctx.strokeStyle = '#1e293b';
       ctx.lineWidth = 1.5;
       ctx.fillRect(-30, 14, 60, 10);
       ctx.strokeRect(-30, 14, 60, 10);
 
-      // Paredes claras de alvenaria (creme/marfim) com vigas
       ctx.fillStyle = '#fef3c7';
       ctx.strokeStyle = '#451a03';
       ctx.lineWidth = 1.8;
       ctx.fillRect(-28, -8, 56, 24);
       ctx.strokeRect(-28, -8, 56, 24);
 
-      // Porta em arco
       ctx.fillStyle = '#78350f';
       ctx.beginPath();
       ctx.roundRect(-7, 2, 14, 20, [5, 5, 0, 0]);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = '#facc15';
-      ctx.beginPath();
-      ctx.arc(4, 12, 1.4, 0, Math.PI * 2);
-      ctx.fill();
 
-      // Duas janelas envidraçadas com floreiras
       [-20, 10].forEach(jx => {
         ctx.fillStyle = '#fef08a';
         ctx.fillRect(jx, -2, 10, 10);
         ctx.strokeStyle = '#451a03';
         ctx.lineWidth = 1.2;
         ctx.strokeRect(jx, -2, 10, 10);
-        ctx.fillStyle = '#15803d';
-        ctx.fillRect(jx - 1, 8, 12, 3);
       });
 
-      // Telhado cerâmico vermelho em duas águas
       ctx.fillStyle = '#b91c1c';
       ctx.strokeStyle = '#450a0a';
       ctx.lineWidth = 2;
@@ -570,7 +708,7 @@
     desenharElementosIlhaCentral(ctx) {
       const esc = this.boxAtual.escala;
 
-      // 1. Brilho vivo e fagulhas na Fogueira Central (já pintada no mapa)
+      // 1. Brilho vivo na Fogueira Central
       const pFogo = this.coordZona('fogueira', 'ilha_central');
       ctx.save();
       const pulso = 34 + Math.sin(this.tempo * 6) * 4;
@@ -581,60 +719,50 @@
       ctx.beginPath();
       ctx.arc(pFogo.x, pFogo.y, pulso * esc, 0, Math.PI * 2);
       ctx.fill();
-
-      for (let i = 0; i < 4; i++) {
-        const sparkY = pFogo.y - 10 - ((this.tempo * 24 + i * 12) % 26);
-        const sparkX = pFogo.x + Math.sin(this.tempo * 5 + i) * 5;
-        ctx.fillStyle = '#fef08a';
-        ctx.beginPath();
-        ctx.arc(sparkX, sparkY, 1.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
       ctx.restore();
 
-      // 2. Horta Comunitária no lote cercado direito
-      const pFaz = this.coordZona('fazenda', 'ilha_central');
+      // 2. Oficina de Fabricação (Expansão Criativa da Vila)
+      const pOfi = this.coordZona('oficina', 'ilha_central');
       ctx.save();
-      const eco = (this.estadoAtual && this.estadoAtual.mundo && this.estadoAtual.mundo.ecossistema) || {};
-      const horta = eco.horta || { plantados: 4, maduros: 2 };
-      const faseHorta = (horta.maduros > 2) ? 'canteiro_maduro' : (horta.plantados > 0 ? 'canteiro_broto' : 'canteiro_arado');
-      this.desenharSpriteOuFallback(ctx, faseHorta, pFaz.x - 26 * esc, pFaz.y - 18 * esc, 52 * esc, 36 * esc);
-      this.desenharEtiquetaMapa(ctx, pFaz.x, pFaz.y + 24 * esc, '🌱 Horta', '#86efac', '#14532d');
+      ctx.fillStyle = '#78350f';
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(pOfi.x - 18 * esc, pOfi.y - 10 * esc, 36 * esc, 20 * esc, 4);
+      ctx.fill();
+      ctx.stroke();
+      this.desenharEtiquetaMapa(ctx, pOfi.x, pOfi.y + 18 * esc, '⚒️ Oficina', '#cbd5e1', '#64748b');
       ctx.restore();
 
-      // 3. Curral Comunitário no lote cercado superior
-      const pCurral = this.coordZona('curral', 'ilha_central');
-      this.desenharSpriteOuFallback(ctx, 'curral', pCurral.x - 24 * esc, pCurral.y - 18 * esc, 48 * esc, 36 * esc);
-      this.desenharEtiquetaMapa(ctx, pCurral.x, pCurral.y + 22 * esc, '🐾 Curral', '#fde68a', '#78350f');
+      // 3. Mirante & Observatório no Noroeste
+      const pObs = this.coordZona('observatorio', 'ilha_central');
+      this.desenharEtiquetaMapa(ctx, pObs.x, pObs.y, '🔭 Observatório', '#bae6fd', '#0284c7');
 
-      // 4. Venda Comunitária
-      const pVenda = this.coordZona('venda', 'ilha_central');
-      this.desenharSpriteOuFallback(ctx, 'mercado', pVenda.x - 28 * esc, pVenda.y - 22 * esc, 56 * esc, 44 * esc);
-      this.desenharEtiquetaMapa(ctx, pVenda.x, pVenda.y + 24 * esc, '🏪 Venda', '#fef08a', '#b45309');
-
-      // 5. Placas clicáveis de transição para os outros 3 Mapas (Bosque, Caverna, Praia)
+      // 4. Portais Clicáveis para as outras 4 Regiões Independentes
       const pBosque = this.coordZona('bosque', 'ilha_central');
-      this.desenharEtiquetaMapa(ctx, pBosque.x, pBosque.y, '🌲 Ir ao Bosque ↗', '#bbf7d0', '#15803d');
+      this.desenharEtiquetaMapa(ctx, pBosque.x, pBosque.y, '🌲 Floresta & Santuário ↗', '#bbf7d0', '#16a34a');
 
       const pCaverna = this.coordZona('caverna', 'ilha_central');
-      this.desenharEtiquetaMapa(ctx, pCaverna.x, pCaverna.y + 18 * esc, '🪨 Entrar na Caverna ↗', '#e9d5ff', '#6b21a8');
+      this.desenharEtiquetaMapa(ctx, pCaverna.x, pCaverna.y + 18 * esc, '🪨 Caverna & Ruínas ↗', '#e9d5ff', '#9333ea');
+
+      const pCachoeira = this.coordZona('cachoeira', 'ilha_central');
+      this.desenharEtiquetaMapa(ctx, pCachoeira.x, pCachoeira.y + 14 * esc, '💧 Cachoeira de Banho ↗', '#cffafe', '#06b6d4');
 
       const pPraia = this.coordZona('mar', 'ilha_central');
-      this.desenharEtiquetaMapa(ctx, pPraia.x, pPraia.y, '🏖️ Ir à Praia ↗', '#bae6fd', '#0369a1');
+      this.desenharEtiquetaMapa(ctx, pPraia.x, pPraia.y, '🏖️ Praia ↗', '#fef08a', '#0284c7');
     }
 
     // =========================================================================
-    // MAPA 2: BOSQUE & FLORESTA ALTA (MAPA DEDICADO 2D TOP-DOWN)
+    // 2. FLORESTA & SANTUÁRIO (MAPA PRÓPRIO INDEPENDENTE)
     // =========================================================================
     renderizarMapaBosque(ctx, w, h) {
       const box = this.boxAtual;
+      const esc = box.escala;
 
-      // Fundo florestal profundo nas margens
       ctx.fillStyle = '#072614';
       ctx.fillRect(0, 0, w, h);
 
       ctx.save();
-      // Terreno principal do Bosque dentro da caixa proporcional
       const gradSolo = ctx.createRadialGradient(
         box.x + box.w * 0.5, box.y + box.h * 0.5, box.w * 0.1,
         box.x + box.w * 0.5, box.y + box.h * 0.5, box.w * 0.65
@@ -647,12 +775,12 @@
       ctx.roundRect(box.x, box.y, box.w, box.h, 16);
       ctx.fill();
 
-      // Clareiras de grama macia
+      // Clareiras
       const clareiras = [
-        { u: 0.28, v: 0.34, rx: 0.13, ry: 0.14, cor: '#2d7a46' },
-        { u: 0.52, v: 0.52, rx: 0.15, ry: 0.15, cor: '#34834e' },
-        { u: 0.38, v: 0.72, rx: 0.12, ry: 0.11, cor: '#27673b' },
-        { u: 0.80, v: 0.72, rx: 0.12, ry: 0.12, cor: '#235c36' }
+        { u: 0.28, v: 0.32, rx: 0.13, ry: 0.14, cor: '#2d7a46' },
+        { u: 0.50, v: 0.54, rx: 0.15, ry: 0.15, cor: '#34834e' },
+        { u: 0.78, v: 0.30, rx: 0.14, ry: 0.13, cor: '#27673b' },
+        { u: 0.36, v: 0.74, rx: 0.12, ry: 0.11, cor: '#235c36' }
       ];
       clareiras.forEach(c => {
         ctx.fillStyle = c.cor;
@@ -661,120 +789,80 @@
         ctx.fill();
       });
 
-      // Riacho Cristalino cortando o nordeste do Bosque
+      // Riacho da Floresta
       ctx.strokeStyle = '#0284c7';
-      ctx.lineWidth = 28 * box.escala;
+      ctx.lineWidth = 26 * esc;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(box.x + box.w * 0.68, box.y + 8);
-      ctx.quadraticCurveTo(box.x + box.w * 0.74, box.y + box.h * 0.32, box.x + box.w * 0.96, box.y + box.h * 0.48);
+      ctx.moveTo(box.x + box.w * 0.65, box.y + box.h * 0.50);
+      ctx.quadraticCurveTo(box.x + box.w * 0.76, box.y + box.h * 0.72, box.x + box.w * 0.95, box.y + box.h * 0.88);
       ctx.stroke();
-
       ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 16 * box.escala;
+      ctx.lineWidth = 14 * esc;
       ctx.stroke();
 
-      // Trilhas de terra batida conectando a saída às clareiras do Bosque
+      // Trilhas conectadas
       const rotasBosque = [
         ['saida_ilha', 'acampamento_caca'],
         ['acampamento_caca', 'serraria_lenha'],
         ['serraria_lenha', 'clareira_frutas'],
-        ['serraria_lenha', 'riacho_bosque'],
-        ['serraria_lenha', 'ruinas_expedicao']
+        ['serraria_lenha', 'santuario_antigo'],
+        ['serraria_lenha', 'riacho_bosque']
       ];
       ctx.strokeStyle = '#92400e';
-      ctx.lineWidth = 18 * box.escala;
-      ctx.lineCap = 'round';
+      ctx.lineWidth = 16 * esc;
       rotasBosque.forEach(([a, b]) => {
         const pa = this.coordZona(a, 'bosque');
         const pb = this.coordZona(b, 'bosque');
-        ctx.beginPath();
-        ctx.moveTo(pa.x, pa.y);
-        ctx.lineTo(pb.x, pb.y);
-        ctx.stroke();
-      });
-      ctx.strokeStyle = '#b45309';
-      ctx.lineWidth = 10 * box.escala;
-      rotasBosque.forEach(([a, b]) => {
-        const pa = this.coordZona(a, 'bosque');
-        const pb = this.coordZona(b, 'bosque');
-        ctx.beginPath();
-        ctx.moveTo(pa.x, pa.y);
-        ctx.lineTo(pb.x, pb.y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
       });
 
-      // Árvores densas (Carvalhos e Pinheiros) espalhadas pelo Bosque
+      // Santuário Antigo de Pedra e Fé
+      const pSant = this.coordZona('santuario_antigo', 'bosque');
+      ctx.fillStyle = '#94a3b8';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2 * esc;
+      ctx.beginPath();
+      ctx.arc(pSant.x, pSant.y, 32 * esc, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#c084fc';
+      ctx.beginPath();
+      ctx.arc(pSant.x, pSant.y, 10 * esc, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Árvores
       const arvoresFixas = [
         [0.10, 0.16, 'pinheiro'], [0.18, 0.14, 'carvalho'], [0.42, 0.15, 'pinheiro'],
-        [0.56, 0.18, 'carvalho'], [0.88, 0.16, 'pinheiro'], [0.12, 0.48, 'carvalho'],
-        [0.18, 0.58, 'pinheiro'], [0.64, 0.68, 'carvalho'], [0.90, 0.58, 'pinheiro'],
-        [0.62, 0.86, 'carvalho'], [0.92, 0.84, 'pinheiro'], [0.45, 0.32, 'carvalho'],
-        [0.24, 0.22, 'carvalho'], [0.33, 0.24, 'carvalho'], [0.22, 0.38, 'carvalho']
+        [0.56, 0.18, 'carvalho'], [0.90, 0.16, 'pinheiro'], [0.12, 0.48, 'carvalho'],
+        [0.18, 0.58, 'pinheiro'], [0.64, 0.78, 'carvalho'], [0.92, 0.52, 'pinheiro'],
+        [0.24, 0.22, 'carvalho'], [0.33, 0.24, 'carvalho'], [0.22, 0.36, 'carvalho']
       ];
-      const esc = box.escala;
-      arvoresFixas.forEach(([au, av, tipo], idx) => {
+      arvoresFixas.forEach(([au, av, tipo]) => {
         const ax = box.x + au * box.w;
         const ay = box.y + av * box.h;
         const sprKey = tipo === 'pinheiro' ? 'arvore_pinheiro' : 'arvore_carvalho';
         this.desenharSpriteOuFallback(ctx, sprKey, ax - 28 * esc, ay - 46 * esc, 56 * esc, 64 * esc);
-        // Frutinhas vermelhas nas árvores do pomar
-        if (au > 0.20 && au < 0.36 && av > 0.20 && av < 0.42) {
-          ctx.fillStyle = '#ef4444';
-          ctx.beginPath();
-          ctx.arc(ax - 8 * esc, ay - 22 * esc, 3.2 * esc, 0, Math.PI * 2);
-          ctx.arc(ax + 7 * esc, ay - 26 * esc, 3.2 * esc, 0, Math.PI * 2);
-          ctx.arc(ax + 2 * esc, ay - 16 * esc, 3.2 * esc, 0, Math.PI * 2);
-          ctx.fill();
-        }
       });
 
-      // Detalhes visuais das Estações do Bosque
-      // 1) Clareira de Corte de Lenha (Troncos e Tocos)
-      const pLenha = this.coordZona('serraria_lenha', 'bosque');
-      ctx.fillStyle = '#78350f';
-      ctx.strokeStyle = '#451a03';
-      ctx.lineWidth = 2;
-      ctx.fillRect(pLenha.x - 28 * esc, pLenha.y - 10 * esc, 36 * esc, 12 * esc);
-      ctx.strokeRect(pLenha.x - 28 * esc, pLenha.y - 10 * esc, 36 * esc, 12 * esc);
-      ctx.fillStyle = '#d97706';
-      ctx.beginPath();
-      ctx.arc(pLenha.x + 18 * esc, pLenha.y - 2 * esc, 10 * esc, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // 2) Ruínas Antigas & Sucata
-      const pRuinas = this.coordZona('ruinas_expedicao', 'bosque');
-      ctx.fillStyle = '#64748b';
-      ctx.strokeStyle = '#1e293b';
-      ctx.fillRect(pRuinas.x - 24 * esc, pRuinas.y - 18 * esc, 16 * esc, 28 * esc);
-      ctx.fillRect(pRuinas.x + 8 * esc, pRuinas.y - 12 * esc, 16 * esc, 22 * esc);
-      ctx.strokeRect(pRuinas.x - 24 * esc, pRuinas.y - 18 * esc, 16 * esc, 28 * esc);
-
-      // Rótulos interativos de todas as zonas do Bosque
       Object.entries(ZONAS_POR_MAPA.bosque).forEach(([id, z]) => {
         const pz = this.coordZona(id, 'bosque');
-        const corTexto = z.portalPara ? '#fef08a' : '#dcfce7';
-        const corBorda = z.portalPara ? '#eab308' : (z.cor || '#22c55e');
-        this.desenharEtiquetaMapa(ctx, pz.x, pz.y + 24 * esc, z.nome, corTexto, corBorda);
+        this.desenharEtiquetaMapa(ctx, pz.x, pz.y + 24 * esc, z.nome, z.portalPara ? '#fef08a' : '#dcfce7', z.portalPara ? '#eab308' : (z.cor || '#22c55e'));
       });
-
       ctx.restore();
     }
 
     // =========================================================================
-    // MAPA 3: CAVERNA & MINAS SOMBRIAS (MAPA DEDICADO 2D TOP-DOWN)
+    // 3. CAVERNA & RUÍNAS (MAPA PRÓPRIO INDEPENDENTE)
     // =========================================================================
     renderizarMapaCaverna(ctx, w, h) {
       const box = this.boxAtual;
       const esc = box.escala;
 
-      // Fundo abissal subterrâneo
       ctx.fillStyle = '#05070e';
       ctx.fillRect(0, 0, w, h);
 
       ctx.save();
-      // Salão Principal Rochoso da Caverna
       const gradCav = ctx.createRadialGradient(
         box.x + box.w * 0.5, box.y + box.h * 0.5, box.w * 0.1,
         box.x + box.w * 0.5, box.y + box.h * 0.5, box.w * 0.65
@@ -787,17 +875,15 @@
       ctx.roundRect(box.x, box.y, box.w, box.h, 18);
       ctx.fill();
 
-      // Paredes de Rocha Esculpida no perímetro da Caverna
       ctx.strokeStyle = '#3f3f46';
       ctx.lineWidth = 18 * esc;
       ctx.strokeRect(box.x + 9 * esc, box.y + 9 * esc, box.w - 18 * esc, box.h - 18 * esc);
 
-      // Trilhos de Vagão de Mineração e Caminhos de Pedra
       const rotasCaverna = [
         ['saida_ilha', 'veio_ferro'],
-        ['veio_ferro', 'galeria_cristais'],
+        ['veio_ferro', 'ruinas_ancestrais'],
+        ['ruinas_ancestrais', 'galeria_cristais'],
         ['saida_ilha', 'lago_subterraneo'],
-        ['galeria_cristais', 'altar_ancestral'],
         ['lago_subterraneo', 'covil_pantera']
       ];
       ctx.strokeStyle = '#3f3f46';
@@ -806,30 +892,30 @@
       rotasCaverna.forEach(([a, b]) => {
         const pa = this.coordZona(a, 'caverna');
         const pb = this.coordZona(b, 'caverna');
-        ctx.beginPath();
-        ctx.moveTo(pa.x, pa.y);
-        ctx.lineTo(pb.x, pb.y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
       });
 
-      // Lago Subterrâneo Cristalino
+      // Ruínas Subterrâneas Ancestrais
+      const pRui = this.coordZona('ruinas_ancestrais', 'caverna');
+      ctx.fillStyle = '#475569';
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2 * esc;
+      ctx.strokeRect(pRui.x - 36 * esc, pRui.y - 22 * esc, 72 * esc, 44 * esc);
+      ctx.fillRect(pRui.x - 32 * esc, pRui.y - 18 * esc, 12 * esc, 36 * esc);
+      ctx.fillRect(pRui.x + 20 * esc, pRui.y - 18 * esc, 12 * esc, 36 * esc);
+
+      // Lago Subterrâneo
       const pLago = this.coordZona('lago_subterraneo', 'caverna');
-      const gradLago = ctx.createRadialGradient(pLago.x, pLago.y, 8 * esc, pLago.x, pLago.y, 75 * esc);
-      gradLago.addColorStop(0, '#38bdf8');
-      gradLago.addColorStop(0.6, '#0284c7');
-      gradLago.addColorStop(1, '#0c4a6e');
-      ctx.fillStyle = gradLago;
+      ctx.fillStyle = '#0284c7';
       ctx.beginPath();
-      ctx.ellipse(pLago.x, pLago.y, 78 * esc, 46 * esc, 0, 0, Math.PI * 2);
+      ctx.ellipse(pLago.x, pLago.y, 70 * esc, 40 * esc, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Cristais Brilhantes de Quartzo e Ametista na Galeria
+      // Cristais
       const pCris = this.coordZona('galeria_cristais', 'caverna');
-      const coresCristal = ['#c084fc', '#38bdf8', '#e879f9', '#67e8f9'];
-      for (let i = 0; i < 6; i++) {
-        const cx = pCris.x + (i - 2.5) * 18 * esc;
-        const cy = pCris.y - 8 * esc + (i % 2) * 10 * esc;
-        const cor = coresCristal[i % coresCristal.length];
+      ['#c084fc', '#38bdf8', '#e879f9', '#67e8f9'].forEach((cor, i) => {
+        const cx = pCris.x + (i - 1.5) * 18 * esc;
+        const cy = pCris.y - 6 * esc;
         ctx.fillStyle = cor;
         ctx.beginPath();
         ctx.moveTo(cx, cy - 16 * esc);
@@ -838,33 +924,10 @@
         ctx.lineTo(cx - 8 * esc, cy);
         ctx.closePath();
         ctx.fill();
-      }
+      });
 
-      // Veios de Minério de Ferro e Ouro
-      const pFerro = this.coordZona('veio_ferro', 'caverna');
-      ctx.fillStyle = '#57534e';
-      ctx.beginPath();
-      ctx.ellipse(pFerro.x, pFerro.y - 6 * esc, 42 * esc, 24 * esc, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(pFerro.x - 20 * esc, pFerro.y - 14 * esc, 12 * esc, 8 * esc);
-      ctx.fillRect(pFerro.x + 6 * esc, pFerro.y - 8 * esc, 14 * esc, 9 * esc);
-
-      // Covil da Pantera das Sombras com olhos brilhantes
-      const pCovil = this.coordZona('covil_pantera', 'caverna');
-      ctx.fillStyle = '#000000';
-      ctx.beginPath();
-      ctx.ellipse(pCovil.x, pCovil.y - 6 * esc, 38 * esc, 22 * esc, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#facc15';
-      ctx.beginPath();
-      ctx.arc(pCovil.x - 8 * esc, pCovil.y - 8 * esc, 3 * esc, 0, Math.PI * 2);
-      ctx.arc(pCovil.x + 8 * esc, pCovil.y - 8 * esc, 3 * esc, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Tochas acesas nas paredes projetando halos de luz quente
-      const tochas = [[0.24, 0.36], [0.50, 0.22], [0.35, 0.65], [0.72, 0.52]];
-      tochas.forEach(([tu, tv], idx) => {
+      // Tochas
+      [[0.24, 0.36], [0.50, 0.22], [0.35, 0.65], [0.72, 0.52]].forEach(([tu, tv], idx) => {
         const tx = box.x + tu * box.w;
         const ty = box.y + tv * box.h;
         const rLuz = (46 + Math.sin(this.tempo * 7 + idx) * 5) * esc;
@@ -872,44 +935,30 @@
         gLuz.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
         gLuz.addColorStop(1, 'rgba(251, 146, 60, 0)');
         ctx.fillStyle = gLuz;
-        ctx.beginPath();
-        ctx.arc(tx, ty, rLuz, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#f97316';
-        ctx.beginPath();
-        ctx.arc(tx, ty, 4 * esc, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(tx, ty, rLuz, 0, Math.PI * 2); ctx.fill();
       });
 
-      // Rótulos interativos das Zonas da Caverna
       Object.entries(ZONAS_POR_MAPA.caverna).forEach(([id, z]) => {
         const pz = this.coordZona(id, 'caverna');
-        const corTexto = z.portalPara ? '#fef08a' : '#f3e8ff';
-        const corBorda = z.portalPara ? '#eab308' : (z.cor || '#a855f7');
-        this.desenharEtiquetaMapa(ctx, pz.x, pz.y + 24 * esc, z.nome, corTexto, corBorda);
+        this.desenharEtiquetaMapa(ctx, pz.x, pz.y + 24 * esc, z.nome, z.portalPara ? '#fef08a' : '#f3e8ff', z.portalPara ? '#eab308' : (z.cor || '#a855f7'));
       });
-
       ctx.restore();
     }
 
     // =========================================================================
-    // MAPA 4: PRAIA & LITORAL SUL (MAPA DEDICADO 2D TOP-DOWN)
+    // 4. PRAIA & LITORAL SUL (MAPA PRÓPRIO INDEPENDENTE)
     // =========================================================================
     renderizarMapaPraia(ctx, w, h) {
       const box = this.boxAtual;
       const esc = box.escala;
 
-      // Fundo oceânico
       ctx.fillStyle = '#042f4b';
       ctx.fillRect(0, 0, w, h);
 
       ctx.save();
-      // 1. Faixa de Vegetação Costeira no Topo (Transição para a Ilha Central)
       ctx.fillStyle = '#15803d';
       ctx.fillRect(box.x, box.y, box.w, box.h * 0.18);
 
-      // 2. Faixa de Areia Dourada Ensolarada
       const gradAreia = ctx.createLinearGradient(0, box.y + box.h * 0.15, 0, box.y + box.h * 0.58);
       gradAreia.addColorStop(0, '#fde68a');
       gradAreia.addColorStop(0.7, '#fcd34d');
@@ -917,7 +966,6 @@
       ctx.fillStyle = gradAreia;
       ctx.fillRect(box.x, box.y + box.h * 0.16, box.w, box.h * 0.42);
 
-      // 3. Águas Rasas Turquesa e Mar Profundo ao Sul
       const gradMar = ctx.createLinearGradient(0, box.y + box.h * 0.54, 0, box.y + box.h);
       gradMar.addColorStop(0, '#38bdf8');
       gradMar.addColorStop(0.35, '#0284c7');
@@ -925,7 +973,6 @@
       ctx.fillStyle = gradMar;
       ctx.fillRect(box.x, box.y + box.h * 0.54, box.w, box.h * 0.46);
 
-      // Espuma animada das ondas quebrando na areia
       const ondaOffset = Math.sin(this.tempo * 2.5) * 6 * esc;
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.78)';
       ctx.lineWidth = 4 * esc;
@@ -937,7 +984,6 @@
       }
       ctx.stroke();
 
-      // Píer de Madeira avançando sobre o mar
       const pPier = this.coordZona('pier_pesca', 'praia');
       ctx.fillStyle = '#78350f';
       ctx.strokeStyle = '#451a03';
@@ -945,34 +991,126 @@
       ctx.fillRect(pPier.x - 24 * esc, box.y + box.h * 0.46, 48 * esc, box.h * 0.22);
       ctx.strokeRect(pPier.x - 24 * esc, box.y + box.h * 0.46, 48 * esc, box.h * 0.22);
 
-      // Barco ancorado ao lado do Píer
       this.desenharSpriteOuFallback(ctx, 'barco', pPier.x + 28 * esc, pPier.y - 18 * esc, 56 * esc, 44 * esc);
 
-      // Palmeira e Coqueiros na Areia
-      const palmeiras = [[0.14, 0.28], [0.26, 0.30], [0.34, 0.25], [0.72, 0.26], [0.86, 0.28]];
-      palmeiras.forEach(([pu, pv]) => {
+      [[0.14, 0.28], [0.26, 0.30], [0.34, 0.25], [0.72, 0.26], [0.86, 0.28]].forEach(([pu, pv]) => {
         const px = box.x + pu * box.w;
         const py = box.y + pv * box.h;
         this.desenharSpriteOuFallback(ctx, 'palmeira', px - 28 * esc, py - 44 * esc, 56 * esc, 56 * esc);
       });
 
-      // Recife de Corais Coloridos
-      const pCorais = this.coordZona('recife_corais', 'praia');
-      ['#f43f5e', '#a855f7', '#fbbf24', '#2dd4bf'].forEach((cor, i) => {
-        ctx.fillStyle = cor;
-        ctx.beginPath();
-        ctx.arc(pCorais.x + (i - 1.5) * 16 * esc, pCorais.y - 6 * esc + (i % 2) * 8 * esc, 7 * esc, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Rótulos interativos das Zonas da Praia
       Object.entries(ZONAS_POR_MAPA.praia).forEach(([id, z]) => {
         const pz = this.coordZona(id, 'praia');
-        const corTexto = z.portalPara ? '#fef08a' : '#e0f2fe';
-        const corBorda = z.portalPara ? '#eab308' : (z.cor || '#0284c7');
-        this.desenharEtiquetaMapa(ctx, pz.x, pz.y + 24 * esc, z.nome, corTexto, corBorda);
+        this.desenharEtiquetaMapa(ctx, pz.x, pz.y + 24 * esc, z.nome, z.portalPara ? '#fef08a' : '#e0f2fe', z.portalPara ? '#eab308' : (z.cor || '#0284c7'));
+      });
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 5. CACHOEIRA DE BANHO (NOVO MAPA PRÓPRIO INDEPENDENTE — MISSÃO K)
+    // =========================================================================
+    renderizarMapaCachoeira(ctx, w, h) {
+      const box = this.boxAtual;
+      const esc = box.escala;
+
+      ctx.fillStyle = '#082f27';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      // Gramado exuberante do vale da cachoeira
+      const gradVale = ctx.createRadialGradient(
+        box.x + box.w * 0.5, box.y + box.h * 0.55, box.w * 0.1,
+        box.x + box.w * 0.5, box.y + box.h * 0.55, box.w * 0.65
+      );
+      gradVale.addColorStop(0, '#15803d');
+      gradVale.addColorStop(0.7, '#166534');
+      gradVale.addColorStop(1, '#064e3b');
+      ctx.fillStyle = gradVale;
+      ctx.beginPath();
+      ctx.roundRect(box.x, box.y, box.w, box.h, 18);
+      ctx.fill();
+
+      // Paredão Rochoso Escarpado ao Norte
+      ctx.fillStyle = '#475569';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 3 * esc;
+      ctx.fillRect(box.x, box.y, box.w, box.h * 0.28);
+      ctx.strokeRect(box.x, box.y, box.w, box.h * 0.28);
+
+      // Grande Lago Natural Cristalino de Banho no Centro
+      const pLago = this.coordZona('lago_banho', 'cachoeira');
+      const gradLago = ctx.createRadialGradient(pLago.x, pLago.y, 12 * esc, pLago.x, pLago.y, box.w * 0.26);
+      gradLago.addColorStop(0, '#67e8f9');
+      gradLago.addColorStop(0.55, '#06b6d4');
+      gradLago.addColorStop(1, '#0369a1');
+      ctx.fillStyle = gradLago;
+      ctx.beginPath();
+      ctx.ellipse(pLago.x, pLago.y, box.w * 0.27, box.h * 0.22, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Queda d'Água Animada despencando do Paredão para o Lago
+      const pQueda = this.coordZona('queda_principal', 'cachoeira');
+      const largQueda = 84 * esc;
+      const altQueda = (pLago.y - box.y - box.h * 0.05);
+      const gradQueda = ctx.createLinearGradient(0, box.y, 0, pLago.y);
+      gradQueda.addColorStop(0, '#e0f2fe');
+      gradQueda.addColorStop(0.5, '#38bdf8');
+      gradQueda.addColorStop(1, '#bae6fd');
+      ctx.fillStyle = gradQueda;
+      ctx.fillRect(pQueda.x - largQueda * 0.5, box.y + 10 * esc, largQueda, altQueda - 20 * esc);
+
+      // Linhas verticais animadas da espuma da cachoeira
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 3 * esc;
+      for (let i = -3; i <= 3; i++) {
+        const lx = pQueda.x + i * 10 * esc;
+        const offY = (this.tempo * 90 + Math.abs(i) * 17) % (altQueda * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(lx, box.y + 14 * esc + offY);
+        ctx.lineTo(lx, box.y + 38 * esc + offY);
+        ctx.stroke();
+      }
+
+      // Espuma borbulhante na base da queda d'água
+      for (let i = 0; i < 7; i++) {
+        const rx = pQueda.x + (i - 3) * 14 * esc;
+        const ry = pLago.y - box.h * 0.12 + Math.sin(this.tempo * 6 + i) * 3 * esc;
+        const rr = (9 + Math.sin(this.tempo * 4 + i) * 2.5) * esc;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
+        ctx.beginPath();
+        ctx.arc(rx, ry, rr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Pedras de Sol e Contemplação à direita do lago
+      const pPedras = this.coordZona('pedras_contemplacao', 'cachoeira');
+      ctx.fillStyle = '#94a3b8';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2 * esc;
+      ctx.beginPath();
+      ctx.ellipse(pPedras.x, pPedras.y, 38 * esc, 22 * esc, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Trilha de acesso sul até a borda do Lago de Banho
+      const pSaida = this.coordZona('saida_ilha', 'cachoeira');
+      ctx.strokeStyle = '#b48250';
+      ctx.lineWidth = 18 * esc;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pSaida.x, pSaida.y);
+      ctx.lineTo(pLago.x, pLago.y + box.h * 0.21);
+      ctx.stroke();
+
+      // Árvores ao redor do vale da cachoeira
+      [[0.12, 0.36], [0.16, 0.68], [0.86, 0.36], [0.84, 0.72]].forEach(([au, av]) => {
+        this.desenharSpriteOuFallback(ctx, 'arvore_carvalho', box.x + au * box.w - 28 * esc, box.y + av * box.h - 46 * esc, 56 * esc, 64 * esc);
       });
 
+      Object.entries(ZONAS_POR_MAPA.cachoeira).forEach(([id, z]) => {
+        const pz = this.coordZona(id, 'cachoeira');
+        this.desenharEtiquetaMapa(ctx, pz.x, pz.y + 24 * esc, z.nome, z.portalPara ? '#fef08a' : '#cffafe', z.portalPara ? '#eab308' : (z.cor || '#06b6d4'));
+      });
       ctx.restore();
     }
 
@@ -981,7 +1119,7 @@
       ctx.font = 'bold 10px system-ui';
       const larg = Math.max(76, ctx.measureText(texto).width + 16);
       const alt = 18;
-      ctx.fillStyle = 'rgba(8, 20, 34, 0.88)';
+      ctx.fillStyle = 'rgba(8, 20, 34, 0.90)';
       ctx.strokeStyle = corBorda;
       ctx.lineWidth = 1.2;
       ctx.beginPath();
@@ -1001,14 +1139,23 @@
       const esc = Math.max(0.75, Math.min(1.1, this.boxAtual.escala));
 
       lista.forEach(p => {
+        // Se houver fila de waypoints da rota calculada, avança de ponto em ponto!
+        if (p.waypoints && p.waypoints.length > 0) {
+          p.targetX = p.waypoints[0].x;
+          p.targetY = p.waypoints[0].y;
+        }
+
         const dx = p.targetX - p.x;
         const dy = p.targetY - p.y;
         const dist = Math.hypot(dx, dy);
 
-        if (dist > 2) {
-          p.x += (dx / dist) * Math.min(dist, 2.6);
-          p.y += (dy / dist) * Math.min(dist, 2.6);
-          p.passo += 0.22;
+        if (dist > 2.5) {
+          const vel = (p.waypoints && p.waypoints.length > 0) ? 4.2 : 2.8;
+          p.x += (dx / dist) * Math.min(dist, vel);
+          p.y += (dy / dist) * Math.min(dist, vel);
+          p.passo += 0.25;
+        } else if (p.waypoints && p.waypoints.length > 0) {
+          p.waypoints.shift();
         }
 
         this.desenharPersonagemAnimado(ctx, p, 0.86 * esc);
@@ -1024,23 +1171,15 @@
       const dx = p.targetX - p.x;
       const dy = p.targetY - p.y;
       const dist = Math.hypot(dx, dy);
-      const caminhando = dist > 2;
+      const caminhando = dist > 2.5;
 
       const seed = id.charCodeAt(0) * 17 + (id.charCodeAt(1) || 0);
       const camisa = p.cor || '#10b981';
       const pele = id === 'joao' ? '#e5b287' : (id === 'maria' ? '#f3c6a0' : (id === 'lara' ? '#f6ceb0' : '#eac096'));
-      const peleSombra = '#c89267';
       const cabelo = (id === 'lara' || id === 'elara') ? { cor: '#451a03', longo: true } :
                      (id === 'maria') ? { cor: '#1c1917', longo: true } :
                      (id === 'joao') ? { cor: '#3a2f28', longo: false } :
                      { cor: '#27201c', longo: false };
-
-      const acaoId = String(p.acao || '').toLowerCase();
-      const pescando = acaoId.includes('pesc');
-      const cacando = acaoId.includes('caç') || acaoId.includes('fera') || acaoId.includes('onça') || acaoId.includes('pantera');
-      const cortando = acaoId.includes('madeira') || acaoId.includes('lenha') || acaoId.includes('arvore') || acaoId.includes('cortar');
-      const plantando = acaoId.includes('plant') || acaoId.includes('horta') || acaoId.includes('colher');
-      const explorando = acaoId.includes('caverna') || acaoId.includes('explor') || this.mapaAtivo === 'caverna';
 
       const passo = caminhando ? Math.sin(p.passo || 0) * 5.2 * u : Math.sin(now / 320 + seed) * 0.8 * u;
       const resp = Math.sin(now / 240 + seed) * 1.2 * u;
@@ -1049,7 +1188,6 @@
 
       ctx.save();
 
-      // Sombra sob os pés
       ctx.fillStyle = 'rgba(10, 18, 14, 0.45)';
       ctx.beginPath();
       ctx.ellipse(x, y + 4, 14 * u, 5.5 * u, 0, 0, Math.PI * 2);
@@ -1078,27 +1216,16 @@
       ctx.lineWidth = 5.2 * u;
       ctx.beginPath();
       ctx.moveTo(x - 4.5 * u, F - 14 * u);
-      ctx.lineTo(x - 5 * u + legL * 0.4, F - 7 * u);
       ctx.lineTo(x - 5 * u + legL, F - 2 * u);
       ctx.moveTo(x + 4.5 * u, F - 14 * u);
-      ctx.lineTo(x + 5 * u + legR * 0.4, F - 7 * u);
       ctx.lineTo(x + 5 * u + legR, F - 2 * u);
       ctx.stroke();
 
       ctx.fillStyle = '#451a03';
-      ctx.strokeStyle = '#1a1c2c';
-      ctx.lineWidth = 1.2 * u;
       ctx.beginPath();
       ctx.roundRect(x - 8.5 * u + legL, F - 4 * u, 6.5 * u, 4.5 * u, 2 * u);
       ctx.roundRect(x + 2 * u + legR, F - 4 * u, 6.5 * u, 4.5 * u, 2 * u);
       ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#5c3a1e';
-      ctx.beginPath();
-      ctx.roundRect(x - 10 * u, F - 28 * u, 20 * u, 12 * u, 3 * u);
-      ctx.fill();
-      ctx.stroke();
 
       const gradTorso = ctx.createLinearGradient(x - 9 * u, F - 29 * u, x + 9 * u, F - 13 * u);
       gradTorso.addColorStop(0, camisa);
@@ -1114,47 +1241,6 @@
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      const swing = caminhando ? -passo * 0.6 : Math.sin(now / 280 + seed) * 1.5 * u;
-      const maoDirY = (pescando || cacando || cortando || plantando || explorando) ? (F - 22 * u + Math.sin(now / 160) * 2 * u) : (F - 15 * u - swing);
-      const maoDirX = (pescando || cacando || cortando || explorando) ? (x + 14 * u) : (x + 10.5 * u);
-
-      ctx.strokeStyle = camisa;
-      ctx.lineWidth = 4.4 * u;
-      ctx.beginPath();
-      ctx.moveTo(x - 8.5 * u, F - 26 * u);
-      ctx.lineTo(x - 11 * u, F - 19 * u + swing * 0.5);
-      ctx.stroke();
-      ctx.strokeStyle = pele;
-      ctx.lineWidth = 3.6 * u;
-      ctx.beginPath();
-      ctx.moveTo(x - 11 * u, F - 19 * u + swing * 0.5);
-      ctx.lineTo(x - 10.5 * u, F - 14 * u + swing);
-      ctx.stroke();
-
-      ctx.strokeStyle = camisa;
-      ctx.lineWidth = 4.4 * u;
-      ctx.beginPath();
-      ctx.moveTo(x + 8.5 * u, F - 26 * u);
-      ctx.lineTo(x + 11 * u, F - 20 * u);
-      ctx.stroke();
-      ctx.strokeStyle = pele;
-      ctx.lineWidth = 3.6 * u;
-      ctx.beginPath();
-      ctx.moveTo(x + 11 * u, F - 20 * u);
-      ctx.lineTo(maoDirX, maoDirY);
-      ctx.stroke();
-
-      if (explorando) {
-        const fxT = maoDirX + 6 * u, fyT = maoDirY - 13 * u;
-        const gT = ctx.createRadialGradient(fxT, fyT, 1, fxT, fyT, 12 * u);
-        gT.addColorStop(0, 'rgba(255,214,110,0.95)');
-        gT.addColorStop(1, 'rgba(255,90,20,0)');
-        ctx.fillStyle = gT;
-        ctx.beginPath();
-        ctx.arc(fxT, fyT, 12 * u, 0, Math.PI * 2);
-        ctx.fill();
-      }
 
       const cy = F - 38 * u + resp * 0.35;
       ctx.fillStyle = pele;
@@ -1177,7 +1263,6 @@
       ctx.arc(x, cy - 1.8 * u, 9.8 * u, Math.PI * 0.92, Math.PI * 2.08);
       ctx.fill();
 
-      // Plaqueta do Personagem
       ctx.fillStyle = 'rgba(8, 24, 39, 0.92)';
       ctx.strokeStyle = camisa;
       ctx.lineWidth = 1.2;
@@ -1239,9 +1324,9 @@
         if (!p) return;
 
         ctx.save();
-        const texto = b.texto.slice(0, 70);
+        const texto = b.texto.slice(0, 72);
         ctx.font = '11px system-ui';
-        const larg = Math.min(210, ctx.measureText(texto).width + 18);
+        const larg = Math.min(220, ctx.measureText(texto).width + 18);
 
         const bx = p.x - larg * 0.5;
         const by = p.y - 74;
@@ -1265,11 +1350,6 @@
       const spr = this.sprites[chave];
       if (spr && spr.complete && spr.naturalWidth > 0) {
         ctx.drawImage(spr, x, y, larg, alt);
-      } else {
-        ctx.fillStyle = '#78350f';
-        ctx.fillRect(x, y, larg, alt);
-        ctx.strokeStyle = '#f59e0b';
-        ctx.strokeRect(x, y, larg, alt);
       }
     }
 
@@ -1294,7 +1374,7 @@
       const zonasMapa = ZONAS_POR_MAPA[this.mapaAtivo] || {};
       for (const [zid, zinfo] of Object.entries(zonasMapa)) {
         const p = this.coordZona(zid, this.mapaAtivo);
-        if (Math.hypot(clickX - p.x, clickY - p.y) < 44) {
+        if (Math.hypot(clickX - p.x, clickY - p.y) < 46) {
           if (zinfo.portalPara) {
             if (typeof window.mudarZonaMundo === 'function') {
               window.mudarZonaMundo(zinfo.portalPara);
@@ -1308,7 +1388,6 @@
             return;
           }
           if (this.mapaAtivo !== 'ilha_central') {
-            // Move o personagem em foco para esta estação do submapa
             this.posicoesLocaisSubmapa[this.mapaAtivo].icaro = zid;
             const pIcaro = this.personagens.icaro;
             if (pIcaro) {
@@ -1317,7 +1396,7 @@
               pIcaro.acao = zinfo.nome;
             }
             if (window.mostrarToast) {
-              window.mostrarToast(`Explorando ${zinfo.nome}`);
+              window.mostrarToast(`Explorando e coletando em: ${zinfo.nome}`);
             }
             return;
           }
@@ -1333,11 +1412,9 @@
       this.mapaAtivo = cfg.id;
       this.reposicionarPersonagensNoMapaAtivo();
 
-      // Atualiza o indicador de região no HUD se existir
       const elReg = document.getElementById('hud-regiao');
       if (elReg) elReg.textContent = cfg.tituloCompleto;
 
-      // Sincroniza transição no backend de instâncias (sem travar UI)
       fetch('/api/rpg/regiao/mudar', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -1345,7 +1422,7 @@
       }).catch(() => {});
 
       if (window.mostrarToast) {
-        window.mostrarToast(`Mapa alterado: ${cfg.tituloCompleto}`);
+        window.mostrarToast(`Região aberta: ${cfg.tituloCompleto}`);
       }
     }
 

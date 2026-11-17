@@ -7,10 +7,10 @@ const { eventos, mesDe } = require('./calendario');
 
 const LIMITES = { agua: 1000, lago: 800 };
 
-// MORADIA (condição inicial do mundo, não escolha de comportamento):
-// o casal João–Maria divide a casa perto do bosque; a Lara, irmã do Ícaro,
-// mora na mesma casa do irmão (Casa do Ícaro, junto ao acampamento).
-const MORADIA = { joao:'casa_joao', maria:'casa_joao', lara:'casa_icaro' };
+// MORADIA E PROPRIEDADE INDIVIDUAL (Missão K):
+// Cada habitante possui sua própria Casa e Fazenda Individual integrada:
+const MORADIA = { icaro:'casa_icaro', joao:'casa_joao', maria:'casa_maria', lara:'casa_lara', elara:'casa_lara' };
+const FAZENDA_PROPRIEDADE = { icaro:'fazenda_icaro', joao:'fazenda_joao', maria:'fazenda_maria', lara:'fazenda_lara', elara:'fazenda_lara' };
 
 function preparar(estado) {
   const mundo = estado.mundo;
@@ -158,27 +158,24 @@ function preparar(estado) {
     }
     ser.status ||= 'vivo';
     ser.vinculos ||= {};
-    ser.casa ||= 'casa_'+ser.id;
-    // MORADIA DO MUNDO: João e Maria são casados e moram na MESMA casa; a
-    // Lara mora na casa do irmão. Normaliza o padrão antigo ('casa_'+id) e o
-    // antigo default da Lara ('acampamento' — ainda sem mecanismo de escolha
-    // própria); uma moradia escolhida depois nunca é reescrita.
-    const moradia=MORADIA[ser.id];
-    if(moradia&&ser.casa==='casa_'+ser.id&&ser.casa!==moradia)ser.casa=moradia;
-    if(ser.id==='lara'&&ser.casa==='acampamento')ser.casa='casa_icaro';
+    if (ser.id === 'lara' || ser.id === 'elara') {
+      ser.nome = 'Elara';
+    }
+    const moradia = MORADIA[ser.id] || ('casa_' + ser.id);
+    ser.casa = moradia;
+    ser.fazenda = FAZENDA_PROPRIEDADE[ser.id] || ('fazenda_' + ser.id);
   }
   estado.rastro ||= [];
   estado.relacoes ||= {};
   for (const a of Object.keys(estado.seres)) for (const b of Object.keys(estado.seres)) {
     if (a !== b) estado.relacoes[a] ||= {}, estado.relacoes[a][b] ??= 50;
   }
-  // IDENTIDADE INICIAL (autores do mundo): passado, história, personalidade,
-  // conhecimentos e relações iniciais — idempotente, nunca reescreve.
   require('./historia-previa').aplicar(estado);
-  // Estado existente carregava a residência antiga da Lara; alinha à moradia
-  // vigente sem tocar em nada mais (aplicar continua idempotente).
-  const lara=estado.seres.lara;
-  if(lara&&lara.historia&&lara.historia.residencia==='acampamento')lara.historia.residencia='casa_icaro';
+  const lara = estado.seres.lara;
+  if (lara) {
+    lara.nome = 'Elara';
+    if (lara.historia) lara.historia.residencia = 'casa_lara';
+  }
   // MEMÓRIA DE PERSONAGEM (M1): cada personagem nasce com a própria
   // identidade na memória (chat do ICAROOVO isolado). Inerte fora dos testes
   // e fora da produção: só roda com o adaptador ativo.

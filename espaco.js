@@ -3,26 +3,40 @@
 // Quem decide para onde ir é o personagem; aqui só existem nós, caminhos e
 // distâncias. Coordenadas relativas (0..1) compatíveis com o mapa de referência.
 const nos={
-	casa_icaro:{x:.214,y:.468,nome:'Casa do Ícaro'},
-	casa_lara:{x:.320,y:.486,nome:'Casa da Lara'},
-	casa_joao:{x:.476,y:.195,nome:'Casa do João'},
-	casa_maria:{x:.855,y:.545,nome:'Casa da Maria'},
-	acampamento:{x:.460,y:.540,nome:'Acampamento'},
-	fogueira:{x:.500,y:.520,nome:'Fogueira Central'},
-	arena:{x:.660,y:.360,nome:'Arena de Lutas'},
-	bosque:{x:.320,y:.320,nome:'Bosque de Frutas'},
-	floresta:{x:.760,y:.320,nome:'Floresta Fechada'},
-	rio:{x:.585,y:.580,nome:'Margem do Rio'},
-	cachoeira:{x:.650,y:.140,nome:'Cachoeira'},
-	fazenda:{x:.880,y:.560,nome:'Horta da Fazenda'},
-	curral:{x:.890,y:.670,nome:'Curral de Animais'},
-	mar:{x:.350,y:.880,nome:'Praia do Sul'},
-	barco:{x:.480,y:.840,nome:'Cais do Barco'},
-	// Caverna (boca da arte, canto NE) e Ilha Vizinha (ilhote da palmeira, SO).
-	caverna:{x:.880,y:.220,nome:'Caverna Sombria'},
+	casa_icaro:{x:.214,y:.445,nome:'Casa do Ícaro'},
+	casa_lara:{x:.325,y:.455,nome:'Casa da Elara'},
+	casa_joao:{x:.476,y:.185,nome:'Casa do João'},
+	casa_maria:{x:.855,y:.535,nome:'Casa da Maria'},
+	fazenda_icaro:{x:.214,y:.535,nome:'Fazenda do Ícaro'},
+	fazenda_lara:{x:.325,y:.545,nome:'Fazenda da Elara'},
+	fazenda_joao:{x:.583,y:.198,nome:'Fazenda do João'},
+	fazenda_maria:{x:.948,y:.545,nome:'Fazenda da Maria'},
+	venda:{x:.425,y:.625,nome:'Mercadinho & Praça Comercial'},
+	oficina:{x:.565,y:.465,nome:'Oficina de Fabricação'},
+	observatorio:{x:.135,y:.205,nome:'Mirante & Observatório'},
+	acampamento:{x:.450,y:.505,nome:'Praça Central'},
+	fogueira:{x:.492,y:.476,nome:'Fogueira Central'},
+	arena:{x:.565,y:.380,nome:'Arena de Treino'},
+	bosque:{x:.235,y:.245,nome:'Bosque & Santuário'},
+	floresta:{x:.815,y:.295,nome:'Floresta Alta'},
+	rio:{x:.692,y:.420,nome:'Ponte do Rio Doce'},
+	cachoeira:{x:.730,y:.115,nome:'Cachoeira de Banho'},
+	fazenda:{x:.948,y:.545,nome:'Fazenda da Maria'},
+	curral:{x:.855,y:.635,nome:'Curral de Animais'},
+	mar:{x:.350,y:.825,nome:'Praia do Sul'},
+	barco:{x:.502,y:.845,nome:'Porto & Píer do Barco'},
+	caverna:{x:.932,y:.175,nome:'Caverna & Ruínas'},
 	ilha_vizinha:{x:.080,y:.820,nome:'Ilha Vizinha'}
 };
-const aliases={pesca_mar:'mar',mar_pesca:'mar',praia:'mar',floresta_densa:'floresta',ruinas_antigas:'caverna',santuario_fe:'cachoeira'};
+const aliases={
+	pesca_mar:'mar',mar_pesca:'mar',praia:'mar',litoral:'mar',
+	floresta_densa:'floresta',santuario:'bosque',floresta_santuario:'bosque',
+	ruinas_antigas:'caverna',caverna_ruinas:'caverna',mina:'caverna',ruinas:'caverna',
+	santuario_fe:'cachoeira',cachoeira_banho:'cachoeira',
+	casa_elara:'casa_lara',fazenda_elara:'fazenda_lara',
+	mercadinho:'venda',mercado:'venda',vendinha:'venda',praca_comercial:'venda',loja:'venda',
+	porto:'barco',pier:'barco',cais:'barco',praca:'acampamento'
+};
 const zonasExpansivas={
 	floresta_densa:{x:.810,y:.280,nome:'Floresta Densa & Misteriosa',base:'floresta'},
 	ruinas_antigas:{x:.920,y:.160,nome:'Ruínas Antigas',base:'caverna'},
@@ -62,6 +76,21 @@ const arestas=[
 	{a:'acampamento',b:'barco',wp:[[.46,.62],[.46,.75]]},
 	// Caverna: boca da arte no canto NE, entrada pela floresta.
 	{a:'floresta',b:'caverna',wp:[[.856,.241],[.895,.203]]},
+	// Propriedades, Fazendas Individuais, Mercadinho, Oficina e Observatório
+	{a:'casa_icaro',b:'fazenda_icaro',wp:[]},
+	{a:'casa_lara',b:'fazenda_lara',wp:[]},
+	{a:'fazenda_icaro',b:'fazenda_lara',wp:[]},
+	{a:'fazenda_lara',b:'acampamento',wp:[[.39,.52]]},
+	{a:'casa_joao',b:'fazenda_joao',wp:[]},
+	{a:'casa_maria',b:'fazenda_maria',wp:[]},
+	{a:'fazenda_maria',b:'fazenda',wp:[]},
+	{a:'fogueira',b:'venda',wp:[[.46,.55]]},
+	{a:'acampamento',b:'venda',wp:[[.44,.56]]},
+	{a:'venda',b:'barco',wp:[[.46,.72]]},
+	{a:'venda',b:'mar',wp:[[.39,.72]]},
+	{a:'fogueira',b:'oficina',wp:[]},
+	{a:'bosque',b:'observatorio',wp:[[.18,.22]]},
+	{a:'casa_icaro',b:'observatorio',wp:[[.17,.32]]},
 	// TRILHAS DE ÁGUA (`agua:true`): trajeto de barco — mesmo mecanismo de
 	// deslocamento (um trecho por ciclo), nunca teleporte.
 	{a:'barco',b:'ilha_vizinha',wp:[[.44,.965],[.34,.985],[.24,.975],[.14,.945]],agua:true},

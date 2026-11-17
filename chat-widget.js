@@ -13,7 +13,8 @@
 
   const NOMES = {
     icaro: 'Ícaro',
-    lara: 'Elara (Lara)',
+    lara: 'Elara',
+    elara: 'Elara',
     joao: 'João',
     maria: 'Maria'
   };
@@ -390,6 +391,9 @@
       });
       const data = await resp.json();
       if (data && data.ok) {
+        if (typeof window.fetchState === 'function') {
+          window.fetchState();
+        }
         if (data.historico && Array.isArray(data.historico)) {
           renderizarMensagens(data.historico);
         } else {

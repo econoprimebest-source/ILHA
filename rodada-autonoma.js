@@ -249,14 +249,19 @@ async function rodada(estado,opcoes={}){
 			if(trilha){const C2=cog();if(C2)try{C2.abortarTrilha(trilha,{ser,erro:err})}catch(e){}}
 			if(err&&typeof err==='object')err.decisao=true;throw err
 		}
+		if (d && typeof d.fala === 'string' && /recebi no Córtex Central|decidindo observar/i.test(d.fala)) {
+			d.fala = `Estou em ${espaco.nome(ser.local || 'acampamento')} realizando ${d.acao || 'minhas tarefas'}.`;
+		}
 		if (cmdPendente) {
 			const cmdTxt = String(cmdPendente.comando || '').toLowerCase();
 			let acaoForcada = null;
 			if (cmdTxt.includes('fogueira') && possiveis.some(p => p.id === 'ir_fogueira')) acaoForcada = 'ir_fogueira';
 			else if ((cmdTxt.includes('casa') || cmdTxt.includes('lar') || cmdTxt.includes('cabana')) && possiveis.some(p => p.id === 'ir_casa')) acaoForcada = 'ir_casa';
+			else if ((cmdTxt.includes('mercadinho') || cmdTxt.includes('mercado') || cmdTxt.includes('venda')) && possiveis.some(p => p.id === 'ir_venda')) acaoForcada = 'ir_venda';
 			else if (cmdTxt.includes('rio') && possiveis.some(p => p.id === 'ir_rio')) acaoForcada = 'ir_rio';
 			else if ((cmdTxt.includes('mar') || cmdTxt.includes('praia')) && possiveis.some(p => p.id === 'ir_mar')) acaoForcada = 'ir_mar';
 			else if (cmdTxt.includes('caverna') && possiveis.some(p => p.id === 'ir_caverna')) acaoForcada = 'ir_caverna';
+			else if (cmdTxt.includes('cachoeira') && possiveis.some(p => p.id === 'ir_cachoeira')) acaoForcada = 'ir_cachoeira';
 			else if (cmdTxt.includes('floresta') && possiveis.some(p => p.id === 'ir_floresta')) acaoForcada = 'ir_floresta';
 			else if (cmdTxt.includes('bosque') && possiveis.some(p => p.id === 'ir_bosque')) acaoForcada = 'ir_bosque';
 			else if ((cmdTxt.includes('fazenda') || cmdTxt.includes('horta')) && possiveis.some(p => p.id === 'ir_fazenda')) acaoForcada = 'ir_fazenda';
@@ -265,10 +270,10 @@ async function rodada(estado,opcoes={}){
 			else if (cmdTxt.includes('pescar') && possiveis.some(p => p.id === 'pescar')) acaoForcada = 'pescar';
 			else if ((cmdTxt.includes('descansar') || cmdTxt.includes('dormir')) && possiveis.some(p => p.id === 'descansar')) acaoForcada = 'descansar';
 
-			if (acaoForcada && d.acao !== acaoForcada) {
+			if (acaoForcada) {
 				d.acao = acaoForcada;
 				d.motivo = `Obedecendo imediatamente à ordem direta de Rafael: "${cmdPendente.comando}"`;
-				d.fala = d.fala || `Entendido, Rafa! Indo cumprir sua ordem agora mesmo: ${cmdPendente.comando}!`;
+				d.fala = `Entendido, Rafa! Cumprindo sua ordem agora mesmo: "${cmdPendente.comando}"!`;
 			}
 
 			comandosCriador.marcarComandoExecutado(cmdPendente.id, { acao: d.acao, motivo: d.motivo, fala: d.fala });

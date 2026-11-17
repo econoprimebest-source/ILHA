@@ -166,40 +166,42 @@ class GerenciadorInstancias {
       portais: [
         { portalId: 'portal_para_caverna', x: 34, y: 5, regiaoDestino: 'regiao_caverna', spawnX: 3, spawnY: 10 },
         { portalId: 'portal_para_bosque', x: 13, y: 9, regiaoDestino: 'regiao_bosque', spawnX: 2, spawnY: 10 },
-        { portalId: 'portal_para_praia', x: 15, y: 23, regiaoDestino: 'regiao_praia', spawnX: 15, spawnY: 2 }
+        { portalId: 'portal_para_praia', x: 15, y: 23, regiaoDestino: 'regiao_praia', spawnX: 15, spawnY: 2 },
+        { portalId: 'portal_para_cachoeira', x: 26, y: 4, regiaoDestino: 'regiao_cachoeira', spawnX: 14, spawnY: 18 }
       ]
     }));
 
-    // 2. Caverna Subterrânea
+    // 2. Caverna e Ruínas Subterrâneas
     this.registrarInstancia(new InstanciaRegiao({
       id: 'regiao_caverna',
-      nome: '🪨 Caverna e Minas Sombrias',
-      descricao: 'Galgas úmidas e escuras no interior rochoso da ilha. Rica em pedras e minérios.',
+      nome: '🪨 Caverna e Ruínas',
+      descricao: 'Galerias úmidas, cristais luminosos, veios de minério e ruínas ancestrais no interior rochoso da ilha.',
       tipoAmbiente: 'subterraneo',
       largura: 28,
       altura: 20,
       recursosDisponiveis: ['pedra', 'ferro', 'cristais'],
       objetos: [
         { id: 'veio_pedra_1', nome: 'Veio de Pedra e Minério', x: 12, y: 5 },
-        { id: 'lago_subterraneo', nome: 'Lago de Água Doce Subterrâneo', x: 22, y: 15 }
+        { id: 'lago_subterraneo', nome: 'Lago de Água Doce Subterrâneo', x: 22, y: 15 },
+        { id: 'ruinas_ancestrais', nome: 'Ruínas Subterrâneas Ancestrais', x: 18, y: 8 }
       ],
       portais: [
         { portalId: 'saida_caverna', x: 2, y: 10, regiaoDestino: 'mapa_global', spawnX: 33, spawnY: 6 }
       ]
     }));
 
-    // 3. Bosque Denso
+    // 3. Floresta e Santuário
     this.registrarInstancia(new InstanciaRegiao({
       id: 'regiao_bosque',
-      nome: '🌲 Bosque e Floresta Alta',
-      descricao: 'Mata densa ao norte e oeste da vila. Árvores frutíferas e trilhas ocultas.',
+      nome: '🌲 Floresta e Santuário',
+      descricao: 'Mata densa ao norte e oeste da vila. Árvores frutíferas, clareira de lenha e o Santuário Antigo.',
       tipoAmbiente: 'mata',
       largura: 30,
       altura: 22,
-      recursosDisponiveis: ['madeira', 'frutas', 'cipos', 'sucata_tecnologica'],
+      recursosDisponiveis: ['madeira', 'frutas', 'cipos', 'ervas_medicinais'],
       objetos: [
         { id: 'arvore_frutifera_1', nome: 'Árvore de Frutas Silvestres', x: 8, y: 7 },
-        { id: 'carcaca_antiga', nome: 'Sucata de Antiga Expedição', x: 24, y: 16 }
+        { id: 'santuario_antigo', nome: 'Santuário da Fé e Sabedoria', x: 24, y: 16 }
       ],
       portais: [
         { portalId: 'saida_bosque', x: 2, y: 10, regiaoDestino: 'mapa_global', spawnX: 14, spawnY: 10 }
@@ -210,7 +212,7 @@ class GerenciadorInstancias {
     this.registrarInstancia(new InstanciaRegiao({
       id: 'regiao_praia',
       nome: '🏖️ Praia e Litoral Sul',
-      descricao: 'Faixa de areia ensolarada, recifes de corais, conchas raras e cais de madeira.',
+      descricao: 'Faixa de areia ensolarada, recifes de corais, conchas raras e píer de pesca.',
       tipoAmbiente: 'litoral',
       largura: 32,
       altura: 20,
@@ -221,6 +223,25 @@ class GerenciadorInstancias {
       ],
       portais: [
         { portalId: 'saida_praia', x: 15, y: 1, regiaoDestino: 'mapa_global', spawnX: 16, spawnY: 22 }
+      ]
+    }));
+
+    // 5. Cachoeira de Banho
+    this.registrarInstancia(new InstanciaRegiao({
+      id: 'regiao_cachoeira',
+      nome: '💧 Cachoeira de Banho',
+      descricao: 'Queda d\'água cristalina sobre o lago natural de banho, pedras de contemplação e bambuzal.',
+      tipoAmbiente: 'lago_cachoeira',
+      largura: 28,
+      altura: 20,
+      recursosDisponiveis: ['agua_pura', 'pedras_lisas', 'ervas_aquaticas'],
+      objetos: [
+        { id: 'lago_banho', nome: 'Lago Natural de Banho', x: 14, y: 10 },
+        { id: 'pedras_contemplacao', nome: 'Pedras de Contemplação', x: 20, y: 9 },
+        { id: 'queda_dagua', nome: 'Queda Principal da Cachoeira', x: 14, y: 3 }
+      ],
+      portais: [
+        { portalId: 'saida_cachoeira', x: 14, y: 18, regiaoDestino: 'mapa_global', spawnX: 26, spawnY: 5 }
       ]
     }));
 
