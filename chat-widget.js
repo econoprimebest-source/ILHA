@@ -22,6 +22,7 @@
   const AVATARES = {
     icaro: '🧑‍🌾',
     lara: '🧝‍♀️',
+    elara: '🧝‍♀️',
     joao: '🏹',
     maria: '🧺'
   };
@@ -29,6 +30,7 @@
   const CORES = {
     icaro: '#10b981',
     lara: '#a855f7',
+    elara: '#a855f7',
     joao: '#3b82f6',
     maria: '#f59e0b'
   };
@@ -227,7 +229,7 @@
         <div class="wa-header-actions" onclick="event.stopPropagation()">
           <select class="wa-select-ser" id="wa-select-ser">
             <option value="icaro" ${serSelecionado === 'icaro' ? 'selected' : ''}>Ícaro</option>
-            <option value="lara" ${serSelecionado === 'lara' ? 'selected' : ''}>Elara</option>
+            <option value="elara" ${(serSelecionado === 'elara' || serSelecionado === 'lara') ? 'selected' : ''}>Elara</option>
             <option value="joao" ${serSelecionado === 'joao' ? 'selected' : ''}>João</option>
             <option value="maria" ${serSelecionado === 'maria' ? 'selected' : ''}>Maria</option>
           </select>

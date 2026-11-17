@@ -74,6 +74,8 @@
     ilha_central: {
       casa_icaro:    { u: 0.214, v: 0.445, nome: '🏠 Casa do Ícaro' },
       fazenda_icaro: { u: 0.214, v: 0.542, nome: '🌱 Fazenda do Ícaro' },
+      casa_elara:    { u: 0.332, v: 0.455, nome: '🏡 Casa da Elara' },
+      fazenda_elara: { u: 0.332, v: 0.548, nome: '🌿 Fazenda da Elara' },
       casa_lara:     { u: 0.332, v: 0.455, nome: '🏡 Casa da Elara' },
       fazenda_lara:  { u: 0.332, v: 0.548, nome: '🌿 Fazenda da Elara' },
       casa_joao:     { u: 0.476, v: 0.185, nome: '🏠 Casa do João' },
@@ -148,10 +150,10 @@
       this.baloes = {};
       this.boxAtual = { x: 0, y: 0, w: 1280, h: 853, escala: 1 };
       this.posicoesLocaisSubmapa = {
-        bosque:    { icaro: 'serraria_lenha', lara: 'santuario_antigo', joao: 'acampamento_caca', maria: 'clareira_frutas' },
-        caverna:   { icaro: 'veio_ferro', lara: 'galeria_cristais', joao: 'ruinas_ancestrais', maria: 'lago_subterraneo' },
-        praia:     { icaro: 'pier_pesca', lara: 'banco_conchas', joao: 'destrocos_baia', maria: 'coqueiral' },
-        cachoeira: { icaro: 'lago_banho', lara: 'pedras_contemplacao', joao: 'nascente_cristalina', maria: 'jardim_lirios' }
+        bosque:    { icaro: 'serraria_lenha', elara: 'santuario_antigo', lara: 'santuario_antigo', joao: 'acampamento_caca', maria: 'clareira_frutas' },
+        caverna:   { icaro: 'veio_ferro', elara: 'galeria_cristais', lara: 'galeria_cristais', joao: 'ruinas_ancestrais', maria: 'lago_subterraneo' },
+        praia:     { icaro: 'pier_pesca', elara: 'banco_conchas', lara: 'banco_conchas', joao: 'destrocos_baia', maria: 'coqueiral' },
+        cachoeira: { icaro: 'lago_banho', elara: 'pedras_contemplacao', lara: 'pedras_contemplacao', joao: 'nascente_cristalina', maria: 'jardim_lirios' }
       };
     }
 
@@ -189,6 +191,13 @@
         this.tiledData = await resp.json();
         this.carregado = true;
       } catch (err) {}
+
+      try {
+        const regParam = new URLSearchParams(window.location.search).get('regiao');
+        if (regParam) {
+          this.mapaAtivo = normalizarIdMapa(regParam);
+        }
+      } catch (_) {}
 
       this.iniciarLoop();
     }
@@ -302,22 +311,30 @@
       this.estadoAtual = stateData;
       if (!stateData || !stateData.seres) return;
 
-      Object.values(stateData.seres).forEach((ser, idx) => {
+      const vistos = new Set();
+      let idx = 0;
+      Object.values(stateData.seres).forEach((ser) => {
+        if (!ser) return;
+        const idCanonico = (ser.id === 'lara' || ser.id === 'elara') ? 'elara' : ser.id;
+        if (vistos.has(idCanonico)) return;
+        vistos.add(idCanonico);
+
         if (ser.status === 'morto') {
-          delete this.personagens[ser.id];
+          delete this.personagens[idCanonico];
           return;
         }
 
-        const nomeDisplay = (ser.id === 'lara' || ser.id === 'elara') ? 'Elara' : (ser.nome || ser.id);
+        const nomeDisplay = idCanonico === 'elara' ? 'Elara' : (ser.nome || idCanonico);
         const dest = this.obterDestinoPersonagem(ser);
         const offsetAng = (idx * Math.PI * 0.5) + 0.3;
+        idx++;
         const offX = Math.cos(offsetAng) * 12;
         const offY = Math.sin(offsetAng) * 8;
 
-        let p = this.personagens[ser.id];
+        let p = this.personagens[idCanonico] || (idCanonico === 'elara' ? this.personagens.lara : null);
         if (!p) {
           p = {
-            id: ser.id,
+            id: idCanonico,
             nome: nomeDisplay,
             x: dest.x + offX,
             y: dest.y + offY,
@@ -327,26 +344,32 @@
             ultimoTrajetoTs: 0,
             acao: ser.acao || ser.ultimaAcao || 'Observando',
             fala: ser.ultimaFala || '',
-            cor: CORES_PERSONAGENS[ser.id] || '#38bdf8',
+            cor: CORES_PERSONAGENS[idCanonico] || '#38bdf8',
             passo: 0
           };
-          this.personagens[ser.id] = p;
         }
-
+        p.id = idCanonico;
         p.nome = nomeDisplay;
+        this.personagens[idCanonico] = p;
+        if (this.personagens.lara && idCanonico === 'elara') {
+          delete this.personagens.lara;
+        }
 
         // Se houve novo trajeto de comando no mapa central, monta a fila de waypoints para caminhar visualmente pela trilha!
         if (this.mapaAtivo === 'ilha_central' && ser.ultimoTrajeto && ser.ultimoTrajeto.timestamp > (p.ultimoTrajetoTs || 0)) {
+          const idadeTrajeto = Date.now() - ser.ultimoTrajeto.timestamp;
           p.ultimoTrajetoTs = ser.ultimoTrajeto.timestamp;
           const cam = Array.isArray(ser.ultimoTrajeto.caminho) ? ser.ultimoTrajeto.caminho : [];
-          if (cam.length > 1) {
+          if (cam.length > 1 && idadeTrajeto < 15000) {
             const ptIni = this.coordZona(cam[0], 'ilha_central');
             p.x = ptIni.x + offX;
             p.y = ptIni.y + offY;
-            p.waypoints = cam.slice(1).map(noId => {
+            p.rotaPontos = cam.map(noId => {
               const c = this.coordZona(noId, 'ilha_central');
-              return { x: c.x + offX, y: c.y + offY };
+              return { x: c.x + offX, y: c.y + offY, nome: c.info?.nome || noId };
             });
+            p.rotaExpiraEm = Date.now() + 10000;
+            p.waypoints = p.rotaPontos.slice(1).map(pt => ({ x: pt.x, y: pt.y }));
           }
         }
 
@@ -359,7 +382,7 @@
 
         if (ser.ultimaFala && ser.ultimaFala !== p.fala) {
           p.fala = ser.ultimaFala;
-          this.baloes[ser.id] = {
+          this.baloes[idCanonico] = {
             texto: ser.ultimaFala,
             expiraEm: Date.now() + 9000
           };
@@ -369,11 +392,18 @@
 
     reposicionarPersonagensNoMapaAtivo() {
       if (!this.estadoAtual || !this.estadoAtual.seres) return;
-      Object.values(this.estadoAtual.seres).forEach((ser, idx) => {
-        const p = this.personagens[ser.id];
+      const vistos = new Set();
+      let idx = 0;
+      Object.values(this.estadoAtual.seres).forEach((ser) => {
+        if (!ser) return;
+        const idCanonico = (ser.id === 'lara' || ser.id === 'elara') ? 'elara' : ser.id;
+        if (vistos.has(idCanonico)) return;
+        vistos.add(idCanonico);
+        const p = this.personagens[idCanonico];
         if (!p) return;
         const dest = this.obterDestinoPersonagem(ser);
         const offsetAng = (idx * Math.PI * 0.5) + 0.3;
+        idx++;
         p.waypoints = [];
         p.x = dest.x + Math.cos(offsetAng) * 12;
         p.y = dest.y + Math.sin(offsetAng) * 8;
@@ -442,17 +472,17 @@
       const seresMundo = (this.estadoAtual && this.estadoAtual.seres) || {};
 
       const propriedades = [
-        { casaId: 'casa_icaro', fazendaId: 'fazenda_icaro', serKey: 'icaro', dono: 'Ícaro', cor: '#10b981', prepararTerreno: false },
-        { casaId: 'casa_lara',  fazendaId: 'fazenda_lara',  serKey: 'lara',  dono: 'Elara', cor: '#a855f7', prepararTerreno: true },
-        { casaId: 'casa_joao',  fazendaId: 'fazenda_joao',  serKey: 'joao',  dono: 'João',  cor: '#3b82f6', prepararTerreno: false },
-        { casaId: 'casa_maria', fazendaId: 'fazenda_maria', serKey: 'maria', dono: 'Maria', cor: '#f59e0b', prepararTerreno: false }
+        { casaId: 'casa_icaro', fazendaId: 'fazenda_icaro', serKey: 'icaro', dono: 'Ícaro', rotuloCasa: '🏠 Casa do Ícaro', rotuloFazenda: '🌱 Fazenda do Ícaro', cor: '#10b981', prepararTerreno: true },
+        { casaId: 'casa_elara', fazendaId: 'fazenda_elara', serKey: 'elara', dono: 'Elara', rotuloCasa: '🏡 Casa da Elara', rotuloFazenda: '🌿 Fazenda da Elara', cor: '#a855f7', prepararTerreno: true },
+        { casaId: 'casa_joao',  fazendaId: 'fazenda_joao',  serKey: 'joao',  dono: 'João',  rotuloCasa: '🏠 Casa do João',  rotuloFazenda: '🌾 Fazenda do João',  cor: '#3b82f6', prepararTerreno: false },
+        { casaId: 'casa_maria', fazendaId: 'fazenda_maria', serKey: 'maria', dono: 'Maria', rotuloCasa: '🏡 Casa da Maria', rotuloFazenda: '🌻 Fazenda da Maria', cor: '#f59e0b', prepararTerreno: false }
       ];
 
       propriedades.forEach(prop => {
         const pCasa = this.coordZona(prop.casaId, 'ilha_central');
         const pFaz = this.coordZona(prop.fazendaId, 'ilha_central');
-        const infoCasa = casasMundo[prop.casaId] || { nivel: 1, bau: {}, horta: {}, obra: null };
-        const serObj = seresMundo[prop.serKey] || { inventario: {} };
+        const infoCasa = casasMundo[prop.casaId] || (prop.casaId === 'casa_elara' ? casasMundo.casa_lara : null) || { nivel: 1, bau: {}, horta: {}, obra: null };
+        const serObj = seresMundo[prop.serKey] || (prop.serKey === 'elara' ? seresMundo.lara : null) || { inventario: {} };
         const nivel = Math.max(1, Math.min(5, infoCasa.nivel || 1));
         const bau = infoCasa.bau || {};
         const inv = serObj.inventario || {};
@@ -464,7 +494,7 @@
 
         ctx.save();
 
-        // A) Se a propriedade precisa de clareira preparada (ex: Propriedade da Elara), nivela o terreno com cerca de madeira!
+        // A) Terreno delimitado individual (Propriedade do Ícaro e Propriedade da Elara com cercas individuais próprias)
         if (prop.prepararTerreno) {
           ctx.fillStyle = '#b48250';
           ctx.strokeStyle = '#5c3a1e';
@@ -474,7 +504,7 @@
           ctx.fill();
           ctx.stroke();
 
-          // Cerca de estacas ao redor da Propriedade da Elara
+          // Cerca de estacas ao redor da Propriedade Individual
           ctx.fillStyle = '#78350f';
           for (let dx = -38; dx <= 38; dx += 12) {
             ctx.fillRect(pCasa.x + dx * esc - 2, pCasa.y - 30 * esc, 4 * esc, 6 * esc);
@@ -511,7 +541,7 @@
         }
 
         // D) Plaqueta da Casa com Nome e Estoque Individual da Propriedade (Comida, Madeira, Pedra)
-        const largPlaca = Math.max(108, 116 * esc);
+        const largPlaca = Math.max(114, 122 * esc);
         const altPlaca = 28;
         ctx.fillStyle = 'rgba(8, 20, 34, 0.92)';
         ctx.strokeStyle = prop.cor;
@@ -524,7 +554,7 @@
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10px system-ui';
         ctx.textAlign = 'center';
-        ctx.fillText(`🏠 Casa de ${prop.dono} (Nv ${nivel})`, pCasa.x, pCasa.y - 54 * esc + 11.5);
+        ctx.fillText(`${prop.rotuloCasa} (Nv ${nivel})`, pCasa.x, pCasa.y - 54 * esc + 11.5);
 
         ctx.fillStyle = '#cbd5e1';
         ctx.font = 'bold 9px system-ui';
@@ -532,13 +562,13 @@
 
         // E) FAZENDA INDIVIDUAL INTEGRADA À PROPRIEDADE
         const faseHorta = (horta.maduros >= 2) ? 'canteiro_maduro' : (horta.plantados > 0 ? 'canteiro_broto' : 'canteiro_arado');
-        this.desenharCanteiroFazenda(ctx, pFaz.x, pFaz.y, faseHorta, esc, prop.dono, prop.cor);
+        this.desenharCanteiroFazenda(ctx, pFaz.x, pFaz.y, faseHorta, esc, prop.rotuloFazenda, prop.cor);
 
         ctx.restore();
       });
     }
 
-    desenharCanteiroFazenda(ctx, fx, fy, chaveSprite, esc, dono, corBorda) {
+    desenharCanteiroFazenda(ctx, fx, fy, chaveSprite, esc, rotuloFazenda, corBorda) {
       ctx.save();
       // Base de solo arado fértil delimitado
       ctx.fillStyle = '#5c3415';
@@ -575,14 +605,14 @@
       ctx.strokeStyle = corBorda;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.roundRect(fx - 38 * esc, fy + 16 * esc, 76 * esc, 14, 4);
+      ctx.roundRect(fx - 46 * esc, fy + 16 * esc, 92 * esc, 14, 4);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = '#86efac';
       ctx.font = 'bold 8.5px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText(`🌱 Fazenda ${dono}`, fx, fy + 16 * esc + 10);
+      ctx.fillText(rotuloFazenda, fx, fy + 16 * esc + 10);
       ctx.restore();
     }
 
@@ -1139,6 +1169,22 @@
       const esc = Math.max(0.75, Math.min(1.1, this.boxAtual.escala));
 
       lista.forEach(p => {
+        // Desenha trilha iluminada se estiver em deslocamento de comando recente
+        if (this.mapaAtivo === 'ilha_central' && p.rotaPontos && p.rotaPontos.length > 1 && Date.now() < (p.rotaExpiraEm || 0)) {
+          ctx.save();
+          ctx.strokeStyle = p.cor || '#10b981';
+          ctx.lineWidth = 3.5 * esc;
+          ctx.setLineDash([7 * esc, 5 * esc]);
+          ctx.beginPath();
+          p.rotaPontos.forEach((pt, i) => {
+            if (i === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+          });
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
         // Se houver fila de waypoints da rota calculada, avança de ponto em ponto!
         if (p.waypoints && p.waypoints.length > 0) {
           p.targetX = p.waypoints[0].x;
@@ -1150,7 +1196,7 @@
         const dist = Math.hypot(dx, dy);
 
         if (dist > 2.5) {
-          const vel = (p.waypoints && p.waypoints.length > 0) ? 4.2 : 2.8;
+          const vel = (p.waypoints && p.waypoints.length > 0) ? 3.2 : 2.8;
           p.x += (dx / dist) * Math.min(dist, vel);
           p.y += (dy / dist) * Math.min(dist, vel);
           p.passo += 0.25;

@@ -35,7 +35,7 @@ function nomePadrao(id) {
 }
 
 function idsDeCasas(estado) {
-  const ids = new Set(['casa_icaro', 'casa_lara', 'casa_joao', 'casa_maria']);
+  const ids = new Set(['casa_icaro', 'casa_elara', 'casa_lara', 'casa_joao', 'casa_maria']);
   try { for (const n of require('./espaco').locais()) if (String(n).startsWith('casa_')) ids.add(n); } catch (_) {}
   for (const s of Object.values(estado.seres || {})) if (s && typeof s.casa === 'string' && s.casa.startsWith('casa_')) ids.add(s.casa);
   return [...ids];
@@ -45,27 +45,32 @@ function idsDeCasas(estado) {
 function preparar(estado) {
   if (!estado || !estado.mundo) return estado;
   const casas = (estado.mundo.casas && typeof estado.mundo.casas === 'object') ? estado.mundo.casas : {};
+  if (casas.casa_lara && !casas.casa_elara) {
+    casas.casa_elara = JSON.parse(JSON.stringify(casas.casa_lara));
+  }
   const fazendasPadrao = {
     casa_icaro: { id: 'fazenda_icaro', nome: 'Fazenda do Ícaro', plantados: 3, crescendo: 2, maduros: 2, capacidade: 8, cultura: 'Trigo & Raízes' },
-    casa_lara:  { id: 'fazenda_lara',  nome: 'Fazenda da Elara', plantados: 4, crescendo: 2, maduros: 3, capacidade: 8, cultura: 'Ervas & Hortaliças' },
+    casa_elara: { id: 'fazenda_elara', nome: 'Fazenda da Elara', plantados: 4, crescendo: 2, maduros: 3, capacidade: 8, cultura: 'Ervas & Hortaliças' },
+    casa_lara:  { id: 'fazenda_elara', nome: 'Fazenda da Elara', plantados: 4, crescendo: 2, maduros: 3, capacidade: 8, cultura: 'Ervas & Hortaliças' },
     casa_joao:  { id: 'fazenda_joao',  nome: 'Fazenda do João',  plantados: 3, crescendo: 1, maduros: 2, capacidade: 8, cultura: 'Milho & Mandioca' },
     casa_maria: { id: 'fazenda_maria', nome: 'Fazenda da Maria', plantados: 4, crescendo: 3, maduros: 3, capacidade: 8, cultura: 'Hortaliças & Frutas' }
   };
   for (const id of idsDeCasas(estado)) {
     const c = casas[id] || {};
-    c.id = id;
+    c.id = id === 'casa_lara' ? 'casa_elara' : id;
     c.nome = nomePadrao(id);
     c.nivel = Math.max(1, Math.min(NIVEL_MAX, Math.floor(num(c.nivel) || 1)));
     c.bau = c.bau && typeof c.bau === 'object' ? c.bau : {};
     for (const k of ['madeira', 'pedra', 'alimento', 'agua']) c.bau[k] = Math.max(0, num(c.bau[k]));
     const fp = fazendasPadrao[id] || { id: 'fazenda_' + id.replace('casa_', ''), nome: 'Fazenda Individual', plantados: 2, crescendo: 1, maduros: 1, capacidade: 8, cultura: 'Hortaliças' };
-    c.horta = (c.horta && typeof c.horta === 'object') ? { ...fp, ...c.horta } : { ...fp };
+    c.horta = (c.horta && typeof c.horta === 'object') ? { ...fp, ...c.horta, id: fp.id, nome: fp.nome } : { ...fp };
     if (c.obra && !(c.obra.paraNivel > c.nivel)) c.obra = null;
     if (c.obra) c.obra.progresso = Math.max(0, Math.min(100, num(c.obra.progresso)));
     c.obra ||= null;
     c.historico = Array.isArray(c.historico) ? c.historico.slice(-30) : [];
     casas[id] = c;
   }
+  if (casas.casa_elara) casas.casa_lara = casas.casa_elara;
   estado.mundo.casas = casas;
   return estado;
 }

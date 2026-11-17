@@ -97,13 +97,13 @@ function resolverDestino(textoNorm, serKey, estado) {
 
   // 2. Casas específicas de outros habitantes
   if (/casa\s+d[eo]\s+icaro/.test(textoNorm)) return { valido: true, destino: 'casa_icaro' };
-  if (/casa\s+d[ae]\s+(elara|lara)/.test(textoNorm)) return { valido: true, destino: 'casa_lara' };
+  if (/casa\s+d[ae]\s+(elara|lara)/.test(textoNorm)) return { valido: true, destino: 'casa_elara' };
   if (/casa\s+d[eo]\s+joao/.test(textoNorm)) return { valido: true, destino: 'casa_joao' };
   if (/casa\s+d[ae]\s+maria/.test(textoNorm)) return { valido: true, destino: 'casa_maria' };
 
   // 3. Fazendas específicas
   if (/fazenda\s+d[eo]\s+icaro/.test(textoNorm)) return { valido: true, destino: 'fazenda_icaro' };
-  if (/fazenda\s+d[ae]\s+(elara|lara)/.test(textoNorm)) return { valido: true, destino: 'fazenda_lara' };
+  if (/fazenda\s+d[ae]\s+(elara|lara)/.test(textoNorm)) return { valido: true, destino: 'fazenda_elara' };
   if (/fazenda\s+d[eo]\s+joao/.test(textoNorm)) return { valido: true, destino: 'fazenda_joao' };
   if (/fazenda\s+d[ae]\s+maria/.test(textoNorm)) return { valido: true, destino: 'fazenda_maria' };
 
@@ -291,15 +291,20 @@ function interpretarEExecutarMensagem(serIdSolicitado, textoBruto, estado) {
     ser.ultimaFala = respostaConfirmada;
     ser.ultimaFalaCiclo = (estado.mundo && estado.mundo.tempo && estado.mundo.tempo.ciclo) || 0;
 
+    if (serKey === 'lara' && estado.seres && estado.seres.elara) {
+      Object.assign(estado.seres.elara, ser, { id: 'elara', nome: 'Elara' });
+    }
+
     return {
       ehComando: true,
       executou: verificado,
+      serId: serKey === 'lara' ? 'elara' : serKey,
       serKey,
       origem,
       destino,
       nomeDestino: noInfo.nome,
       rota: rotaCalc.caminho,
-      acompanhante: acompanhanteKey,
+      acompanhante: acompanhanteKey === 'lara' ? 'elara' : acompanhanteKey,
       resposta: respostaConfirmada
     };
   }

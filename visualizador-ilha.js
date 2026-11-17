@@ -43,7 +43,17 @@ function json(res,obj){const s=JSON.stringify(reparaDeep(obj));res.writeHead(200
 function readState(){
   try{
     const bruto=JSON.parse(fs.readFileSync(STATE,'utf8'));
-    try{const copia=JSON.parse(JSON.stringify(bruto));eco.preparar(copia);return copia}
+    try{
+      const copia=JSON.parse(JSON.stringify(bruto));
+      eco.preparar(copia);
+      if (copia.seres && copia.seres.lara) {
+        copia.seres.lara.nome = 'Elara';
+        copia.seres.lara.casa = 'casa_elara';
+        copia.seres.lara.fazenda = 'fazenda_elara';
+        copia.seres.elara = { ...copia.seres.lara, id: 'elara', nome: 'Elara', casa: 'casa_elara', fazenda: 'fazenda_elara' };
+      }
+      return copia;
+    }
     catch(e){bruto.aviso_preparacao=e.message;return bruto}
   }catch(e){return {mundo:{tempo:{ciclo:0}},seres:{},descobertas:[],memorias:[],erro_estado:e.message}}
 }
@@ -861,7 +871,7 @@ http.createServer((req,res)=>{
       const estMundo = readState();
       const casasMundo = (estMundo.mundo && estMundo.mundo.casas) || {};
       const mapaSerKey = { icaro: 'icaro', elara: 'lara', lara: 'lara', joao: 'joao', maria: 'maria' };
-      const mapaCasaKey = { icaro: 'casa_icaro', elara: 'casa_lara', lara: 'casa_lara', joao: 'casa_joao', maria: 'casa_maria' };
+      const mapaCasaKey = { icaro: 'casa_icaro', elara: 'casa_elara', lara: 'casa_elara', joao: 'casa_joao', maria: 'casa_maria' };
       const mapaNome = { icaro: 'Ícaro', elara: 'Elara', lara: 'Elara', joao: 'João', maria: 'Maria' };
       const habitantesIds = ['icaro', 'elara', 'lara', 'joao', 'maria'];
       const dadosHabitantes = {};
@@ -871,7 +881,7 @@ http.createServer((req,res)=>{
         const cKey = mapaCasaKey[hid] || ('casa_' + sKey);
         const serObj = (estMundo.seres && estMundo.seres[sKey]) || {};
         const invSer = serObj.inventario || {};
-        const casaObj = casasMundo[cKey] || { nivel: 1, bau: {}, horta: {} };
+        const casaObj = casasMundo[cKey] || casasMundo.casa_lara || { nivel: 1, bau: {}, horta: {} };
         const bauCasa = casaObj.bau || {};
         const hortaCasa = casaObj.horta || {};
 

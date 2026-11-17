@@ -4,11 +4,13 @@
 // distâncias. Coordenadas relativas (0..1) compatíveis com o mapa de referência.
 const nos={
 	casa_icaro:{x:.214,y:.445,nome:'Casa do Ícaro'},
-	casa_lara:{x:.325,y:.455,nome:'Casa da Elara'},
+	casa_elara:{x:.332,y:.455,nome:'Casa da Elara'},
+	casa_lara:{x:.332,y:.455,nome:'Casa da Elara'},
 	casa_joao:{x:.476,y:.185,nome:'Casa do João'},
 	casa_maria:{x:.855,y:.535,nome:'Casa da Maria'},
 	fazenda_icaro:{x:.214,y:.535,nome:'Fazenda do Ícaro'},
-	fazenda_lara:{x:.325,y:.545,nome:'Fazenda da Elara'},
+	fazenda_elara:{x:.332,y:.548,nome:'Fazenda da Elara'},
+	fazenda_lara:{x:.332,y:.548,nome:'Fazenda da Elara'},
 	fazenda_joao:{x:.583,y:.198,nome:'Fazenda do João'},
 	fazenda_maria:{x:.948,y:.545,nome:'Fazenda da Maria'},
 	venda:{x:.425,y:.625,nome:'Mercadinho & Praça Comercial'},
@@ -33,7 +35,7 @@ const aliases={
 	floresta_densa:'floresta',santuario:'bosque',floresta_santuario:'bosque',
 	ruinas_antigas:'caverna',caverna_ruinas:'caverna',mina:'caverna',ruinas:'caverna',
 	santuario_fe:'cachoeira',cachoeira_banho:'cachoeira',
-	casa_elara:'casa_lara',fazenda_elara:'fazenda_lara',
+	casa_lara:'casa_elara',fazenda_lara:'fazenda_elara',
 	mercadinho:'venda',mercado:'venda',vendinha:'venda',praca_comercial:'venda',loja:'venda',
 	porto:'barco',pier:'barco',cais:'barco',praca:'acampamento'
 };
@@ -78,6 +80,11 @@ const arestas=[
 	{a:'floresta',b:'caverna',wp:[[.856,.241],[.895,.203]]},
 	// Propriedades, Fazendas Individuais, Mercadinho, Oficina e Observatório
 	{a:'casa_icaro',b:'fazenda_icaro',wp:[]},
+	{a:'casa_icaro',b:'casa_elara',wp:[[.27,.45]]},
+	{a:'casa_elara',b:'bosque',wp:[[.28,.36]]},
+	{a:'casa_elara',b:'fazenda_elara',wp:[]},
+	{a:'fazenda_icaro',b:'fazenda_elara',wp:[]},
+	{a:'fazenda_elara',b:'acampamento',wp:[[.39,.52]]},
 	{a:'casa_lara',b:'fazenda_lara',wp:[]},
 	{a:'fazenda_icaro',b:'fazenda_lara',wp:[]},
 	{a:'fazenda_lara',b:'acampamento',wp:[[.39,.52]]},

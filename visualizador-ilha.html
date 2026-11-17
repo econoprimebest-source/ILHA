@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Ilha Aurora — 2D RPG</title>
-<script src="/mapa-rpg.js?v=20261116_2055"></script>
-<script src="/motor-rpg-tiled.js?v=20261116_2055"></script>
-<script src="/rpg-interface-master.js?v=20261116_2055"></script>
-<script src="/chat-widget.js?v=20261116_2055"></script>
+<script src="/mapa-rpg.js?v=20261116_2120"></script>
+<script src="/motor-rpg-tiled.js?v=20261116_2120"></script>
+<script src="/rpg-interface-master.js?v=20261116_2120"></script>
+<script src="/chat-widget.js?v=20261116_2120"></script>
 <style>
   body { margin: 0; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; background: #071827; color: #fff; }
   canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
@@ -202,7 +202,9 @@
             <option value="cachoeira">Cachoeira</option>
             <option value="fazenda">Horta Comunitária</option>
             <option value="casa_icaro">Casa do Ícaro</option>
-            <option value="casa_lara">Casa da Lara</option>
+            <option value="casa_elara">Casa da Elara</option>
+            <option value="fazenda_icaro">Fazenda do Ícaro</option>
+            <option value="fazenda_elara">Fazenda da Elara</option>
             <option value="casa_joao">Casa do João</option>
             <option value="casa_maria">Casa da Maria</option>
             <option value="arena">Arena</option>
@@ -691,6 +693,10 @@ window.setVisualMode = function(){
 window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     window.setVisualMode('rpg');
+    const regParam = new URLSearchParams(window.location.search).get('regiao');
+    if (regParam && typeof window.mudarZonaMundo === 'function') {
+      window.mudarZonaMundo(regParam);
+    }
   }, 50);
 });
 
@@ -744,7 +750,19 @@ function resetCameraGeral(){
     window.motorPixi.resetCamera();
   }
 }
-function seres(){ return stateData ? Object.values(stateData.seres) : []; }
+function seres(){
+  if (!stateData || !stateData.seres) return [];
+  const vistos = new Set();
+  const lista = [];
+  for (const [k, s] of Object.entries(stateData.seres)) {
+    if (!s) continue;
+    const idCan = (k === 'lara' || s.id === 'lara') ? 'elara' : (s.id || k);
+    if (vistos.has(idCan)) continue;
+    vistos.add(idCan);
+    lista.push(s);
+  }
+  return lista;
+}
 function vivos(){ return seres().filter(s => s.status !== 'morto'); }
 function falecidos(){ return seres().filter(s => s.status === 'morto'); }
 

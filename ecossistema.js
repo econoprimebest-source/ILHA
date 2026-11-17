@@ -9,8 +9,8 @@ const LIMITES = { agua: 1000, lago: 800 };
 
 // MORADIA E PROPRIEDADE INDIVIDUAL (Missão K):
 // Cada habitante possui sua própria Casa e Fazenda Individual integrada:
-const MORADIA = { icaro:'casa_icaro', joao:'casa_joao', maria:'casa_maria', lara:'casa_lara', elara:'casa_lara' };
-const FAZENDA_PROPRIEDADE = { icaro:'fazenda_icaro', joao:'fazenda_joao', maria:'fazenda_maria', lara:'fazenda_lara', elara:'fazenda_lara' };
+const MORADIA = { icaro:'casa_icaro', joao:'casa_joao', maria:'casa_maria', lara:'casa_elara', elara:'casa_elara' };
+const FAZENDA_PROPRIEDADE = { icaro:'fazenda_icaro', joao:'fazenda_joao', maria:'fazenda_maria', lara:'fazenda_elara', elara:'fazenda_elara' };
 
 function preparar(estado) {
   const mundo = estado.mundo;
@@ -174,7 +174,11 @@ function preparar(estado) {
   const lara = estado.seres.lara;
   if (lara) {
     lara.nome = 'Elara';
-    if (lara.historia) lara.historia.residencia = 'casa_lara';
+    if (lara.local === 'casa_lara') lara.local = 'casa_elara';
+    if (lara.local === 'fazenda_lara') lara.local = 'fazenda_elara';
+    lara.casa = 'casa_elara';
+    lara.fazenda = 'fazenda_elara';
+    if (lara.historia) lara.historia.residencia = 'casa_elara';
   }
   // MEMÓRIA DE PERSONAGEM (M1): cada personagem nasce com a própria
   // identidade na memória (chat do ICAROOVO isolado). Inerte fora dos testes
